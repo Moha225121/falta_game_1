@@ -1,4 +1,4 @@
-# Kalak Libya
+# فلتة
 
 Multiplayer party trivia game with bluffing mechanics. Players join a room, submit real or fake answers, vote anonymously, and score points for picking the truth or fooling others.
 
@@ -6,8 +6,8 @@ Multiplayer party trivia game with bluffing mechanics. Players join a room, subm
 
 - Backend: Node.js, Express, Socket.IO
 - Data: file-backed JSON questions at `server/data/questions.json`
-- Frontend: React, Vite, responsive player UI and admin interface
-- Admin: `/admin` question CRUD
+- Frontend: React, Vite, responsive player UI
+- Admin: standalone `/admin-panel` question CRUD protected by `ADMIN_TOKEN`
 
 ## Run Locally
 
@@ -46,14 +46,16 @@ Copy `.env.example` to `.env` and adjust values as needed.
 ```bash
 PORT=4000
 CLIENT_ORIGIN=http://localhost:5173
-ADMIN_TOKEN=
+ADMIN_TOKEN=change-this-secret
 MIN_PLAYERS=3
-MAX_PLAYERS=20
-ANSWER_SECONDS=45
+MAX_PLAYERS=6
+ANSWER_SECONDS=30
 VOTE_SECONDS=30
 ```
 
-If `ADMIN_TOKEN` is set, admin write actions require:
+Admin is not linked from the player UI. Open it directly at `/admin-panel`.
+
+All admin question/stat APIs require:
 
 ```http
 Authorization: Bearer your-token
@@ -65,12 +67,12 @@ Authorization: Bearer your-token
 - `GET /api/config`
 - `GET /api/categories`
 - `GET /api/game-modes`
-- `GET /api/stats`
-- `GET /api/questions`
-- `GET /api/questions/:id`
-- `POST /api/questions`
-- `PUT /api/questions/:id`
-- `DELETE /api/questions/:id`
+- `GET /api/stats` admin token required
+- `GET /api/questions` admin token required
+- `GET /api/questions/:id` admin token required
+- `POST /api/questions` admin token required
+- `PUT /api/questions/:id` admin token required
+- `DELETE /api/questions/:id` admin token required
 - `GET /api/rooms/:code`
 
 ## Socket Events
@@ -83,6 +85,7 @@ Client emits:
 - `room:addBot`
 - `room:removeBot`
 - `game:start`
+- `game:end`
 - `answer:submit`
 - `vote:submit`
 - `round:next`

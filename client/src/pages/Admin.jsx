@@ -15,7 +15,7 @@ const blankQuestion = {
 export default function Admin() {
   const [questions, setQuestions] = useState([]);
   const [stats, setStats] = useState(null);
-  const [config, setConfig] = useState({ adminAuthRequired: false });
+  const [config, setConfig] = useState({ adminAuthRequired: true, adminConfigured: null });
   const [token, setToken] = useState(localStorage.getItem("kalak:adminToken") || "");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -28,6 +28,7 @@ export default function Admin() {
   const categories = useMemo(() => {
     return [...new Set(questions.map((question) => question.category))].sort((a, b) => a.localeCompare(b, "ar"));
   }, [questions]);
+  const canUseAdmin = Boolean(config.adminConfigured && token.trim());
 
   function difficultyLabel(value) {
     return {
@@ -42,8 +43,16 @@ export default function Admin() {
   }, []);
 
   useEffect(() => {
+    if (config.adminConfigured === null) {
+      return;
+    }
+    if (!canUseAdmin) {
+      setQuestions([]);
+      setStats(null);
+      return;
+    }
     loadQuestions();
-  }, [category]);
+  }, [category, canUseAdmin, config.adminConfigured]);
 
   function saveToken(value) {
     setToken(value);
@@ -51,6 +60,15 @@ export default function Admin() {
   }
 
   async function loadQuestions() {
+    if (config.adminConfigured === false) {
+      setError("رمز الإدارة غير مضبوط على الخادم. أضف ADMIN_TOKEN ثم أعد تشغيل السيرفر.");
+      return;
+    }
+    if (!token.trim()) {
+      setError("اكتب رمز الإدارة أولًا.");
+      return;
+    }
+
     setBusy(true);
     setError("");
     try {
@@ -62,8 +80,8 @@ export default function Admin() {
         query.set("search", search.trim());
       }
       const [questionPayload, statsPayload] = await Promise.all([
-        api(`/questions?${query.toString()}`),
-        api("/stats")
+        api(`/questions?${query.toString()}`, { headers: adminHeaders(token) }),
+        api("/stats", { headers: adminHeaders(token) })
       ]);
       setQuestions(questionPayload);
       setStats(statsPayload);
@@ -184,7 +202,21 @@ export default function Admin() {
         </section>
       ) : null}
 
-      <section className="admin-layout">
+      {config.adminConfigured === false ? (
+        <section className="panel token-panel">
+          <strong>لوحة الإدارة مقفلة</strong>
+          <p>اضبط ADMIN_TOKEN في إعدادات السيرفر ثم أعد تشغيله.</p>
+        </section>
+      ) : null}
+
+      {config.adminConfigured && !token.trim() ? (
+        <section className="panel token-panel">
+          <strong>أدخل رمز الإدارة</strong>
+          <p>هذه الصفحة مستقلة عن واجهة اللاعبين ولا تعرض البيانات بدون الرمز.</p>
+        </section>
+      ) : null}
+
+      {canUseAdmin ? <section className="admin-layout">
         <form className="panel admin-form" onSubmit={submit}>
           <div className="panel-heading">
             {editingId ? <Edit3 size={20} /> : <Plus size={20} />}
@@ -327,7 +359,7 @@ export default function Admin() {
             ))}
           </div>
         </section>
-      </section>
+      </section> : null}
 
       <datalist id="category-list">
         {categories.map((item) => <option value={item} key={item} />)}

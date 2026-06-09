@@ -1,0 +1,2499 @@
+import { customAlphabet, nanoid } from "nanoid";
+import { clampNumber } from "./config.js";
+import {
+  CLOSEST_NUMBER_ROUNDS,
+  DIRECT_CHOICE_ROUNDS,
+  FAKE_FACTS,
+  HOT_TAKE_BOT_ANSWERS,
+  HOT_TAKE_PROMPTS,
+  IMPOSTER_WORDS,
+  JUDGE_PICK_GAME_ANSWERS,
+  JUDGE_PICK_PROMPTS,
+  LAST_SURVIVOR_BOT_ANSWERS,
+  LAST_SURVIVOR_CHALLENGES,
+  MINORITY_WINS_ROUNDS,
+  MIND_MATCH_ROUNDS,
+  MODE_IDS,
+  REVERSE_TRAP_ROUNDS,
+  SPLIT_STEAL_SCENARIOS,
+  SPOT_AI_ANSWERS,
+  SPOT_AI_PROMPTS,
+  TARGET_GUESS_ROUNDS
+} from "./gameModes.js";
+
+const makeCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 5);
+const BOT_NAMES = [
+  "ندى الآلية",
+  "سالم الآلي",
+  "ميرا الآلية",
+  "طارق الآلي",
+  "لينا الآلية",
+  "عمر الآلي",
+  "ريان الآلي",
+  "هنا الآلية"
+];
+const BOT_COLORS = ["#12d6c5", "#ff3f98", "#f6b84a", "#62df6c", "#8c6cff"];
+const BOT_MARKS = ["spark", "diamond", "crown", "bolt", "circle"];
+const MAX_TOTAL_ROUNDS = 20;
+const AVATAR_DEFAULT = {
+  persona: "a1",
+  skin: "#c9865a",
+  hair: "#15120f",
+  outfit: "#12d6c5",
+  hairStyle: "short",
+  eyes: "focused",
+  mouth: "smile",
+  accessory: "headset"
+};
+const AVATAR_CHOICES = {
+  skin: new Set(["#c9865a", "#a96f45", "#8d5338", "#e0ad7f", "#6a3d2f"]),
+  hair: new Set(["#15120f", "#4a2d20", "#d6a94d", "#2457c5", "#df3e8f"]),
+  outfit: new Set(["#12d6c5", "#ff3f98", "#f6b84a", "#62df6c", "#8c6cff", "#ff5d69"]),
+  hairStyle: new Set(["short", "wave", "curls", "fade", "cap"]),
+  eyes: new Set(["focused", "happy", "sharp", "bright"]),
+  mouth: new Set(["smile", "grin", "smirk", "calm"]),
+  accessory: new Set(["none", "glasses", "headset", "visor"])
+};
+const BOT_AVATARS = [
+  { persona: "a1", skin: "#c9865a", hair: "#15120f", outfit: "#12d6c5", hairStyle: "short", eyes: "focused", mouth: "smile", accessory: "headset" },
+  { persona: "a2", skin: "#a96f45", hair: "#2457c5", outfit: "#ff3f98", hairStyle: "fade", eyes: "sharp", mouth: "smirk", accessory: "visor" },
+  { persona: "a3", skin: "#e0ad7f", hair: "#4a2d20", outfit: "#f6b84a", hairStyle: "wave", eyes: "happy", mouth: "grin", accessory: "none" },
+  { persona: "a4", skin: "#8d5338", hair: "#df3e8f", outfit: "#8c6cff", hairStyle: "curls", eyes: "bright", mouth: "smirk", accessory: "glasses" },
+  { persona: "a5", skin: "#6a3d2f", hair: "#d6a94d", outfit: "#62df6c", hairStyle: "cap", eyes: "focused", mouth: "smile", accessory: "headset" }
+];
+const BOT_FAKE_ANSWERS = [
+  "الميناء القديم",
+  "بوصلة فضية",
+  "1974",
+  "قمر الصحراء",
+  "سبعة أبواب",
+  "جزيرة مخفية",
+  "الخريطة الذهبية",
+  "ريح الشمال",
+  "المنارة الأولى",
+  "رخام أزرق",
+  "الأرشيف الملكي",
+  "مدينة جبلية"
+];
+const BOT_CORRECT_ANSWER_RATE = 0.18;
+const BOT_CORRECT_VOTE_RATE = 0.42;
+
+function normalizeAnswer(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[\u0623\u0625\u0622]/g, "\u0627")
+    .replace(/\u0649/g, "\u064A")
+    .replace(/\u0629/g, "\u0647")
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, "");
+}
+
+function parseNumericAnswer(value) {
+  const normalizedDigits = String(value || "")
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/,/g, ".");
+  const match = normalizedDigits.match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function shuffle(items) {
+  const array = [...items];
+  for (let index = array.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(Math.random() * (index + 1));
+    [array[index], array[target]] = [array[target], array[index]];
+  }
+  return array;
+}
+
+function playerName(name) {
+  const fallback = `لاعب ${Math.floor(1000 + Math.random() * 9000)}`;
+  return String(name || fallback).trim().slice(0, 28) || fallback;
+}
+
+function cleanMessage(message) {
+  return String(message || "").trim().replace(/\s+/g, " ").slice(0, 180);
+}
+
+function cleanAvatarValue(value, choices, fallback) {
+  return choices.has(value) ? value : fallback;
+}
+
+function cleanPersona(value) {
+  return String(value || AVATAR_DEFAULT.persona)
+    .trim()
+    .replace(/[^a-z0-9_-]/gi, "")
+    .slice(0, 24) || AVATAR_DEFAULT.persona;
+}
+
+function cleanAvatar(avatar = {}) {
+  return {
+    persona: cleanPersona(avatar.persona || avatar.id),
+    skin: cleanAvatarValue(avatar.skin, AVATAR_CHOICES.skin, AVATAR_DEFAULT.skin),
+    hair: cleanAvatarValue(avatar.hair, AVATAR_CHOICES.hair, AVATAR_DEFAULT.hair),
+    outfit: cleanAvatarValue(avatar.outfit || avatar.color, AVATAR_CHOICES.outfit, AVATAR_DEFAULT.outfit),
+    hairStyle: cleanAvatarValue(avatar.hairStyle, AVATAR_CHOICES.hairStyle, AVATAR_DEFAULT.hairStyle),
+    eyes: cleanAvatarValue(avatar.eyes, AVATAR_CHOICES.eyes, AVATAR_DEFAULT.eyes),
+    mouth: cleanAvatarValue(avatar.mouth, AVATAR_CHOICES.mouth, AVATAR_DEFAULT.mouth),
+    accessory: cleanAvatarValue(avatar.accessory, AVATAR_CHOICES.accessory, AVATAR_DEFAULT.accessory)
+  };
+}
+
+function createPlayer(socket, payload = {}) {
+  return {
+    id: socket.id,
+    name: playerName(payload.name),
+    avatar: cleanAvatar(payload.avatar),
+    score: 0,
+    joinedAt: Date.now()
+  };
+}
+
+function createBot(room) {
+  const botCount = [...room.players.values()].filter((player) => player.isBot).length;
+  const baseName = BOT_NAMES[botCount % BOT_NAMES.length];
+  const usedNames = new Set([...room.players.values()].map((player) => player.name));
+  const name = usedNames.has(baseName) ? `${baseName} ${botCount + 1}` : baseName;
+
+  return {
+    id: `bot_${nanoid(8)}`,
+    name,
+    avatar: cleanAvatar(BOT_AVATARS[botCount % BOT_AVATARS.length]),
+    score: 0,
+    isBot: true,
+    joinedAt: Date.now()
+  };
+}
+
+function createEmptyRoom(code, host, config) {
+  return {
+    code,
+    hostId: host.id,
+    players: new Map([[host.id, host]]),
+    phase: "lobby",
+    round: 0,
+    settings: {
+      mode: "kalak",
+      modes: ["kalak"],
+      category: "all",
+      categories: [],
+      rounds: 1,
+      answerSeconds: config.answerSeconds,
+      voteSeconds: config.voteSeconds
+    },
+    usedQuestionIds: [],
+    question: null,
+    submissions: new Map(),
+    votes: new Map(),
+    options: [],
+    correctWriterIds: [],
+    eliminatedPlayerIds: new Set(),
+    kickVotes: new Map(),
+    activeMode: "kalak",
+    modeData: null,
+    results: null,
+    messages: [],
+    phaseEndsAt: null,
+    timer: null,
+    botTimers: [],
+    createdAt: Date.now()
+  };
+}
+
+export class KalakGameEngine {
+  constructor(io, store, config) {
+    this.io = io;
+    this.store = store;
+    this.config = config;
+    this.rooms = new Map();
+  }
+
+  bindSocket(socket) {
+    socket.on("room:create", (payload, ack) => this.handle(socket, ack, () => this.createRoom(socket, payload)));
+    socket.on("room:join", (payload, ack) => this.handle(socket, ack, () => this.joinRoom(socket, payload)));
+    socket.on("room:updateSettings", (payload, ack) => this.handle(socket, ack, () => this.updateSettings(socket, payload)));
+    socket.on("room:addBot", (payload, ack) => this.handle(socket, ack, () => this.addBot(socket)));
+    socket.on("room:removeBot", (payload, ack) => this.handle(socket, ack, () => this.removeBot(socket, payload)));
+    socket.on("player:kickVote", (payload, ack) => this.handle(socket, ack, () => this.voteKick(socket, payload)));
+    socket.on("game:start", (payload, ack) => this.handle(socket, ack, () => this.startGame(socket)));
+    socket.on("game:end", (payload, ack) => this.handle(socket, ack, () => this.endGame(socket)));
+    socket.on("answer:submit", (payload, ack) => this.handle(socket, ack, () => this.submitAnswer(socket, payload)));
+    socket.on("vote:submit", (payload, ack) => this.handle(socket, ack, () => this.submitVote(socket, payload)));
+    socket.on("round:next", (payload, ack) => this.handle(socket, ack, () => this.nextRound(socket)));
+    socket.on("chat:send", (payload, ack) => this.handle(socket, ack, () => this.sendChat(socket, payload)));
+    socket.on("disconnect", () => this.removePlayer(socket));
+  }
+
+  async handle(socket, ack, action) {
+    try {
+      const result = await action();
+      if (typeof ack === "function") {
+        ack({ ok: true, ...result });
+      }
+    } catch (error) {
+      if (typeof ack === "function") {
+        ack({ ok: false, error: error.message || "حدث خطأ غير متوقع." });
+      }
+      socket.emit("game:error", { error: error.message || "حدث خطأ غير متوقع." });
+    }
+  }
+
+  getRoom(code) {
+    const room = this.rooms.get(String(code || "").toUpperCase());
+    return room ? this.publicRoom(room, null) : null;
+  }
+
+  async createRoom(socket, payload = {}) {
+    const player = createPlayer(socket, payload);
+    let code = makeCode();
+
+    while (this.rooms.has(code)) {
+      code = makeCode();
+    }
+
+    const room = createEmptyRoom(code, player, this.config);
+    const settingsInput = {
+      ...room.settings,
+      ...payload,
+      modes: payload.modes ?? (payload.mode ? [payload.mode] : room.settings.modes)
+    };
+    room.settings = this.cleanSettings(settingsInput);
+    room.activeMode = room.settings.mode;
+    this.rooms.set(code, room);
+    socket.join(code);
+    socket.data.roomCode = code;
+    socket.data.playerId = player.id;
+
+    this.addSystemMessage(room, `${player.name} فتح الغرفة.`);
+    this.emitRoom(room);
+
+    return {
+      room: this.publicRoom(room, player.id),
+      playerId: player.id
+    };
+  }
+
+  async joinRoom(socket, payload = {}) {
+    const code = String(payload.code || "").trim().toUpperCase();
+    const room = this.rooms.get(code);
+
+    if (!room) {
+      throw new Error("كود الغرفة غير موجود.");
+    }
+
+    if (room.phase !== "lobby") {
+      throw new Error("هذه المباراة بدأت بالفعل.");
+    }
+
+    if (room.players.size >= this.config.maxPlayers) {
+      throw new Error("هذه الغرفة ممتلئة.");
+    }
+
+    const player = createPlayer(socket, payload);
+    room.players.set(player.id, player);
+    socket.join(code);
+    socket.data.roomCode = code;
+    socket.data.playerId = player.id;
+
+    this.addSystemMessage(room, `${player.name} انضم للغرفة.`);
+    this.emitRoom(room);
+
+    return {
+      room: this.publicRoom(room, player.id),
+      playerId: player.id
+    };
+  }
+
+  async updateSettings(socket, payload = {}) {
+    const room = this.requireRoom(socket);
+    this.requireHost(room, socket);
+
+    if (room.phase !== "lobby") {
+      throw new Error("يمكن تغيير الإعدادات في غرفة الانتظار فقط.");
+    }
+
+    const settingsInput = {
+      ...room.settings,
+      ...payload,
+      modes: payload.modes ?? (payload.mode ? [payload.mode] : room.settings.modes)
+    };
+    room.settings = this.cleanSettings(settingsInput);
+    room.activeMode = room.settings.mode;
+    this.emitRoom(room);
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async addBot(socket) {
+    const room = this.requireRoom(socket);
+    this.requireHost(room, socket);
+
+    if (room.phase !== "lobby") {
+      throw new Error("يمكن إضافة اللاعبين الآليين في غرفة الانتظار فقط.");
+    }
+
+    if (room.players.size >= this.config.maxPlayers) {
+      throw new Error("هذه الغرفة ممتلئة.");
+    }
+
+    const bot = createBot(room);
+    room.players.set(bot.id, bot);
+    this.addSystemMessage(room, `${bot.name} انضم كلاعب آلي للتجربة.`);
+    this.emitRoom(room);
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async removeBot(socket, payload = {}) {
+    const room = this.requireRoom(socket);
+    this.requireHost(room, socket);
+
+    throw new Error("الإخراج يتم بتصويت اللاعبين فقط.");
+  }
+
+  async voteKick(socket, payload = {}) {
+    const room = this.requireRoom(socket);
+    const voter = room.players.get(socket.id);
+    const targetId = String(payload.playerId || "");
+    const target = room.players.get(targetId);
+
+    if (!target) {
+      throw new Error("اللاعب غير موجود.");
+    }
+
+    if (target.id === socket.id) {
+      throw new Error("لا يمكنك التصويت لإخراج نفسك.");
+    }
+
+    if (voter?.isBot) {
+      throw new Error("اللاعب الآلي لا يصوت على الطرد.");
+    }
+
+    const voters = this.kickVotersFor(room, target.id);
+    if (!voters.some((player) => player.id === socket.id)) {
+      throw new Error("لا يمكنك التصويت على هذا اللاعب.");
+    }
+
+    if (!room.kickVotes.has(target.id)) {
+      room.kickVotes.set(target.id, new Set());
+    }
+
+    const votes = room.kickVotes.get(target.id);
+    if (votes.has(socket.id)) {
+      throw new Error("صوتك محسوب بالفعل.");
+    }
+
+    votes.add(socket.id);
+
+    if (votes.size >= voters.length) {
+      this.removePlayerFromRoom(room, target.id, `تم إخراج ${target.name} بتصويت اللاعبين.`, {
+        notify: true
+      });
+      return {
+        room: this.rooms.has(room.code) && room.players.has(socket.id) ? this.publicRoom(room, socket.id) : null
+      };
+    }
+
+    this.emitRoom(room);
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async startGame(socket) {
+    const room = this.requireRoom(socket);
+    this.requireHost(room, socket);
+
+    if (room.players.size < this.config.minPlayers) {
+      throw new Error(`اللعبة تحتاج على الأقل ${this.config.minPlayers} لاعبين.`);
+    }
+
+    if (room.phase !== "lobby" && room.phase !== "finished") {
+      throw new Error("اللعبة تعمل بالفعل.");
+    }
+
+    room.round = 0;
+    room.usedQuestionIds = [];
+    room.eliminatedPlayerIds = new Set();
+    room.activeMode = room.settings.modes[0] || "kalak";
+    room.modeData = null;
+    for (const player of room.players.values()) {
+      player.score = 0;
+    }
+
+    await this.startRound(room);
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async endGame(socket) {
+    const room = this.requireRoom(socket);
+    this.requireHost(room, socket);
+
+    if (room.phase === "lobby") {
+      return { room: this.publicRoom(room, socket.id) };
+    }
+
+    this.clearTimer(room);
+    room.phase = "lobby";
+    room.round = 0;
+    room.usedQuestionIds = [];
+    room.submissions = new Map();
+    room.votes = new Map();
+    room.options = [];
+    room.correctWriterIds = [];
+    room.eliminatedPlayerIds = new Set();
+    room.modeData = null;
+    room.results = null;
+    room.question = null;
+    room.phaseEndsAt = null;
+    room.activeMode = room.settings.modes[0] || "kalak";
+    room.kickVotes = new Map();
+
+    for (const player of room.players.values()) {
+      player.score = 0;
+    }
+
+    this.addSystemMessage(room, "المضيف أنهى اللعبة ورجع الغرفة للانتظار.");
+    this.emitRoom(room);
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async submitAnswer(socket, payload = {}) {
+    const room = this.requireRoom(socket);
+
+    if (room.phase !== "answering") {
+      throw new Error("وقت الإجابة انتهى.");
+    }
+
+    if (!this.eligibleAnswerers(room).some((player) => player.id === socket.id)) {
+      throw new Error("أنت غير مشارك في هذه الجولة.");
+    }
+
+    const text = String(payload.text || "").trim().replace(/\s+/g, " ").slice(0, 160);
+    if (text.length < 1) {
+      throw new Error("اكتب إجابة أولًا.");
+    }
+
+    if (this.currentMode(room) === "kalak" && normalizeAnswer(text) === normalizeAnswer(room.question.correctAnswer)) {
+      if (!room.correctWriterIds.includes(socket.id)) {
+        room.correctWriterIds.push(socket.id);
+      }
+
+      return {
+        room: this.publicRoom(room, socket.id),
+        correctAnswerHit: true,
+        message: "إجابتك صحيحة. الآن اكتب إجابة غلط مقنعة عشان تخدع اللاعبين."
+      };
+    }
+
+    room.submissions.set(socket.id, {
+      playerId: socket.id,
+      text,
+      submittedAt: Date.now()
+    });
+
+    this.emitRoom(room);
+
+    if (room.submissions.size >= this.eligibleAnswerers(room).length) {
+      setTimeout(() => this.finishAnswering(room.code), 550);
+    }
+
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async submitVote(socket, payload = {}) {
+    const room = this.requireRoom(socket);
+
+    if (room.phase !== "voting") {
+      throw new Error("وقت التصويت انتهى.");
+    }
+
+    const voters = this.eligibleVoters(room);
+    if (!voters.some((player) => player.id === socket.id)) {
+      throw new Error("أنت غير مشارك في التصويت لهذه الجولة.");
+    }
+
+    const option = room.options.find((item) => item.id === payload.optionId);
+    if (!option) {
+      throw new Error("الخيار غير موجود.");
+    }
+
+    if (option.ownerIds.includes(socket.id)) {
+      throw new Error("لا يمكنك التصويت لإجابتك.");
+    }
+
+    room.votes.set(socket.id, {
+      playerId: socket.id,
+      optionId: option.id,
+      votedAt: Date.now()
+    });
+
+    this.emitRoom(room);
+
+    if (room.votes.size >= this.eligibleVoters(room).length) {
+      setTimeout(() => this.finishVoting(room.code), 550);
+    }
+
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async nextRound(socket) {
+    const room = this.requireRoom(socket);
+    this.requireHost(room, socket);
+
+    if (room.phase !== "results") {
+      throw new Error("الجولة الحالية لم تنته بعد.");
+    }
+
+    if (room.results?.isFinal || room.modeData?.matchFinished || room.round >= room.settings.rounds) {
+      room.phase = "finished";
+      room.phaseEndsAt = null;
+      this.emitRoom(room);
+      return { room: this.publicRoom(room, socket.id) };
+    }
+
+    await this.startRound(room);
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  async sendChat(socket, payload = {}) {
+    const room = this.requireRoom(socket);
+    const player = room.players.get(socket.id);
+    const message = cleanMessage(payload.message);
+
+    if (!message) {
+      throw new Error("الرسالة فارغة.");
+    }
+
+    room.messages.push({
+      id: nanoid(8),
+      type: "player",
+      playerId: player.id,
+      playerName: player.name,
+      message,
+      createdAt: Date.now()
+    });
+    room.messages = room.messages.slice(-60);
+    this.emitRoom(room);
+    return { room: this.publicRoom(room, socket.id) };
+  }
+
+  selectModeForRound(room) {
+    const modes = this.cleanModes(room.settings);
+    const mode = modes[room.round % modes.length] || "kalak";
+    room.settings = {
+      ...room.settings,
+      modes,
+      mode
+    };
+    room.activeMode = mode;
+    return mode;
+  }
+
+  currentMode(room) {
+    if (MODE_IDS.has(room.activeMode)) {
+      return room.activeMode;
+    }
+
+    if (MODE_IDS.has(room.settings?.mode)) {
+      return room.settings.mode;
+    }
+
+    return this.cleanModes(room.settings)[0];
+  }
+
+  async startRound(room) {
+    this.clearTimer(room);
+    const mode = this.selectModeForRound(room);
+
+    if ((room.settings.modes || []).length > 1 && mode !== "last_survivor") {
+      room.eliminatedPlayerIds = new Set();
+    }
+
+    if (mode !== "kalak") {
+      await this.startSpecialRound(room);
+      return;
+    }
+
+    const question = await this.store.random({
+      categories: room.settings.categories,
+      excludeIds: room.usedQuestionIds
+    });
+
+    if (!question) {
+      throw new Error("لا توجد أسئلة نشطة للأنواع المختارة.");
+    }
+
+    room.round += 1;
+    room.phase = "answering";
+    room.question = question;
+    room.usedQuestionIds.push(question.id);
+    room.submissions = new Map();
+    room.votes = new Map();
+    room.options = [];
+    room.correctWriterIds = [];
+    room.modeData = null;
+    room.results = null;
+    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
+    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+
+    this.emitRoom(room);
+    this.scheduleBotAnswers(room);
+  }
+
+  async startSpecialRound(room) {
+    const mode = this.currentMode(room);
+    room.round += 1;
+    room.submissions = new Map();
+    room.votes = new Map();
+    room.options = [];
+    room.correctWriterIds = [];
+    room.results = null;
+
+    if (mode === "imposter") {
+      this.startImposterRound(room);
+      return;
+    }
+
+    if (mode === "fake_fact") {
+      this.startFakeFactRound(room);
+      return;
+    }
+
+    if (mode === "last_survivor") {
+      this.startLastSurvivorRound(room);
+      return;
+    }
+
+    if (mode === "spot_ai") {
+      this.startSpotAiRound(room);
+      return;
+    }
+
+    if (mode === "judge_pick") {
+      this.startJudgePickRound(room);
+      return;
+    }
+
+    if (mode === "target_guess") {
+      this.startTargetGuessRound(room);
+      return;
+    }
+
+    if (mode === "split_steal") {
+      this.startSplitStealRound(room);
+      return;
+    }
+
+    if (mode === "minority_wins") {
+      this.startMinorityWinsRound(room);
+      return;
+    }
+
+    if (mode === "reverse_trap") {
+      this.startReverseTrapRound(room);
+    }
+  }
+
+  startImposterRound(room) {
+    const activePlayers = this.activePlayers(room);
+    const imposter = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+    const word = IMPOSTER_WORDS[Math.floor(Math.random() * IMPOSTER_WORDS.length)];
+
+    room.phase = "answering";
+    room.modeData = {
+      imposterId: imposter.id,
+      secretWord: word
+    };
+    room.question = {
+      id: `imposter_${room.round}`,
+      category: "الدخيل",
+      prompt: "اكتب وصفًا من كلمة واحدة للكلمة السرية.",
+      difficulty: "medium"
+    };
+    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
+    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotAnswers(room);
+  }
+
+  startFakeFactRound(room) {
+    const fact = FAKE_FACTS[Math.floor(Math.random() * FAKE_FACTS.length)];
+
+    room.phase = "voting";
+    room.modeData = fact;
+    room.question = {
+      id: `fake_fact_${room.round}`,
+      category: "كذبة ذكية",
+      prompt: fact.statement,
+      difficulty: "medium"
+    };
+    room.options = shuffle([
+      { id: "true", text: "صح", isCorrect: fact.answer === "true", ownerIds: [] },
+      { id: "fake", text: "غلط", isCorrect: fact.answer === "fake", ownerIds: [] }
+    ]);
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  startLastSurvivorRound(room) {
+    const challenge = LAST_SURVIVOR_CHALLENGES[Math.floor(Math.random() * LAST_SURVIVOR_CHALLENGES.length)];
+
+    room.phase = "answering";
+    room.modeData = { challenge };
+    room.question = {
+      id: `last_survivor_${room.round}`,
+      category: "⚡ الفرصة الأخيرة",
+      prompt: challenge,
+      difficulty: "medium"
+    };
+    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
+    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotAnswers(room);
+  }
+
+  startSpotAiRound(room) {
+    const index = Math.floor(Math.random() * SPOT_AI_PROMPTS.length);
+
+    room.phase = "answering";
+    room.modeData = {
+      aiAnswer: SPOT_AI_ANSWERS[index % SPOT_AI_ANSWERS.length]
+    };
+    room.question = {
+      id: `spot_ai_${room.round}`,
+      category: "كشف الذكاء",
+      prompt: SPOT_AI_PROMPTS[index],
+      difficulty: "medium"
+    };
+    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
+    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotAnswers(room);
+  }
+
+  startJudgePickRound(room) {
+    const activePlayers = this.activePlayers(room);
+    const judge = activePlayers[(room.round - 1) % activePlayers.length];
+    const promptIndex = Math.floor(Math.random() * JUDGE_PICK_PROMPTS.length);
+    const prompt = JUDGE_PICK_PROMPTS[promptIndex];
+
+    room.phase = "answering";
+    room.modeData = {
+      judgeId: judge.id,
+      prompt,
+      gameAnswers: JUDGE_PICK_GAME_ANSWERS[promptIndex] || []
+    };
+    room.question = {
+      id: `judge_pick_${room.round}`,
+      category: "الحكم",
+      prompt: `الحكم: ${judge.name}. ${prompt}`,
+      difficulty: "medium"
+    };
+    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
+    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotAnswers(room);
+  }
+
+  startTargetGuessRound(room) {
+    const activePlayers = this.activePlayers(room);
+    const target = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+    const challenge = TARGET_GUESS_ROUNDS[Math.floor(Math.random() * TARGET_GUESS_ROUNDS.length)];
+
+    room.phase = "voting";
+    room.modeData = {
+      ...challenge,
+      targetId: target.id
+    };
+    room.question = {
+      id: `target_guess_${room.round}`,
+      category: "توقع الهدف",
+      prompt: `الهدف: ${target.name}. ${challenge.prompt}`,
+      difficulty: "medium"
+    };
+    room.options = shuffle(challenge.options.map((text) => ({
+      id: nanoid(8),
+      text,
+      isCorrect: false,
+      ownerIds: []
+    })));
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  startSplitStealRound(room) {
+    const scenario = SPLIT_STEAL_SCENARIOS[Math.floor(Math.random() * SPLIT_STEAL_SCENARIOS.length)];
+
+    room.phase = "voting";
+    room.modeData = { scenario };
+    room.question = {
+      id: `split_steal_${room.round}`,
+      category: "قسمة أو سرقة",
+      prompt: scenario,
+      difficulty: "medium"
+    };
+    room.options = [
+      { id: "split", text: "قسمة", isCorrect: false, ownerIds: [] },
+      { id: "steal", text: "سرقة", isCorrect: false, ownerIds: [] }
+    ];
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  startMinorityWinsRound(room) {
+    const challenge = MINORITY_WINS_ROUNDS[Math.floor(Math.random() * MINORITY_WINS_ROUNDS.length)];
+
+    room.phase = "voting";
+    room.modeData = challenge;
+    room.question = {
+      id: `minority_wins_${room.round}`,
+      category: "الأقلية تربح",
+      prompt: challenge.prompt,
+      difficulty: "medium"
+    };
+    room.options = shuffle(challenge.options.map((text) => ({
+      id: nanoid(8),
+      text,
+      isCorrect: false,
+      ownerIds: []
+    })));
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  startReverseTrapRound(room) {
+    const challenge = REVERSE_TRAP_ROUNDS[Math.floor(Math.random() * REVERSE_TRAP_ROUNDS.length)];
+
+    room.phase = "voting";
+    room.modeData = challenge;
+    room.question = {
+      id: `reverse_trap_${room.round}`,
+      category: "الفخ المعكوس",
+      prompt: challenge.prompt,
+      difficulty: "medium"
+    };
+    room.options = shuffle(challenge.options.map((text) => ({
+      id: nanoid(8),
+      text,
+      isCorrect: text !== challenge.trap,
+      isTrap: text === challenge.trap,
+      ownerIds: []
+    })));
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  startDirectChoiceRound(room, mode) {
+    const rounds = DIRECT_CHOICE_ROUNDS[mode] || [];
+    const challenge = rounds[Math.floor(Math.random() * rounds.length)];
+
+    room.phase = "voting";
+    room.modeData = {
+      ...challenge,
+      modeType: "direct_choice"
+    };
+    room.question = {
+      id: `${mode}_${room.round}`,
+      category: challenge.category,
+      prompt: challenge.prompt,
+      difficulty: "medium"
+    };
+    room.options = shuffle(challenge.options.map((text) => ({
+      id: nanoid(8),
+      text,
+      isCorrect: text === challenge.correct,
+      ownerIds: []
+    })));
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  startMindMatchRound(room) {
+    const challenge = MIND_MATCH_ROUNDS[Math.floor(Math.random() * MIND_MATCH_ROUNDS.length)];
+
+    room.phase = "voting";
+    room.modeData = challenge;
+    room.question = {
+      id: `mind_match_${room.round}`,
+      category: challenge.category,
+      prompt: challenge.prompt,
+      difficulty: "medium"
+    };
+    room.options = shuffle(challenge.options.map((text) => ({
+      id: nanoid(8),
+      text,
+      isCorrect: false,
+      ownerIds: []
+    })));
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  startClosestNumberRound(room) {
+    const challenge = CLOSEST_NUMBER_ROUNDS[Math.floor(Math.random() * CLOSEST_NUMBER_ROUNDS.length)];
+
+    room.phase = "answering";
+    room.modeData = challenge;
+    room.question = {
+      id: `closest_number_${room.round}`,
+      category: challenge.category,
+      prompt: challenge.prompt,
+      difficulty: "medium"
+    };
+    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
+    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotAnswers(room);
+  }
+
+  startHotTakeRound(room) {
+    const prompt = HOT_TAKE_PROMPTS[Math.floor(Math.random() * HOT_TAKE_PROMPTS.length)];
+
+    room.phase = "answering";
+    room.modeData = { prompt };
+    room.question = {
+      id: `hot_take_${room.round}`,
+      category: "أقوى إجابة",
+      prompt,
+      difficulty: "medium"
+    };
+    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
+    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotAnswers(room);
+  }
+
+  scheduleBotAnswers(room) {
+    const bots = this.eligibleAnswerers(room).filter((player) => player.isBot);
+
+    bots.forEach((bot, index) => {
+      this.queueBotTask(room, () => {
+        const liveRoom = this.rooms.get(room.code);
+        if (!liveRoom || liveRoom.phase !== "answering" || !liveRoom.players.has(bot.id) || liveRoom.submissions.has(bot.id)) {
+          return;
+        }
+
+        liveRoom.submissions.set(bot.id, {
+          playerId: bot.id,
+          text: this.botAnswerText(liveRoom, bot),
+          submittedAt: Date.now()
+        });
+
+        this.emitRoom(liveRoom);
+
+        if (liveRoom.submissions.size >= this.eligibleAnswerers(liveRoom).length) {
+          setTimeout(() => this.finishAnswering(liveRoom.code), 550);
+        }
+      }, 900 + index * 700 + Math.floor(Math.random() * 900));
+    });
+  }
+
+  scheduleBotVotes(room) {
+    const bots = this.eligibleVoters(room).filter((player) => player.isBot);
+
+    bots.forEach((bot, index) => {
+      this.queueBotTask(room, () => {
+        const liveRoom = this.rooms.get(room.code);
+        const canVote = liveRoom ? this.eligibleVoters(liveRoom).some((player) => player.id === bot.id) : false;
+        if (!liveRoom || liveRoom.phase !== "voting" || !liveRoom.players.has(bot.id) || liveRoom.votes.has(bot.id) || !canVote) {
+          return;
+        }
+
+        const allowedOptions = liveRoom.options.filter((option) => !option.ownerIds.includes(bot.id));
+        const correctOption = allowedOptions.find((option) => option.isCorrect);
+        const fakeOptions = allowedOptions.filter((option) => !option.isCorrect);
+        const wantsCorrect = Math.random() < BOT_CORRECT_VOTE_RATE;
+        const choice = wantsCorrect && correctOption
+          ? correctOption
+          : fakeOptions[Math.floor(Math.random() * fakeOptions.length)] || correctOption || allowedOptions[0];
+
+        if (!choice) {
+          return;
+        }
+
+        liveRoom.votes.set(bot.id, {
+          playerId: bot.id,
+          optionId: choice.id,
+          votedAt: Date.now()
+        });
+
+        this.emitRoom(liveRoom);
+
+        if (liveRoom.votes.size >= this.eligibleVoters(liveRoom).length) {
+          setTimeout(() => this.finishVoting(liveRoom.code), 550);
+        }
+      }, 1000 + index * 800 + Math.floor(Math.random() * 1200));
+    });
+  }
+
+  botAnswerText(room, bot) {
+    const mode = this.currentMode(room);
+
+    if (mode === "imposter") {
+      if (bot.id === room.modeData?.imposterId) {
+        return shuffle(["دافئ", "سريع", "قديم", "أزرق", "عال", "لامع"])[0];
+      }
+      return shuffle(["واضح", "مشهور", "يومي", "كلاسيكي", "قوي", "محلي"])[0];
+    }
+
+    if (mode === "last_survivor") {
+      const existing = new Set([...room.submissions.values()].map((submission) => normalizeAnswer(submission.text)));
+      const candidate = shuffle(LAST_SURVIVOR_BOT_ANSWERS).find((answer) => !existing.has(normalizeAnswer(answer)));
+      return candidate || `إجابة ${Math.floor(10 + Math.random() * 90)}`;
+    }
+
+    if (mode === "spot_ai") {
+      return shuffle([
+        "تبدو مألوفة لكنها درامية قليلًا.",
+        "الأمر يعتمد على من يحكي القصة.",
+        "أصفها بأنها غريبة ومضحكة ولا تُنسى.",
+        "تبدو بسيطة حتى يبدأ الجميع في الجدال.",
+        "أفضل إجابة تكون قصيرة وصادقة وذكية قليلًا."
+      ])[0];
+    }
+
+    if (mode === "closest_number") {
+      const answer = Number(room.modeData?.answer || 10);
+      const spread = Math.max(2, Math.round(Math.abs(answer) * 0.25));
+      return String(Math.max(0, answer + Math.floor(Math.random() * (spread * 2 + 1)) - spread));
+    }
+
+    if (mode === "hot_take" || mode === "judge_pick") {
+      return shuffle(HOT_TAKE_BOT_ANSWERS)[0];
+    }
+
+    if (Math.random() < BOT_CORRECT_ANSWER_RATE) {
+      return room.question.correctAnswer;
+    }
+
+    const existing = new Set([...room.submissions.values()].map((submission) => normalizeAnswer(submission.text)));
+    const correct = normalizeAnswer(room.question.correctAnswer);
+    const candidates = shuffle(BOT_FAKE_ANSWERS).filter((answer) => {
+      const normalized = normalizeAnswer(answer);
+      return normalized && normalized !== correct && !existing.has(normalized);
+    });
+
+    return candidates[0] || `إجابة غامضة ${Math.floor(10 + Math.random() * 90)}`;
+  }
+
+  queueBotTask(room, task, delay) {
+    const timer = setTimeout(task, delay);
+    room.botTimers.push(timer);
+  }
+
+  finishAnswering(code) {
+    const room = this.rooms.get(code);
+    if (!room || room.phase !== "answering") {
+      return;
+    }
+
+    const mode = this.currentMode(room);
+
+    if (mode === "imposter") {
+      this.finishImposterAnswering(room);
+      return;
+    }
+
+    if (mode === "last_survivor") {
+      this.finishLastSurvivorAnswering(room);
+      return;
+    }
+
+    if (mode === "spot_ai") {
+      this.finishSpotAiAnswering(room);
+      return;
+    }
+
+    if (mode === "judge_pick") {
+      this.finishJudgePickAnswering(room);
+      return;
+    }
+
+    if (mode === "closest_number") {
+      this.finishClosestNumberAnswering(room);
+      return;
+    }
+
+    if (mode === "hot_take") {
+      this.finishHotTakeAnswering(room);
+      return;
+    }
+
+    this.clearTimer(room);
+
+    const correct = room.question.correctAnswer;
+    const normalizedCorrect = normalizeAnswer(correct);
+    const fakeGroups = new Map();
+    const correctWriterIds = new Set(room.correctWriterIds || []);
+
+    for (const submission of room.submissions.values()) {
+      const normalized = normalizeAnswer(submission.text);
+
+      if (normalized && normalized === normalizedCorrect) {
+        correctWriterIds.add(submission.playerId);
+        continue;
+      }
+
+      if (!normalized) {
+        continue;
+      }
+
+      if (!fakeGroups.has(normalized)) {
+        fakeGroups.set(normalized, {
+          id: nanoid(8),
+          text: submission.text,
+          isCorrect: false,
+          ownerIds: []
+        });
+      }
+
+      fakeGroups.get(normalized).ownerIds.push(submission.playerId);
+    }
+
+    const options = [
+      ...fakeGroups.values(),
+      {
+        id: nanoid(8),
+        text: correct,
+        isCorrect: true,
+        ownerIds: []
+      }
+    ];
+
+    room.options = shuffle(options);
+    room.correctWriterIds = [...correctWriterIds];
+    room.phase = "voting";
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  finishImposterAnswering(room) {
+    this.clearTimer(room);
+
+    room.options = this.activePlayers(room).map((player) => {
+      const clue = room.submissions.get(player.id)?.text || "لم يكتب وصفًا";
+      return {
+        id: `suspect_${player.id}`,
+        text: player.name,
+        clue,
+        isCorrect: player.id === room.modeData.imposterId,
+        ownerIds: [player.id],
+        suspectId: player.id
+      };
+    });
+    room.phase = "voting";
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  finishLastSurvivorAnswering(room) {
+    this.clearTimer(room);
+
+    const activePlayers = this.activePlayers(room);
+    const answers = new Map();
+    const eliminated = [];
+    const awards = this.baseAwards(room);
+
+    for (const player of activePlayers) {
+      const submission = room.submissions.get(player.id);
+      const normalized = normalizeAnswer(submission?.text);
+
+      if (!normalized) {
+        eliminated.push({ playerId: player.id, name: player.name, reason: "لم يجب", answer: "" });
+        continue;
+      }
+
+      if (!answers.has(normalized)) {
+        answers.set(normalized, []);
+      }
+      answers.get(normalized).push({ player, text: submission.text });
+    }
+
+    for (const answerGroup of answers.values()) {
+      if (answerGroup.length > 1) {
+        for (const entry of answerGroup) {
+          eliminated.push({
+            playerId: entry.player.id,
+            name: entry.player.name,
+            reason: "إجابة مكررة",
+            answer: entry.text
+          });
+        }
+      } else {
+        const survivor = answerGroup[0].player;
+        const award = awards.get(survivor.id);
+        award.correctVote += 100;
+        award.total += 100;
+      }
+    }
+
+    for (const item of eliminated) {
+      room.eliminatedPlayerIds.add(item.playerId);
+    }
+
+    for (const award of awards.values()) {
+      const player = room.players.get(award.playerId);
+      if (player) {
+        player.score += award.total;
+        award.score = player.score;
+      }
+    }
+
+    const remaining = this.activePlayers(room);
+    const isOnlySurvivorMode = (room.settings.modes || []).length === 1;
+    const matchFinished = isOnlySurvivorMode && (remaining.length <= 1 || room.round >= room.settings.rounds);
+    room.modeData = {
+      ...room.modeData,
+      matchFinished
+    };
+    room.results = {
+      correctAnswer: remaining.length === 1 ? remaining[0].name : "المستمرون في الفرصة الأخيرة",
+      summary: remaining.length === 1 ? `${remaining[0].name} فاز بالفرصة الأخيرة.` : `بقي ${remaining.length} لاعبين في المنافسة.`,
+      isFinal: matchFinished || room.round >= room.settings.rounds,
+      eliminated,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: activePlayers.map((player) => {
+        const submission = room.submissions.get(player.id);
+        const eliminatedEntry = eliminated.find((item) => item.playerId === player.id);
+        return {
+          id: player.id,
+          text: submission?.text || "بدون إجابة",
+          isCorrect: !eliminatedEntry,
+          ownerIds: [player.id],
+          ownerNames: [player.name],
+          voterNames: [eliminatedEntry?.reason || "نجا"]
+        };
+      })
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishSpotAiAnswering(room) {
+    this.clearTimer(room);
+
+    const playerOptions = [...room.submissions.values()].map((submission) => ({
+      id: nanoid(8),
+      text: submission.text,
+      isCorrect: false,
+      ownerIds: [submission.playerId]
+    }));
+
+    room.options = shuffle([
+      ...playerOptions,
+      {
+        id: nanoid(8),
+        text: room.modeData.aiAnswer,
+        isCorrect: true,
+        ownerIds: ["ai"]
+      }
+    ]);
+    room.phase = "voting";
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  finishHotTakeAnswering(room) {
+    this.clearTimer(room);
+
+    room.options = shuffle([...room.submissions.values()]
+      .filter((submission) => normalizeAnswer(submission.text))
+      .map((submission) => ({
+        id: nanoid(8),
+        text: submission.text,
+        isCorrect: false,
+        ownerIds: [submission.playerId]
+      })));
+
+    if (room.options.length === 0) {
+      const awards = this.baseAwards(room);
+      room.results = {
+        correctAnswer: "لا توجد إجابات",
+        summary: "لم يرسل أحد إجابة في هذه الجولة.",
+        isFinal: room.round >= room.settings.rounds,
+        votes: [],
+        awards: [...awards.values()],
+        revealedOptions: []
+      };
+      room.phase = "results";
+      room.phaseEndsAt = null;
+      this.emitRoom(room);
+      return;
+    }
+
+    room.phase = "voting";
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  finishJudgePickAnswering(room) {
+    this.clearTimer(room);
+
+    const playerOptions = [...room.submissions.values()]
+      .filter((submission) => normalizeAnswer(submission.text))
+      .map((submission) => ({
+        id: nanoid(8),
+        text: submission.text,
+        isCorrect: false,
+        ownerIds: [submission.playerId],
+        source: "player"
+      }));
+
+    const gameOptions = shuffle(room.modeData?.gameAnswers || []).map((text) => ({
+      id: nanoid(8),
+      text,
+      isCorrect: false,
+      ownerIds: [],
+      source: "game"
+    }));
+
+    room.options = shuffle([...playerOptions, ...gameOptions]);
+
+    if (room.options.length === 0) {
+      const awards = this.baseAwards(room);
+      room.results = {
+        correctAnswer: "لا توجد إجابات",
+        summary: "لم يرسل اللاعبون إجابات للحكم.",
+        isFinal: room.round >= room.settings.rounds,
+        votes: [],
+        awards: [...awards.values()],
+        revealedOptions: []
+      };
+      room.phase = "results";
+      room.phaseEndsAt = null;
+      this.emitRoom(room);
+      return;
+    }
+
+    room.phase = "voting";
+    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
+    this.emitRoom(room);
+    this.scheduleBotVotes(room);
+  }
+
+  finishClosestNumberAnswering(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const answer = Number(room.modeData.answer);
+    const unit = room.modeData.unit || "";
+    const entries = this.activePlayers(room).map((player) => {
+      const submission = room.submissions.get(player.id);
+      const guess = parseNumericAnswer(submission?.text);
+      return {
+        player,
+        text: submission?.text || "بدون إجابة",
+        guess,
+        distance: Number.isFinite(guess) ? Math.abs(guess - answer) : Infinity
+      };
+    });
+    const bestDistance = Math.min(...entries.map((entry) => entry.distance));
+    const winners = entries.filter((entry) => entry.distance === bestDistance && Number.isFinite(entry.distance));
+
+    for (const winner of winners) {
+      const award = awards.get(winner.player.id);
+      if (award) {
+        award.correctVote += 150;
+        award.total += 150;
+      }
+    }
+
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: `${answer}${unit ? ` ${unit}` : ""}`,
+      summary: winners.length
+        ? `${winners.map((entry) => entry.player.name).join("، ")} الأقرب للرقم الصحيح. ${room.modeData.explanation || ""}`
+        : `لم توجد أرقام صحيحة. ${room.modeData.explanation || ""}`,
+      isFinal: room.round >= room.settings.rounds,
+      votes: [],
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: entries.map((entry) => ({
+        id: entry.player.id,
+        text: entry.text,
+        isCorrect: winners.some((winner) => winner.player.id === entry.player.id),
+        ownerIds: [entry.player.id],
+        ownerNames: [entry.player.name],
+        voterNames: [Number.isFinite(entry.distance) ? `الفارق ${entry.distance}` : "ليس رقمًا"]
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishVoting(code) {
+    const room = this.rooms.get(code);
+    if (!room || room.phase !== "voting") {
+      return;
+    }
+
+    const mode = this.currentMode(room);
+
+    if (mode === "imposter") {
+      this.finishImposterVoting(room);
+      return;
+    }
+
+    if (mode === "fake_fact") {
+      this.finishCorrectOptionVoting(room);
+      return;
+    }
+
+    if (mode === "spot_ai") {
+      this.finishSpotAiVoting(room);
+      return;
+    }
+
+    if (mode === "judge_pick") {
+      this.finishJudgePickVoting(room);
+      return;
+    }
+
+    if (mode === "target_guess") {
+      this.finishTargetGuessVoting(room);
+      return;
+    }
+
+    if (mode === "split_steal") {
+      this.finishSplitStealVoting(room);
+      return;
+    }
+
+    if (mode === "minority_wins") {
+      this.finishMinorityWinsVoting(room);
+      return;
+    }
+
+    if (mode === "reverse_trap") {
+      this.finishReverseTrapVoting(room);
+      return;
+    }
+
+    if (mode === "mind_match") {
+      this.finishMindMatchVoting(room);
+      return;
+    }
+
+    if (mode === "hot_take") {
+      this.finishHotTakeVoting(room);
+      return;
+    }
+
+    if (DIRECT_CHOICE_ROUNDS[mode]) {
+      this.finishCorrectOptionVoting(room);
+      return;
+    }
+
+    this.clearTimer(room);
+
+    const awards = new Map();
+    const ensureAward = (playerId) => {
+      if (!awards.has(playerId)) {
+        const player = room.players.get(playerId);
+        awards.set(playerId, {
+          playerId,
+          name: player?.name || "غير معروف",
+          avatar: player?.avatar,
+          correctVote: 0,
+          fakeVotes: 0,
+          correctSubmission: 0,
+          total: 0,
+          score: player?.score || 0
+        });
+      }
+      return awards.get(playerId);
+    };
+
+    for (const playerId of room.players.keys()) {
+      ensureAward(playerId);
+    }
+
+    for (const playerId of room.correctWriterIds) {
+      const award = ensureAward(playerId);
+      award.correctSubmission += 150;
+      award.total += 150;
+    }
+
+    for (const vote of room.votes.values()) {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      if (!option) {
+        continue;
+      }
+
+      if (option.isCorrect) {
+        const award = ensureAward(vote.playerId);
+        award.correctVote += 100;
+        award.total += 100;
+      } else {
+        for (const ownerId of option.ownerIds) {
+          if (ownerId === vote.playerId) {
+            continue;
+          }
+          const award = ensureAward(ownerId);
+          award.fakeVotes += 50;
+          award.total += 50;
+        }
+      }
+    }
+
+    for (const award of awards.values()) {
+      const player = room.players.get(award.playerId);
+      if (player) {
+        player.score += award.total;
+        award.score = player.score;
+      }
+    }
+
+    const votes = [...room.votes.values()].map((vote) => {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      const voter = room.players.get(vote.playerId);
+      return {
+        voterId: vote.playerId,
+        voterName: voter?.name || "غير معروف",
+        optionId: option?.id,
+        optionText: option?.text || "",
+        isCorrect: Boolean(option?.isCorrect),
+        ownerIds: option?.ownerIds || [],
+        ownerNames: (option?.ownerIds || []).map((id) => room.players.get(id)?.name || "غير معروف")
+      };
+    });
+
+    room.results = {
+      correctAnswer: room.question.correctAnswer,
+      correctWriterIds: room.correctWriterIds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: option.isCorrect,
+        ownerIds: option.ownerIds,
+        ownerNames: option.ownerIds.map((id) => room.players.get(id)?.name || "غير معروف"),
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishImposterVoting(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const votes = this.publicVotes(room);
+    const imposterId = room.modeData.imposterId;
+    const scoringVotes = [...room.votes.values()].filter((vote) => vote.playerId !== imposterId);
+    const voteCounts = new Map();
+
+    for (const vote of scoringVotes) {
+      voteCounts.set(vote.optionId, (voteCounts.get(vote.optionId) || 0) + 1);
+    }
+
+    const imposterOption = room.options.find((option) => option.suspectId === imposterId);
+    const imposterVoteCount = voteCounts.get(imposterOption?.id) || 0;
+    const highestOtherVoteCount = Math.max(0, ...room.options
+      .filter((option) => option.suspectId !== imposterId)
+      .map((option) => voteCounts.get(option.id) || 0));
+    const imposterCaught = imposterVoteCount > highestOtherVoteCount && imposterVoteCount > 0;
+    const imposter = room.players.get(imposterId);
+    const secretWord = room.modeData?.secretWord || "غير معروف";
+
+    for (const vote of scoringVotes) {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      if (!option) {
+        continue;
+      }
+
+      if (option?.suspectId === imposterId) {
+        const award = awards.get(vote.playerId);
+        if (award) {
+          award.correctVote += 120;
+          award.total += 120;
+        }
+        continue;
+      }
+
+      if (imposter && awards.has(imposter.id)) {
+        const award = awards.get(imposter.id);
+        award.fakeVotes += 80;
+        award.total += 80;
+      }
+    }
+
+    if (!imposterCaught && imposter && awards.has(imposter.id)) {
+      const award = awards.get(imposter.id);
+      award.fakeVotes += 80;
+      award.total += 80;
+    }
+
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: `${imposter?.name || "غير معروف"} · ${secretWord}`,
+      summary: imposterCaught
+        ? `الكلمة السرية: ${secretWord}. تم اكتشاف الدخيل. صوت الدخيل لا يؤثر على النقاط.`
+        : `الكلمة السرية: ${secretWord}. الدخيل نجا وكسب نقاط الخداع. صوت الدخيل لا يؤثر على النقاط.`,
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        clue: option.clue,
+        isCorrect: option.suspectId === imposterId,
+        ownerIds: [option.suspectId],
+        ownerNames: [option.clue ? `الوصف: ${option.clue}` : "بدون وصف"],
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishJudgePickVoting(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const votes = this.publicVotes(room);
+    const judgeVote = room.votes.get(room.modeData.judgeId);
+    const winningOption = room.options.find((option) => option.id === judgeVote?.optionId);
+    const winningPlayerOption = winningOption && winningOption.source !== "game" && winningOption.ownerIds.length > 0;
+    const winningGameOption = winningOption?.source === "game";
+    const winningIds = new Set(winningOption ? [winningOption.id] : []);
+
+    if (winningPlayerOption) {
+      for (const ownerId of winningOption.ownerIds) {
+        const award = awards.get(ownerId);
+        if (award) {
+          award.correctSubmission += 100;
+          award.total += 100;
+        }
+      }
+    } else if (winningGameOption) {
+      const judgeAward = awards.get(room.modeData.judgeId);
+      if (judgeAward) {
+        judgeAward.correctVote += 200;
+        judgeAward.total += 200;
+      }
+    }
+
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: winningGameOption ? `اختيار اللعبة: ${winningOption.text}` : winningOption?.text || "الحكم لم يختر",
+      summary: winningPlayerOption
+        ? "الحكم اختار جواب لاعب، لذلك صاحب الجواب أخذ +100."
+        : winningGameOption
+          ? "الحكم اختار جواب اللعبة الصحيح وأخذ +200."
+          : "لم يصوت الحكم في الوقت المحدد، لذلك لا توجد نقاط في هذه الجولة.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: winningIds.has(option.id),
+        source: option.source,
+        ownerIds: option.ownerIds,
+        ownerNames: option.ownerIds.map((id) => room.players.get(id)?.name || "غير معروف"),
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishTargetGuessVoting(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const votes = this.publicVotes(room);
+    const targetId = room.modeData.targetId;
+    const target = room.players.get(targetId);
+    const targetVote = room.votes.get(targetId);
+    const correctOptionId = targetVote?.optionId;
+    const correctOption = room.options.find((option) => option.id === correctOptionId);
+
+    if (correctOptionId) {
+      let wrongGuessers = 0;
+      for (const vote of room.votes.values()) {
+        if (vote.playerId !== targetId && vote.optionId === correctOptionId) {
+          const award = awards.get(vote.playerId);
+          if (award) {
+            award.correctVote += 120;
+            award.total += 120;
+          }
+        } else if (vote.playerId !== targetId) {
+          wrongGuessers += 1;
+        }
+      }
+
+      const targetAward = awards.get(targetId);
+      if (targetAward) {
+        targetAward.correctSubmission += 70;
+        targetAward.fakeVotes += wrongGuessers * 30;
+        targetAward.total += 70 + (wrongGuessers * 30);
+      }
+    }
+
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: correctOption ? `${target?.name || "الهدف"} اختار ${correctOption.text}` : "الهدف لم يختر",
+      summary: correctOption
+        ? "من توقع اختيار الهدف أخذ +120. الهدف أخذ +70 لاختياره و+30 عن كل لاعب لم يتوقعه."
+        : "لم يصوت الهدف في الوقت المحدد.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: option.id === correctOptionId,
+        ownerIds: [],
+        ownerNames: [],
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishSplitStealVoting(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const votes = this.publicVotes(room);
+    const stealVotes = [...room.votes.values()].filter((vote) => vote.optionId === "steal");
+    const splitVotes = [...room.votes.values()].filter((vote) => vote.optionId === "split");
+    let summary = "";
+
+    if (stealVotes.length === 0 && splitVotes.length > 0) {
+      summary = "الجميع تعاون. كل من اختار القسمة حصل على نقاط قوية.";
+      for (const vote of splitVotes) {
+        const award = awards.get(vote.playerId);
+        if (award) {
+          award.correctVote += 120;
+          award.total += 120;
+        }
+      }
+    } else if (stealVotes.length === 1) {
+      summary = "لاعب واحد سرق الصفقة وأخذ الجائزة الأكبر، ومن اختار القسمة أخذ نقاط ثقة بسيطة.";
+      const award = awards.get(stealVotes[0].playerId);
+      if (award) {
+        award.fakeVotes += 220;
+        award.total += 220;
+      }
+      for (const vote of splitVotes) {
+        const splitAward = awards.get(vote.playerId);
+        if (splitAward) {
+          splitAward.correctSubmission += 25;
+          splitAward.total += 25;
+        }
+      }
+    } else if (stealVotes.length > 1) {
+      summary = "أكثر من لاعب حاول السرقة، فتقسمت المكافأة وخفّت قيمتها. ومن اختار القسمة أخذ نقاط ثقة بسيطة.";
+      for (const vote of stealVotes) {
+        const award = awards.get(vote.playerId);
+        if (award) {
+          award.fakeVotes += 45;
+          award.total += 45;
+        }
+      }
+      for (const vote of splitVotes) {
+        const splitAward = awards.get(vote.playerId);
+        if (splitAward) {
+          splitAward.correctSubmission += 25;
+          splitAward.total += 25;
+        }
+      }
+    } else {
+      summary = "لم يصوت أحد في الوقت المحدد.";
+    }
+
+    const winningOptionIds = new Set(stealVotes.length ? ["steal"] : splitVotes.length ? ["split"] : []);
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: stealVotes.length ? "سرقة" : splitVotes.length ? "قسمة" : "لا نتيجة",
+      summary,
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: winningOptionIds.has(option.id),
+        ownerIds: [],
+        ownerNames: [],
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishMinorityWinsVoting(room) {
+    this.clearTimer(room);
+
+    const voteCounts = new Map();
+    for (const vote of room.votes.values()) {
+      voteCounts.set(vote.optionId, (voteCounts.get(vote.optionId) || 0) + 1);
+    }
+    const positiveCounts = room.options.map((option) => voteCounts.get(option.id) || 0).filter((count) => count > 0);
+    const lowest = positiveCounts.length ? Math.min(...positiveCounts) : 0;
+    const winningIds = new Set(room.options
+      .filter((option) => (voteCounts.get(option.id) || 0) === lowest && lowest > 0)
+      .map((option) => option.id));
+
+    const awards = this.baseAwards(room);
+    for (const vote of room.votes.values()) {
+      if (winningIds.has(vote.optionId)) {
+        const award = awards.get(vote.playerId);
+        if (award) {
+          award.correctVote += 130;
+          award.total += 130;
+        }
+      }
+    }
+
+    this.applyAwards(room, awards);
+    const votes = this.publicVotes(room);
+    const winners = room.options.filter((option) => winningIds.has(option.id)).map((option) => option.text);
+    room.results = {
+      correctAnswer: winners.length ? winners.join("، ") : "لا توجد أقلية",
+      summary: winners.length ? "الاختيارات الأقل تصويتًا فازت." : "لم يصوت عدد كافٍ.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: winningIds.has(option.id),
+        ownerIds: [],
+        ownerNames: [],
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishReverseTrapVoting(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const votes = this.publicVotes(room);
+    const trapOption = room.options.find((option) => option.isTrap);
+
+    for (const vote of room.votes.values()) {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      if (option && !option.isTrap) {
+        const award = awards.get(vote.playerId);
+        if (award) {
+          award.correctVote += 100;
+          award.total += 100;
+        }
+      }
+    }
+
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: `الفخ: ${trapOption?.text || room.modeData.trap}`,
+      summary: room.modeData.explanation || "من تجنب الفخ حصل على النقاط.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: !option.isTrap,
+        ownerIds: [],
+        ownerNames: [],
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishMindMatchVoting(room) {
+    this.clearTimer(room);
+
+    const voteCounts = new Map();
+    for (const vote of room.votes.values()) {
+      voteCounts.set(vote.optionId, (voteCounts.get(vote.optionId) || 0) + 1);
+    }
+
+    const highest = Math.max(0, ...room.options.map((option) => voteCounts.get(option.id) || 0));
+    const majorityIds = new Set(room.options
+      .filter((option) => (voteCounts.get(option.id) || 0) === highest && highest > 0)
+      .map((option) => option.id));
+
+    for (const option of room.options) {
+      option.isCorrect = majorityIds.has(option.id);
+    }
+
+    const awards = this.baseAwards(room);
+    for (const vote of room.votes.values()) {
+      if (majorityIds.has(vote.optionId)) {
+        const award = awards.get(vote.playerId);
+        if (award) {
+          award.correctVote += 100;
+          award.total += 100;
+        }
+      }
+    }
+
+    this.applyAwards(room, awards);
+    const votes = this.publicVotes(room);
+    const winners = room.options.filter((option) => majorityIds.has(option.id)).map((option) => option.text);
+    room.results = {
+      correctAnswer: winners.length ? winners.join("، ") : "لا توجد أغلبية",
+      summary: winners.length ? `الأغلبية اختارت: ${winners.join("، ")}.` : "لم يصوت عدد كافٍ لصناعة أغلبية.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: majorityIds.has(option.id),
+        ownerIds: [],
+        ownerNames: [],
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishHotTakeVoting(room) {
+    this.clearTimer(room);
+
+    const voteCounts = new Map();
+    for (const vote of room.votes.values()) {
+      voteCounts.set(vote.optionId, (voteCounts.get(vote.optionId) || 0) + 1);
+    }
+
+    const highest = Math.max(0, ...room.options.map((option) => voteCounts.get(option.id) || 0));
+    const winningIds = new Set(room.options
+      .filter((option) => (voteCounts.get(option.id) || 0) === highest && highest > 0)
+      .map((option) => option.id));
+
+    for (const option of room.options) {
+      option.isCorrect = winningIds.has(option.id);
+    }
+
+    const awards = this.baseAwards(room);
+    for (const vote of room.votes.values()) {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      if (!option) {
+        continue;
+      }
+
+      for (const ownerId of option.ownerIds) {
+        if (ownerId !== vote.playerId && awards.has(ownerId)) {
+          const award = awards.get(ownerId);
+          award.fakeVotes += 70;
+          award.total += 70;
+        }
+      }
+    }
+
+    for (const option of room.options.filter((item) => winningIds.has(item.id))) {
+      for (const ownerId of option.ownerIds) {
+        if (awards.has(ownerId)) {
+          const award = awards.get(ownerId);
+          award.correctSubmission += 80;
+          award.total += 80;
+        }
+      }
+    }
+
+    this.applyAwards(room, awards);
+    const votes = this.publicVotes(room);
+    const winners = room.options.filter((option) => winningIds.has(option.id));
+    room.results = {
+      correctAnswer: winners.length ? winners.map((option) => option.text).join("، ") : "بدون فائز",
+      summary: winners.length ? "هذه الإجابات أخذت أعلى تصويت." : "لم تصل أي إجابة لتصويت كافٍ.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: winningIds.has(option.id),
+        ownerIds: option.ownerIds,
+        ownerNames: option.ownerIds.map((id) => room.players.get(id)?.name || "غير معروف"),
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishCorrectOptionVoting(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const votes = this.publicVotes(room);
+    const correctOption = room.options.find((option) => option.isCorrect);
+
+    for (const vote of room.votes.values()) {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      if (option?.isCorrect) {
+        const award = awards.get(vote.playerId);
+        award.correctVote += 100;
+        award.total += 100;
+      }
+    }
+
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: correctOption?.text || "",
+      summary: room.modeData?.explanation || "الإجابات الصحيحة حصلت على نقاط.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: option.isCorrect,
+        ownerIds: [],
+        ownerNames: [],
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  finishSpotAiVoting(room) {
+    this.clearTimer(room);
+
+    const awards = this.baseAwards(room);
+    const votes = this.publicVotes(room);
+    const aiOption = room.options.find((option) => option.isCorrect);
+
+    for (const vote of room.votes.values()) {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      if (!option) {
+        continue;
+      }
+
+      if (option.isCorrect) {
+        const award = awards.get(vote.playerId);
+        award.correctVote += 100;
+        award.total += 100;
+        continue;
+      }
+
+      for (const ownerId of option.ownerIds) {
+        if (ownerId !== vote.playerId && awards.has(ownerId)) {
+          const award = awards.get(ownerId);
+          award.fakeVotes += 50;
+          award.total += 50;
+        }
+      }
+    }
+
+    this.applyAwards(room, awards);
+    room.results = {
+      correctAnswer: aiOption?.text || "",
+      summary: "تم كشف إجابة الذكاء الاصطناعي.",
+      isFinal: room.round >= room.settings.rounds,
+      votes,
+      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      revealedOptions: room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: option.isCorrect,
+        ownerIds: option.ownerIds,
+        ownerNames: option.ownerIds.includes("ai")
+          ? ["الذكاء الاصطناعي"]
+          : option.ownerIds.map((id) => room.players.get(id)?.name || "غير معروف"),
+        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+      }))
+    };
+    room.phase = "results";
+    room.phaseEndsAt = null;
+    this.emitRoom(room);
+  }
+
+  baseAwards(room) {
+    const awards = new Map();
+    for (const player of room.players.values()) {
+      awards.set(player.id, {
+        playerId: player.id,
+        name: player.name,
+        avatar: player.avatar,
+        correctVote: 0,
+        fakeVotes: 0,
+        correctSubmission: 0,
+        total: 0,
+        score: player.score
+      });
+    }
+    return awards;
+  }
+
+  applyAwards(room, awards) {
+    for (const award of awards.values()) {
+      const player = room.players.get(award.playerId);
+      if (player) {
+        player.score += award.total;
+        award.score = player.score;
+      }
+    }
+  }
+
+  publicVotes(room) {
+    return [...room.votes.values()].map((vote) => {
+      const option = room.options.find((item) => item.id === vote.optionId);
+      const voter = room.players.get(vote.playerId);
+      return {
+        voterId: vote.playerId,
+        voterName: voter?.name || "غير معروف",
+        optionId: option?.id,
+        optionText: option?.text || "",
+        isCorrect: Boolean(option?.isCorrect),
+        ownerIds: option?.ownerIds || [],
+        ownerNames: (option?.ownerIds || []).map((id) => id === "ai" ? "الذكاء الاصطناعي" : room.players.get(id)?.name || "غير معروف")
+      };
+    });
+  }
+
+  removePlayer(socket) {
+    const code = socket.data.roomCode;
+    const room = code ? this.rooms.get(code) : null;
+
+    if (!room) {
+      return;
+    }
+
+    const player = room.players.get(socket.id);
+    if (!player) {
+      return;
+    }
+
+    this.removePlayerFromRoom(room, socket.id, `${player.name} غادر الغرفة.`);
+  }
+
+  removePlayerFromRoom(room, playerId, message, { notify = false } = {}) {
+    const player = room.players.get(playerId);
+    if (!player) {
+      return null;
+    }
+
+    if (notify) {
+      this.io.to(player.id).emit("room:kicked", { message });
+    }
+
+    const playerSocket = this.io.sockets?.sockets?.get(player.id);
+    playerSocket?.leave?.(room.code);
+    if (playerSocket?.data?.roomCode === room.code) {
+      delete playerSocket.data.roomCode;
+      delete playerSocket.data.playerId;
+    }
+
+    room.players.delete(player.id);
+    room.submissions.delete(player.id);
+    room.votes.delete(player.id);
+    this.clearKickVotesFor(room, player.id);
+
+    const humanPlayers = [...room.players.values()].filter((item) => !item.isBot);
+
+    if (room.hostId === player.id) {
+      room.hostId = humanPlayers[0]?.id || null;
+    }
+
+    if (humanPlayers.length === 0) {
+      this.clearTimer(room);
+      this.rooms.delete(room.code);
+      return player;
+    }
+
+    this.addSystemMessage(room, message);
+    this.emitRoom(room);
+    this.checkPhaseCompletion(room);
+    return player;
+  }
+
+  checkPhaseCompletion(room) {
+    if (!this.rooms.has(room.code)) {
+      return;
+    }
+
+    if (room.phase === "answering" && room.submissions.size >= this.eligibleAnswerers(room).length) {
+      setTimeout(() => this.finishAnswering(room.code), 550);
+    }
+
+    if (room.phase === "voting" && room.votes.size >= this.eligibleVoters(room).length) {
+      setTimeout(() => this.finishVoting(room.code), 550);
+    }
+  }
+
+  addSystemMessage(room, message) {
+    room.messages.push({
+      id: nanoid(8),
+      type: "system",
+      message,
+      createdAt: Date.now()
+    });
+    room.messages = room.messages.slice(-60);
+  }
+
+  cleanSettings(input) {
+    const categories = this.cleanCategories(input);
+    const modes = this.cleanModes(input);
+    const mode = modes[0] || "kalak";
+    const rounds = this.cleanRoundCount(input.rounds, modes.length);
+
+    return {
+      mode,
+      modes,
+      category: categories.length === 1 ? categories[0] : "all",
+      categories,
+      rounds,
+      answerSeconds: clampNumber(input.answerSeconds, 20, 60, this.config.answerSeconds),
+      voteSeconds: clampNumber(input.voteSeconds, 15, 45, this.config.voteSeconds)
+    };
+  }
+
+  cleanModes(input = {}) {
+    const value = input.modes ?? input.mode;
+    const raw = Array.isArray(value)
+      ? value
+      : typeof value === "string"
+        ? value.split(",")
+        : [];
+
+    const modes = [...new Set(raw
+      .map((mode) => String(mode).trim())
+      .filter((mode) => MODE_IDS.has(mode)))];
+
+    return modes.length ? modes : ["kalak"];
+  }
+
+  cleanRoundCount(value, modeCount = 1) {
+    const step = Math.max(1, modeCount);
+    const maxRounds = Math.max(step, Math.floor(MAX_TOTAL_ROUNDS / step) * step);
+    const requested = clampNumber(value, step, maxRounds, step);
+    const rounded = Math.round(requested / step) * step;
+    return clampNumber(rounded, step, maxRounds, step);
+  }
+
+  cleanCategories(input = {}) {
+    const value = input.categories ?? input.category;
+    const raw = Array.isArray(value)
+      ? value
+      : typeof value === "string"
+        ? value.split(",")
+        : [];
+
+    return [...new Set(raw
+      .map((category) => String(category).trim())
+      .filter((category) => category && category !== "all"))];
+  }
+
+  activePlayers(room) {
+    return [...room.players.values()].filter((player) => !room.eliminatedPlayerIds.has(player.id));
+  }
+
+  eligibleAnswerers(room) {
+    const players = this.activePlayers(room);
+    if (this.currentMode(room) === "judge_pick") {
+      return players.filter((player) => player.id !== room.modeData?.judgeId);
+    }
+    return players;
+  }
+
+  eligibleVoters(room) {
+    if (this.currentMode(room) === "judge_pick") {
+      return this.activePlayers(room).filter((player) => player.id === room.modeData?.judgeId);
+    }
+    return this.activePlayers(room);
+  }
+
+  kickVotersFor(room, targetId) {
+    return [...room.players.values()].filter((player) => player.id !== targetId && !player.isBot);
+  }
+
+  clearKickVotesFor(room, playerId) {
+    room.kickVotes.delete(playerId);
+
+    for (const [targetId, votes] of room.kickVotes.entries()) {
+      votes.delete(playerId);
+      if (!room.players.has(targetId) || votes.size === 0) {
+        room.kickVotes.delete(targetId);
+      }
+    }
+  }
+
+  publicKickVotes(room, currentPlayerId) {
+    return [...room.players.values()].map((target) => {
+      const voters = this.kickVotersFor(room, target.id);
+      const allowedIds = new Set(voters.map((player) => player.id));
+      const votes = [...(room.kickVotes.get(target.id) || new Set())].filter((id) => allowedIds.has(id));
+
+      return {
+        targetId: target.id,
+        count: votes.length,
+        required: voters.length,
+        voted: currentPlayerId ? votes.includes(currentPlayerId) : false,
+        canVote: Boolean(currentPlayerId && allowedIds.has(currentPlayerId) && !votes.includes(currentPlayerId))
+      };
+    });
+  }
+
+  requireRoom(socket) {
+    const room = this.rooms.get(socket.data.roomCode);
+    if (!room || !room.players.has(socket.id)) {
+      throw new Error("ادخل غرفة أولًا.");
+    }
+    return room;
+  }
+
+  requireHost(room, socket) {
+    if (room.hostId !== socket.id) {
+      throw new Error("هذا الأمر للمضيف فقط.");
+    }
+  }
+
+  clearTimer(room) {
+    if (room.timer) {
+      clearTimeout(room.timer);
+      room.timer = null;
+    }
+
+    for (const timer of room.botTimers || []) {
+      clearTimeout(timer);
+    }
+    room.botTimers = [];
+  }
+
+  emitRoom(room) {
+    for (const player of room.players.values()) {
+      if (!player.isBot) {
+        this.io.to(player.id).emit("room:state", this.publicRoom(room, player.id));
+      }
+    }
+  }
+
+  publicRoom(room, currentPlayerId) {
+    const votesByPlayer = new Set(room.votes.keys());
+    const submissionsByPlayer = new Set(room.submissions.keys());
+    const eligibleVoteIds = new Set(this.eligibleVoters(room).map((player) => player.id));
+    const eligibleAnswerIds = new Set(this.eligibleAnswerers(room).map((player) => player.id));
+
+    return {
+      code: room.code,
+      phase: room.phase,
+      round: room.round,
+      settings: room.settings,
+      activeMode: this.currentMode(room),
+      playerCount: room.players.size,
+      hostId: room.hostId,
+      me: currentPlayerId ? {
+        playerId: currentPlayerId,
+        isHost: room.hostId === currentPlayerId,
+        knowsCorrect: room.correctWriterIds.includes(currentPlayerId)
+      } : null,
+      players: [...room.players.values()]
+        .sort((a, b) => b.score - a.score || a.joinedAt - b.joinedAt)
+        .map((player) => ({
+          id: player.id,
+          name: player.name,
+          avatar: player.avatar,
+          score: player.score,
+          isBot: Boolean(player.isBot),
+          eliminated: room.eliminatedPlayerIds.has(player.id),
+          isHost: room.hostId === player.id,
+          submitted: submissionsByPlayer.has(player.id),
+          canSubmit: eligibleAnswerIds.has(player.id),
+          voted: votesByPlayer.has(player.id),
+          canVote: eligibleVoteIds.has(player.id),
+          joinedAt: player.joinedAt
+        }))
+        .map(({ joinedAt, ...player }) => player),
+      question: this.publicQuestion(room, currentPlayerId),
+      phaseEndsAt: room.phaseEndsAt,
+      options: this.publicOptions(room, currentPlayerId),
+      kickVotes: this.publicKickVotes(room, currentPlayerId),
+      results: room.phase === "results" || room.phase === "finished" ? room.results : null,
+      messages: room.messages
+    };
+  }
+
+  publicQuestion(room, currentPlayerId) {
+    if (!room.question) {
+      return null;
+    }
+
+    const question = {
+      id: room.question.id,
+      category: room.question.category,
+      prompt: room.question.prompt,
+      difficulty: room.question.difficulty,
+      correctAnswer: ["results", "finished"].includes(room.phase) ? room.question.correctAnswer : undefined
+    };
+
+    if (this.currentMode(room) === "imposter" && ["answering", "voting"].includes(room.phase)) {
+      question.isImposter = currentPlayerId === room.modeData?.imposterId;
+      question.secretWord = question.isImposter ? null : room.modeData?.secretWord;
+    }
+
+    if (this.currentMode(room) === "judge_pick" && ["answering", "voting"].includes(room.phase)) {
+      question.isJudge = currentPlayerId === room.modeData?.judgeId;
+    }
+
+    return question;
+  }
+
+  publicOptions(room, currentPlayerId) {
+    if (room.phase === "voting") {
+      return room.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        clue: option.clue,
+        isOwn: option.ownerIds.includes(currentPlayerId)
+      }));
+    }
+
+    if (room.phase === "results" || room.phase === "finished") {
+      return room.results?.revealedOptions || [];
+    }
+
+    return [];
+  }
+}

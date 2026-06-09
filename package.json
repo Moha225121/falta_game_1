@@ -1,0 +1,20 @@
+{
+  "name": "libyan-kalak",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Falta multiplayer bluffing trivia game with Node.js API, realtime web client, and admin panel.",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c cyan,magenta \"npm run dev --workspace server\" \"npm run dev --workspace client\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:client": "npm run dev --workspace client",
+    "start": "npm run start --workspace server",
+    "build": "npm run build --workspace client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
