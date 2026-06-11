@@ -21,7 +21,10 @@ import {
   TARGET_GUESS_ROUNDS
 } from "./gameModes.js";
 
-const makeCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 5);
+const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const ROOM_CODE_LENGTH = 5;
+const ROOM_CODE_ATTEMPTS = 100;
+const makeCode = customAlphabet(ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH);
 const BOT_NAMES = [
   "ندى الآلية",
   "سالم الآلي",
@@ -254,6 +257,7 @@ export class KalakGameEngine {
     this.store = store;
     this.config = config;
     this.rooms = new Map();
+    this.usedRoomCodes = new Set();
     this.startedAt = Date.now();
     this.cumulative = {
       roomsCreated: 0,
@@ -473,13 +477,40 @@ export class KalakGameEngine {
     };
   }
 
+  generateRoomCode() {
+    for (let attempt = 0; attempt < ROOM_CODE_ATTEMPTS; attempt += 1) {
+      const code = makeCode();
+      if (!this.rooms.has(code) && !this.usedRoomCodes.has(code)) {
+        this.usedRoomCodes.add(code);
+        return code;
+      }
+    }
+
+    throw new Error("تعذر إنشاء كود غرفة فريد. حاول مرة ثانية.");
+  }
+
+  connectedHumans(room) {
+    return [...room.players.values()].filter((player) => !player.isBot && player.connected !== false);
+  }
+
+  assignHostIfNeeded(room, preferredPlayerId = null) {
+    const currentHost = room.hostId ? room.players.get(room.hostId) : null;
+    if (currentHost && !currentHost.isBot && currentHost.connected !== false) {
+      return currentHost.id;
+    }
+
+    const preferredPlayer = preferredPlayerId ? room.players.get(preferredPlayerId) : null;
+    const nextHost = preferredPlayer && !preferredPlayer.isBot && preferredPlayer.connected !== false
+      ? preferredPlayer
+      : this.connectedHumans(room)[0] || null;
+
+    room.hostId = nextHost?.id || null;
+    return room.hostId;
+  }
+
   async createRoom(socket, payload = {}) {
     const player = createPlayer(socket, payload);
-    let code = makeCode();
-
-    while (this.rooms.has(code)) {
-      code = makeCode();
-    }
+    const code = this.generateRoomCode();
 
     const room = createEmptyRoom(code, player, this.config);
     const settingsInput = {
@@ -527,6 +558,7 @@ export class KalakGameEngine {
 
     const player = createPlayer(socket, payload);
     room.players.set(player.id, player);
+    this.assignHostIfNeeded(room, player.id);
     this.cumulative.humanPlayersJoined += 1;
     this.bindPlayerSocket(socket, room, player, payload, { announceReturn: false });
 
@@ -550,6 +582,10 @@ export class KalakGameEngine {
 
     const player = room.players.get(sessionId);
     if (!player || player.isBot) {
+      if (room.phase === "lobby") {
+        return this.joinRoom(socket, payload);
+      }
+
       throw new Error("لم نجد جلستك في هذه الغرفة.");
     }
 
@@ -571,6 +607,7 @@ export class KalakGameEngine {
     if (wasDisconnected) {
       this.cumulative.reconnections += 1;
     }
+    this.assignHostIfNeeded(room, player.id);
     this.emitRoom(room);
     return {
       room: this.publicRoom(room, player.id),
@@ -2748,13 +2785,19 @@ export class KalakGameEngine {
         return;
       }
       const current = room.players.get(player.id);
+      if (current?.connected === false && room.phase === "lobby") {
+        this.removePlayerFromRoom(room, player.id, `${player.name} غادر الغرفة.`, {
+          preserveEmptyLobby: true
+        });
+        return;
+      }
       if (current?.connected === false) {
         this.removePlayerFromRoom(room, player.id, `${player.name} غادر الغرفة.`);
       }
     }, RECONNECT_GRACE_MS);
   }
 
-  removePlayerFromRoom(room, playerId, message, { notify = false } = {}) {
+  removePlayerFromRoom(room, playerId, message, { notify = false, preserveEmptyLobby = false } = {}) {
     const player = room.players.get(playerId);
     if (!player) {
       return null;
@@ -2788,20 +2831,25 @@ export class KalakGameEngine {
     room.votes.delete(player.id);
     this.clearKickVotesFor(room, player.id);
 
-    const humanPlayers = [...room.players.values()].filter((item) => !item.isBot && item.connected !== false);
-
     if (room.hostId === player.id) {
-      room.hostId = humanPlayers[0]?.id || null;
+      room.hostId = null;
     }
 
     const remainingHumans = [...room.players.values()].filter((item) => !item.isBot);
     if (remainingHumans.length === 0) {
+      if (preserveEmptyLobby && room.phase === "lobby") {
+        this.addSystemMessage(room, message);
+        this.emitRoom(room);
+        return player;
+      }
+
       this.clearTimer(room);
       this.rooms.delete(room.code);
       this.cumulative.roomsClosed += 1;
       return player;
     }
 
+    this.assignHostIfNeeded(room);
     this.addSystemMessage(room, message);
     this.emitRoom(room);
     this.checkPhaseCompletion(room);
