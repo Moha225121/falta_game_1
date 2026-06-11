@@ -77,6 +77,17 @@ const BOT_FAKE_ANSWERS = [
 ];
 const BOT_CORRECT_ANSWER_RATE = 0.18;
 const BOT_CORRECT_VOTE_RATE = 0.42;
+const RECONNECT_GRACE_MS = 45_000;
+const LIVE_GAME_PHASES = new Set(["answering", "voting", "results"]);
+const PHASE_ORDER = ["lobby", "answering", "voting", "results", "finished"];
+
+function percent(part, total) {
+  return total > 0 ? Math.round((part / total) * 100) : 0;
+}
+
+function elapsedSeconds(start, end = Date.now()) {
+  return start ? Math.max(0, Math.floor((end - start) / 1000)) : 0;
+}
 
 function normalizeAnswer(value) {
   return String(value || "")
@@ -108,6 +119,26 @@ function shuffle(items) {
   return array;
 }
 
+function contentPayload(question) {
+  return question?.content && typeof question.content === "object" ? question.content : {};
+}
+
+function contentPrompt(question, fallback) {
+  return question?.prompt || contentPayload(question).prompt || fallback;
+}
+
+function contentCategory(question, fallback) {
+  return question?.category || fallback;
+}
+
+function contentDifficulty(question) {
+  return question?.difficulty || "medium";
+}
+
+function contentQuestionId(question, fallback) {
+  return question?.id || fallback;
+}
+
 function playerName(name) {
   const fallback = `لاعب ${Math.floor(1000 + Math.random() * 9000)}`;
   return String(name || fallback).trim().slice(0, 28) || fallback;
@@ -128,6 +159,13 @@ function cleanPersona(value) {
     .slice(0, 24) || AVATAR_DEFAULT.persona;
 }
 
+function cleanSessionId(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^a-z0-9_-]/gi, "")
+    .slice(0, 64) || nanoid(16);
+}
+
 function cleanAvatar(avatar = {}) {
   return {
     persona: cleanPersona(avatar.persona || avatar.id),
@@ -143,10 +181,14 @@ function cleanAvatar(avatar = {}) {
 
 function createPlayer(socket, payload = {}) {
   return {
-    id: socket.id,
+    id: cleanSessionId(payload.sessionId),
+    socketId: socket.id,
     name: playerName(payload.name),
     avatar: cleanAvatar(payload.avatar),
     score: 0,
+    connected: true,
+    disconnectedAt: null,
+    reconnectTimer: null,
     joinedAt: Date.now()
   };
 }
@@ -198,7 +240,11 @@ function createEmptyRoom(code, host, config) {
     phaseEndsAt: null,
     timer: null,
     botTimers: [],
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    lastActivityAt: Date.now(),
+    gameStartedAt: null,
+    finishedAt: null,
+    statsFinalRecorded: false
   };
 }
 
@@ -208,11 +254,32 @@ export class KalakGameEngine {
     this.store = store;
     this.config = config;
     this.rooms = new Map();
+    this.startedAt = Date.now();
+    this.cumulative = {
+      roomsCreated: 0,
+      roomsClosed: 0,
+      humanPlayersJoined: 0,
+      botsAdded: 0,
+      gamesStarted: 0,
+      gamesFinished: 0,
+      gamesEndedByHost: 0,
+      answerSubmissions: 0,
+      botAnswerSubmissions: 0,
+      voteSubmissions: 0,
+      botVoteSubmissions: 0,
+      chatMessages: 0,
+      disconnections: 0,
+      reconnections: 0,
+      playersLeft: 0,
+      kickRemovals: 0
+    };
   }
 
   bindSocket(socket) {
     socket.on("room:create", (payload, ack) => this.handle(socket, ack, () => this.createRoom(socket, payload)));
     socket.on("room:join", (payload, ack) => this.handle(socket, ack, () => this.joinRoom(socket, payload)));
+    socket.on("room:restore", (payload, ack) => this.handle(socket, ack, () => this.restoreRoom(socket, payload)));
+    socket.on("room:leave", (payload, ack) => this.handle(socket, ack, () => this.leaveRoom(socket)));
     socket.on("room:updateSettings", (payload, ack) => this.handle(socket, ack, () => this.updateSettings(socket, payload)));
     socket.on("room:addBot", (payload, ack) => this.handle(socket, ack, () => this.addBot(socket)));
     socket.on("room:removeBot", (payload, ack) => this.handle(socket, ack, () => this.removeBot(socket, payload)));
@@ -245,6 +312,167 @@ export class KalakGameEngine {
     return room ? this.publicRoom(room, null) : null;
   }
 
+  getStatistics() {
+    const now = Date.now();
+    const roomRows = [...this.rooms.values()].map((room) => this.publicRoomStatistics(room, now));
+    const phaseCounts = PHASE_ORDER.map((phase) => ({
+      phase,
+      count: roomRows.filter((room) => room.phase === phase).length
+    }));
+    const modeCounts = new Map();
+
+    for (const room of roomRows) {
+      const mode = room.activeMode || "kalak";
+      if (!modeCounts.has(mode)) {
+        modeCounts.set(mode, {
+          mode,
+          rooms: 0,
+          players: 0,
+          activeGames: 0
+        });
+      }
+
+      const row = modeCounts.get(mode);
+      row.rooms += 1;
+      row.players += room.players.total;
+      if (LIVE_GAME_PHASES.has(room.phase)) {
+        row.activeGames += 1;
+      }
+    }
+
+    const playerTotals = roomRows.reduce((acc, room) => {
+      acc.total += room.players.total;
+      acc.humans += room.players.humans;
+      acc.bots += room.players.bots;
+      acc.onlineHumans += room.players.onlineHumans;
+      acc.offlineHumans += room.players.offlineHumans;
+      acc.connectedTotal += room.players.connectedTotal;
+      acc.eliminated += room.players.eliminated;
+      return acc;
+    }, {
+      total: 0,
+      humans: 0,
+      bots: 0,
+      onlineHumans: 0,
+      offlineHumans: 0,
+      connectedTotal: 0,
+      eliminated: 0
+    });
+
+    const roomTotals = {
+      total: roomRows.length,
+      lobby: phaseCounts.find((phase) => phase.phase === "lobby")?.count || 0,
+      answering: phaseCounts.find((phase) => phase.phase === "answering")?.count || 0,
+      voting: phaseCounts.find((phase) => phase.phase === "voting")?.count || 0,
+      results: phaseCounts.find((phase) => phase.phase === "results")?.count || 0,
+      finished: phaseCounts.find((phase) => phase.phase === "finished")?.count || 0,
+      inGame: roomRows.filter((room) => LIVE_GAME_PHASES.has(room.phase)).length,
+      openSlots: roomRows.reduce((sum, room) => sum + Math.max(0, this.config.maxPlayers - room.players.total), 0),
+      averagePlayers: roomRows.length ? Number((playerTotals.total / roomRows.length).toFixed(1)) : 0,
+      averageHumans: roomRows.length ? Number((playerTotals.humans / roomRows.length).toFixed(1)) : 0
+    };
+
+    const totalAnswerSubmissions = this.cumulative.answerSubmissions + this.cumulative.botAnswerSubmissions;
+    const totalVoteSubmissions = this.cumulative.voteSubmissions + this.cumulative.botVoteSubmissions;
+
+    return {
+      startedAt: new Date(this.startedAt).toISOString(),
+      generatedAt: new Date(now).toISOString(),
+      uptimeSeconds: elapsedSeconds(this.startedAt, now),
+      socketConnections: this.io.engine?.clientsCount ?? this.io.sockets?.sockets?.size ?? 0,
+      rooms: roomTotals,
+      players: playerTotals,
+      games: {
+        live: roomTotals.inGame,
+        waiting: roomTotals.lobby,
+        finishedRooms: roomTotals.finished,
+        finalResultRooms: roomRows.filter((room) => room.results?.isFinal).length
+      },
+      cumulative: { ...this.cumulative },
+      activity: {
+        humanAnswerSubmissions: this.cumulative.answerSubmissions,
+        botAnswerSubmissions: this.cumulative.botAnswerSubmissions,
+        totalAnswerSubmissions,
+        humanVoteSubmissions: this.cumulative.voteSubmissions,
+        botVoteSubmissions: this.cumulative.botVoteSubmissions,
+        totalVoteSubmissions,
+        chatMessages: this.cumulative.chatMessages,
+        totalActions: totalAnswerSubmissions + totalVoteSubmissions + this.cumulative.chatMessages
+      },
+      phases: phaseCounts,
+      modes: [...modeCounts.values()].sort((a, b) => b.rooms - a.rooms || a.mode.localeCompare(b.mode)),
+      recentRooms: roomRows
+        .sort((a, b) => b.lastActivityTimestamp - a.lastActivityTimestamp)
+        .slice(0, 12)
+        .map(({ createdTimestamp, lastActivityTimestamp, ...room }) => room)
+    };
+  }
+
+  publicRoomStatistics(room, now = Date.now()) {
+    const players = [...room.players.values()];
+    const humans = players.filter((player) => !player.isBot);
+    const bots = players.filter((player) => player.isBot);
+    const onlineHumans = humans.filter((player) => player.connected !== false);
+    const offlineHumans = humans.filter((player) => player.connected === false);
+    const connectedTotal = players.filter((player) => player.connected !== false).length;
+    const answerers = this.eligibleAnswerers(room);
+    const voters = this.eligibleVoters(room);
+    const topPlayer = [...players].sort((a, b) => b.score - a.score || a.joinedAt - b.joinedAt)[0] || null;
+    const lastActivityAt = room.lastActivityAt || room.createdAt;
+
+    return {
+      code: room.code,
+      phase: room.phase,
+      activeMode: this.currentMode(room),
+      round: room.round,
+      settings: {
+        rounds: room.settings.rounds,
+        modes: room.settings.modes || [room.settings.mode || "kalak"],
+        categories: room.settings.categories || [],
+        answerSeconds: room.settings.answerSeconds,
+        voteSeconds: room.settings.voteSeconds
+      },
+      createdAt: new Date(room.createdAt).toISOString(),
+      createdTimestamp: room.createdAt,
+      lastActivityAt: new Date(lastActivityAt).toISOString(),
+      lastActivityTimestamp: lastActivityAt,
+      ageSeconds: elapsedSeconds(room.createdAt, now),
+      idleSeconds: elapsedSeconds(lastActivityAt, now),
+      gameAgeSeconds: room.gameStartedAt ? elapsedSeconds(room.gameStartedAt, room.finishedAt || now) : 0,
+      phaseEndsAt: room.phaseEndsAt ? new Date(room.phaseEndsAt).toISOString() : null,
+      phaseRemainingSeconds: room.phaseEndsAt ? Math.max(0, Math.ceil((room.phaseEndsAt - now) / 1000)) : null,
+      players: {
+        total: players.length,
+        humans: humans.length,
+        bots: bots.length,
+        onlineHumans: onlineHumans.length,
+        offlineHumans: offlineHumans.length,
+        connectedTotal,
+        eliminated: room.eliminatedPlayerIds.size
+      },
+      hostOnline: Boolean(room.hostId && room.players.get(room.hostId)?.connected !== false),
+      progress: {
+        submissions: room.submissions.size,
+        answerers: answerers.length,
+        submissionPercent: percent(room.submissions.size, answerers.length),
+        votes: room.votes.size,
+        voters: voters.length,
+        votePercent: percent(room.votes.size, voters.length),
+        options: room.options.length,
+        messages: room.messages.length
+      },
+      results: room.results ? {
+        isFinal: Boolean(room.results.isFinal),
+        awards: Array.isArray(room.results.awards) ? room.results.awards.length : 0
+      } : null,
+      topPlayer: topPlayer ? {
+        name: topPlayer.name,
+        score: topPlayer.score,
+        isBot: Boolean(topPlayer.isBot)
+      } : null
+    };
+  }
+
   async createRoom(socket, payload = {}) {
     const player = createPlayer(socket, payload);
     let code = makeCode();
@@ -262,9 +490,9 @@ export class KalakGameEngine {
     room.settings = this.cleanSettings(settingsInput);
     room.activeMode = room.settings.mode;
     this.rooms.set(code, room);
-    socket.join(code);
-    socket.data.roomCode = code;
-    socket.data.playerId = player.id;
+    this.cumulative.roomsCreated += 1;
+    this.cumulative.humanPlayersJoined += 1;
+    this.bindPlayerSocket(socket, room, player, payload, { announceReturn: false });
 
     this.addSystemMessage(room, `${player.name} فتح الغرفة.`);
     this.emitRoom(room);
@@ -278,9 +506,15 @@ export class KalakGameEngine {
   async joinRoom(socket, payload = {}) {
     const code = String(payload.code || "").trim().toUpperCase();
     const room = this.rooms.get(code);
+    const sessionId = cleanSessionId(payload.sessionId);
 
     if (!room) {
       throw new Error("كود الغرفة غير موجود.");
+    }
+
+    const existingPlayer = room.players.get(sessionId);
+    if (existingPlayer) {
+      return this.restorePlayer(socket, room, existingPlayer, payload);
     }
 
     if (room.phase !== "lobby") {
@@ -293,9 +527,8 @@ export class KalakGameEngine {
 
     const player = createPlayer(socket, payload);
     room.players.set(player.id, player);
-    socket.join(code);
-    socket.data.roomCode = code;
-    socket.data.playerId = player.id;
+    this.cumulative.humanPlayersJoined += 1;
+    this.bindPlayerSocket(socket, room, player, payload, { announceReturn: false });
 
     this.addSystemMessage(room, `${player.name} انضم للغرفة.`);
     this.emitRoom(room);
@@ -304,6 +537,78 @@ export class KalakGameEngine {
       room: this.publicRoom(room, player.id),
       playerId: player.id
     };
+  }
+
+  async restoreRoom(socket, payload = {}) {
+    const code = String(payload.code || "").trim().toUpperCase();
+    const room = this.rooms.get(code);
+    const sessionId = cleanSessionId(payload.sessionId);
+
+    if (!room) {
+      throw new Error("هذه الغرفة انتهت أو انقطعت.");
+    }
+
+    const player = room.players.get(sessionId);
+    if (!player || player.isBot) {
+      throw new Error("لم نجد جلستك في هذه الغرفة.");
+    }
+
+    return this.restorePlayer(socket, room, player, payload);
+  }
+
+  async leaveRoom(socket) {
+    const room = this.requireRoom(socket);
+    const playerId = this.playerId(socket);
+    const player = room.players.get(playerId);
+
+    this.removePlayerFromRoom(room, playerId, `${player?.name || "اللاعب"} غادر الغرفة.`);
+    return { room: null };
+  }
+
+  restorePlayer(socket, room, player, payload = {}) {
+    const wasDisconnected = player.connected === false;
+    this.bindPlayerSocket(socket, room, player, payload, { announceReturn: wasDisconnected });
+    if (wasDisconnected) {
+      this.cumulative.reconnections += 1;
+    }
+    this.emitRoom(room);
+    return {
+      room: this.publicRoom(room, player.id),
+      playerId: player.id
+    };
+  }
+
+  bindPlayerSocket(socket, room, player, payload = {}, { announceReturn = true } = {}) {
+    const previousSocketId = player.socketId;
+    if (previousSocketId && previousSocketId !== socket.id) {
+      const previousSocket = this.io.sockets?.sockets?.get(previousSocketId);
+      previousSocket?.leave?.(room.code);
+      previousSocket?.leave?.(this.privatePlayerRoom(room, player.id));
+      if (previousSocket?.data?.playerId === player.id) {
+        delete previousSocket.data.roomCode;
+        delete previousSocket.data.playerId;
+      }
+    }
+
+    if (player.reconnectTimer) {
+      clearTimeout(player.reconnectTimer);
+      player.reconnectTimer = null;
+    }
+
+    player.socketId = socket.id;
+    player.connected = true;
+    player.disconnectedAt = null;
+    player.name = playerName(payload.name || player.name);
+    player.avatar = cleanAvatar(payload.avatar || player.avatar);
+
+    socket.join(room.code);
+    socket.join(this.privatePlayerRoom(room, player.id));
+    socket.data.roomCode = room.code;
+    socket.data.playerId = player.id;
+
+    if (announceReturn) {
+      this.addSystemMessage(room, `${player.name} رجع للغرفة.`);
+    }
   }
 
   async updateSettings(socket, payload = {}) {
@@ -322,7 +627,7 @@ export class KalakGameEngine {
     room.settings = this.cleanSettings(settingsInput);
     room.activeMode = room.settings.mode;
     this.emitRoom(room);
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, this.playerId(socket)) };
   }
 
   async addBot(socket) {
@@ -339,9 +644,10 @@ export class KalakGameEngine {
 
     const bot = createBot(room);
     room.players.set(bot.id, bot);
+    this.cumulative.botsAdded += 1;
     this.addSystemMessage(room, `${bot.name} انضم كلاعب آلي للتجربة.`);
     this.emitRoom(room);
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, this.playerId(socket)) };
   }
 
   async removeBot(socket, payload = {}) {
@@ -353,7 +659,8 @@ export class KalakGameEngine {
 
   async voteKick(socket, payload = {}) {
     const room = this.requireRoom(socket);
-    const voter = room.players.get(socket.id);
+    const playerId = this.playerId(socket);
+    const voter = room.players.get(playerId);
     const targetId = String(payload.playerId || "");
     const target = room.players.get(targetId);
 
@@ -361,7 +668,7 @@ export class KalakGameEngine {
       throw new Error("اللاعب غير موجود.");
     }
 
-    if (target.id === socket.id) {
+    if (target.id === playerId) {
       throw new Error("لا يمكنك التصويت لإخراج نفسك.");
     }
 
@@ -370,7 +677,7 @@ export class KalakGameEngine {
     }
 
     const voters = this.kickVotersFor(room, target.id);
-    if (!voters.some((player) => player.id === socket.id)) {
+    if (!voters.some((player) => player.id === playerId)) {
       throw new Error("لا يمكنك التصويت على هذا اللاعب.");
     }
 
@@ -379,30 +686,31 @@ export class KalakGameEngine {
     }
 
     const votes = room.kickVotes.get(target.id);
-    if (votes.has(socket.id)) {
+    if (votes.has(playerId)) {
       throw new Error("صوتك محسوب بالفعل.");
     }
 
-    votes.add(socket.id);
+    votes.add(playerId);
 
     if (votes.size >= voters.length) {
       this.removePlayerFromRoom(room, target.id, `تم إخراج ${target.name} بتصويت اللاعبين.`, {
         notify: true
       });
       return {
-        room: this.rooms.has(room.code) && room.players.has(socket.id) ? this.publicRoom(room, socket.id) : null
+        room: this.rooms.has(room.code) && room.players.has(playerId) ? this.publicRoom(room, playerId) : null
       };
     }
 
     this.emitRoom(room);
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, this.playerId(socket)) };
   }
 
   async startGame(socket) {
     const room = this.requireRoom(socket);
     this.requireHost(room, socket);
 
-    if (room.players.size < this.config.minPlayers) {
+    const connectedPlayers = [...room.players.values()].filter((player) => player.connected !== false);
+    if (connectedPlayers.length < this.config.minPlayers) {
       throw new Error(`اللعبة تحتاج على الأقل ${this.config.minPlayers} لاعبين.`);
     }
 
@@ -415,12 +723,16 @@ export class KalakGameEngine {
     room.eliminatedPlayerIds = new Set();
     room.activeMode = room.settings.modes[0] || "kalak";
     room.modeData = null;
+    room.gameStartedAt = Date.now();
+    room.finishedAt = null;
+    room.statsFinalRecorded = false;
+    this.cumulative.gamesStarted += 1;
     for (const player of room.players.values()) {
       player.score = 0;
     }
 
     await this.startRound(room);
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, this.playerId(socket)) };
   }
 
   async endGame(socket) {
@@ -428,9 +740,10 @@ export class KalakGameEngine {
     this.requireHost(room, socket);
 
     if (room.phase === "lobby") {
-      return { room: this.publicRoom(room, socket.id) };
+      return { room: this.publicRoom(room, this.playerId(socket)) };
     }
 
+    this.cumulative.gamesEndedByHost += 1;
     this.clearTimer(room);
     room.phase = "lobby";
     room.round = 0;
@@ -446,6 +759,8 @@ export class KalakGameEngine {
     room.phaseEndsAt = null;
     room.activeMode = room.settings.modes[0] || "kalak";
     room.kickVotes = new Map();
+    room.gameStartedAt = null;
+    room.finishedAt = null;
 
     for (const player of room.players.values()) {
       player.score = 0;
@@ -453,17 +768,18 @@ export class KalakGameEngine {
 
     this.addSystemMessage(room, "المضيف أنهى اللعبة ورجع الغرفة للانتظار.");
     this.emitRoom(room);
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, this.playerId(socket)) };
   }
 
   async submitAnswer(socket, payload = {}) {
     const room = this.requireRoom(socket);
+    const playerId = this.playerId(socket);
 
     if (room.phase !== "answering") {
       throw new Error("وقت الإجابة انتهى.");
     }
 
-    if (!this.eligibleAnswerers(room).some((player) => player.id === socket.id)) {
+    if (!this.eligibleAnswerers(room).some((player) => player.id === playerId)) {
       throw new Error("أنت غير مشارك في هذه الجولة.");
     }
 
@@ -472,20 +788,22 @@ export class KalakGameEngine {
       throw new Error("اكتب إجابة أولًا.");
     }
 
+    this.cumulative.answerSubmissions += 1;
+
     if (this.currentMode(room) === "kalak" && normalizeAnswer(text) === normalizeAnswer(room.question.correctAnswer)) {
-      if (!room.correctWriterIds.includes(socket.id)) {
-        room.correctWriterIds.push(socket.id);
+      if (!room.correctWriterIds.includes(playerId)) {
+        room.correctWriterIds.push(playerId);
       }
 
       return {
-        room: this.publicRoom(room, socket.id),
+        room: this.publicRoom(room, playerId),
         correctAnswerHit: true,
         message: "إجابتك صحيحة. الآن اكتب إجابة غلط مقنعة عشان تخدع اللاعبين."
       };
     }
 
-    room.submissions.set(socket.id, {
-      playerId: socket.id,
+    room.submissions.set(playerId, {
+      playerId,
       text,
       submittedAt: Date.now()
     });
@@ -496,18 +814,19 @@ export class KalakGameEngine {
       setTimeout(() => this.finishAnswering(room.code), 550);
     }
 
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, playerId) };
   }
 
   async submitVote(socket, payload = {}) {
     const room = this.requireRoom(socket);
+    const playerId = this.playerId(socket);
 
     if (room.phase !== "voting") {
       throw new Error("وقت التصويت انتهى.");
     }
 
     const voters = this.eligibleVoters(room);
-    if (!voters.some((player) => player.id === socket.id)) {
+    if (!voters.some((player) => player.id === playerId)) {
       throw new Error("أنت غير مشارك في التصويت لهذه الجولة.");
     }
 
@@ -516,15 +835,16 @@ export class KalakGameEngine {
       throw new Error("الخيار غير موجود.");
     }
 
-    if (option.ownerIds.includes(socket.id)) {
+    if (option.ownerIds.includes(playerId)) {
       throw new Error("لا يمكنك التصويت لإجابتك.");
     }
 
-    room.votes.set(socket.id, {
-      playerId: socket.id,
+    room.votes.set(playerId, {
+      playerId,
       optionId: option.id,
       votedAt: Date.now()
     });
+    this.cumulative.voteSubmissions += 1;
 
     this.emitRoom(room);
 
@@ -532,11 +852,12 @@ export class KalakGameEngine {
       setTimeout(() => this.finishVoting(room.code), 550);
     }
 
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, playerId) };
   }
 
   async nextRound(socket) {
     const room = this.requireRoom(socket);
+    const playerId = this.playerId(socket);
     this.requireHost(room, socket);
 
     if (room.phase !== "results") {
@@ -547,16 +868,17 @@ export class KalakGameEngine {
       room.phase = "finished";
       room.phaseEndsAt = null;
       this.emitRoom(room);
-      return { room: this.publicRoom(room, socket.id) };
+      return { room: this.publicRoom(room, playerId) };
     }
 
     await this.startRound(room);
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, playerId) };
   }
 
   async sendChat(socket, payload = {}) {
     const room = this.requireRoom(socket);
-    const player = room.players.get(socket.id);
+    const playerId = this.playerId(socket);
+    const player = room.players.get(playerId);
     const message = cleanMessage(payload.message);
 
     if (!message) {
@@ -571,9 +893,10 @@ export class KalakGameEngine {
       message,
       createdAt: Date.now()
     });
+    this.cumulative.chatMessages += 1;
     room.messages = room.messages.slice(-60);
     this.emitRoom(room);
-    return { room: this.publicRoom(room, socket.id) };
+    return { room: this.publicRoom(room, playerId) };
   }
 
   selectModeForRound(room) {
@@ -614,6 +937,7 @@ export class KalakGameEngine {
     }
 
     const question = await this.store.random({
+      mode: "kalak",
       categories: room.settings.categories,
       excludeIds: room.usedQuestionIds
     });
@@ -647,56 +971,85 @@ export class KalakGameEngine {
     room.options = [];
     room.correctWriterIds = [];
     room.results = null;
+    const content = await this.store.random({
+      mode,
+      excludeIds: room.usedQuestionIds
+    });
+
+    if (content) {
+      room.usedQuestionIds.push(content.id);
+    }
 
     if (mode === "imposter") {
-      this.startImposterRound(room);
+      this.startImposterRound(room, content);
       return;
     }
 
     if (mode === "fake_fact") {
-      this.startFakeFactRound(room);
+      this.startFakeFactRound(room, content);
       return;
     }
 
     if (mode === "last_survivor") {
-      this.startLastSurvivorRound(room);
+      this.startLastSurvivorRound(room, content);
       return;
     }
 
     if (mode === "spot_ai") {
-      this.startSpotAiRound(room);
+      this.startSpotAiRound(room, content);
       return;
     }
 
     if (mode === "judge_pick") {
-      this.startJudgePickRound(room);
+      this.startJudgePickRound(room, content);
       return;
     }
 
     if (mode === "target_guess") {
-      this.startTargetGuessRound(room);
+      this.startTargetGuessRound(room, content);
       return;
     }
 
     if (mode === "split_steal") {
-      this.startSplitStealRound(room);
+      this.startSplitStealRound(room, content);
       return;
     }
 
     if (mode === "minority_wins") {
-      this.startMinorityWinsRound(room);
+      this.startMinorityWinsRound(room, content);
       return;
     }
 
     if (mode === "reverse_trap") {
-      this.startReverseTrapRound(room);
+      this.startReverseTrapRound(room, content);
+      return;
+    }
+
+    if (mode === "mind_match") {
+      this.startMindMatchRound(room, content);
+      return;
+    }
+
+    if (mode === "closest_number") {
+      this.startClosestNumberRound(room, content);
+      return;
+    }
+
+    if (mode === "hot_take") {
+      this.startHotTakeRound(room, content);
+      return;
+    }
+
+    if (DIRECT_CHOICE_ROUNDS[mode]) {
+      this.startDirectChoiceRound(room, mode, content);
     }
   }
 
-  startImposterRound(room) {
+  startImposterRound(room, question = null) {
     const activePlayers = this.activePlayers(room);
     const imposter = activePlayers[Math.floor(Math.random() * activePlayers.length)];
-    const word = IMPOSTER_WORDS[Math.floor(Math.random() * IMPOSTER_WORDS.length)];
+    const content = contentPayload(question);
+    const word = content.secretWord || question?.correctAnswer || IMPOSTER_WORDS[Math.floor(Math.random() * IMPOSTER_WORDS.length)];
 
     room.phase = "answering";
     room.modeData = {
@@ -709,14 +1062,30 @@ export class KalakGameEngine {
       prompt: "اكتب وصفًا من كلمة واحدة للكلمة السرية.",
       difficulty: "medium"
     };
+    if (question && room.question.id.startsWith("imposter_")) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        prompt: content.cluePrompt || contentPrompt(question, room.question.prompt),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
     room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotAnswers(room);
   }
 
-  startFakeFactRound(room) {
-    const fact = FAKE_FACTS[Math.floor(Math.random() * FAKE_FACTS.length)];
+  startFakeFactRound(room, question = null) {
+    const content = contentPayload(question);
+    const fact = question
+      ? {
+        statement: content.statement || question.prompt,
+        answer: content.answer || question.correctAnswer,
+        explanation: content.explanation || ""
+      }
+      : FAKE_FACTS[Math.floor(Math.random() * FAKE_FACTS.length)];
 
     room.phase = "voting";
     room.modeData = fact;
@@ -726,6 +1095,14 @@ export class KalakGameEngine {
       prompt: fact.statement,
       difficulty: "medium"
     };
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.options = shuffle([
       { id: "true", text: "صح", isCorrect: fact.answer === "true", ownerIds: [] },
       { id: "fake", text: "غلط", isCorrect: fact.answer === "fake", ownerIds: [] }
@@ -736,8 +1113,11 @@ export class KalakGameEngine {
     this.scheduleBotVotes(room);
   }
 
-  startLastSurvivorRound(room) {
-    const challenge = LAST_SURVIVOR_CHALLENGES[Math.floor(Math.random() * LAST_SURVIVOR_CHALLENGES.length)];
+  startLastSurvivorRound(room, question = null) {
+    const challenge = contentPrompt(
+      question,
+      LAST_SURVIVOR_CHALLENGES[Math.floor(Math.random() * LAST_SURVIVOR_CHALLENGES.length)]
+    );
 
     room.phase = "answering";
     room.modeData = { challenge };
@@ -747,42 +1127,65 @@ export class KalakGameEngine {
       prompt: challenge,
       difficulty: "medium"
     };
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
     room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotAnswers(room);
   }
 
-  startSpotAiRound(room) {
+  startSpotAiRound(room, question = null) {
     const index = Math.floor(Math.random() * SPOT_AI_PROMPTS.length);
+    const content = contentPayload(question);
+    const prompt = contentPrompt(question, SPOT_AI_PROMPTS[index]);
+    const aiAnswer = content.aiAnswer || question?.correctAnswer || SPOT_AI_ANSWERS[index % SPOT_AI_ANSWERS.length];
 
     room.phase = "answering";
     room.modeData = {
-      aiAnswer: SPOT_AI_ANSWERS[index % SPOT_AI_ANSWERS.length]
+      aiAnswer
     };
     room.question = {
       id: `spot_ai_${room.round}`,
       category: "كشف الذكاء",
-      prompt: SPOT_AI_PROMPTS[index],
+      prompt,
       difficulty: "medium"
     };
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
     room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotAnswers(room);
   }
 
-  startJudgePickRound(room) {
+  startJudgePickRound(room, question = null) {
     const activePlayers = this.activePlayers(room);
     const judge = activePlayers[(room.round - 1) % activePlayers.length];
     const promptIndex = Math.floor(Math.random() * JUDGE_PICK_PROMPTS.length);
-    const prompt = JUDGE_PICK_PROMPTS[promptIndex];
+    const content = contentPayload(question);
+    const prompt = contentPrompt(question, JUDGE_PICK_PROMPTS[promptIndex]);
+    const gameAnswers = Array.isArray(content.gameAnswers) && content.gameAnswers.length > 0
+      ? content.gameAnswers
+      : JUDGE_PICK_GAME_ANSWERS[promptIndex] || [];
 
     room.phase = "answering";
     room.modeData = {
       judgeId: judge.id,
       prompt,
-      gameAnswers: JUDGE_PICK_GAME_ANSWERS[promptIndex] || []
+      gameAnswers
     };
     room.question = {
       id: `judge_pick_${room.round}`,
@@ -790,16 +1193,30 @@ export class KalakGameEngine {
       prompt: `الحكم: ${judge.name}. ${prompt}`,
       difficulty: "medium"
     };
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
     room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotAnswers(room);
   }
 
-  startTargetGuessRound(room) {
+  startTargetGuessRound(room, question = null) {
     const activePlayers = this.activePlayers(room);
     const target = activePlayers[Math.floor(Math.random() * activePlayers.length)];
-    const challenge = TARGET_GUESS_ROUNDS[Math.floor(Math.random() * TARGET_GUESS_ROUNDS.length)];
+    const content = contentPayload(question);
+    const challenge = question
+      ? {
+        prompt: contentPrompt(question, question.prompt),
+        options: content.options || []
+      }
+      : TARGET_GUESS_ROUNDS[Math.floor(Math.random() * TARGET_GUESS_ROUNDS.length)];
 
     room.phase = "voting";
     room.modeData = {
@@ -818,14 +1235,25 @@ export class KalakGameEngine {
       isCorrect: false,
       ownerIds: []
     })));
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotVotes(room);
   }
 
-  startSplitStealRound(room) {
-    const scenario = SPLIT_STEAL_SCENARIOS[Math.floor(Math.random() * SPLIT_STEAL_SCENARIOS.length)];
+  startSplitStealRound(room, question = null) {
+    const scenario = contentPrompt(
+      question,
+      SPLIT_STEAL_SCENARIOS[Math.floor(Math.random() * SPLIT_STEAL_SCENARIOS.length)]
+    );
 
     room.phase = "voting";
     room.modeData = { scenario };
@@ -839,14 +1267,28 @@ export class KalakGameEngine {
       { id: "split", text: "قسمة", isCorrect: false, ownerIds: [] },
       { id: "steal", text: "سرقة", isCorrect: false, ownerIds: [] }
     ];
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotVotes(room);
   }
 
-  startMinorityWinsRound(room) {
-    const challenge = MINORITY_WINS_ROUNDS[Math.floor(Math.random() * MINORITY_WINS_ROUNDS.length)];
+  startMinorityWinsRound(room, question = null) {
+    const content = contentPayload(question);
+    const challenge = question
+      ? {
+        prompt: contentPrompt(question, question.prompt),
+        options: content.options || []
+      }
+      : MINORITY_WINS_ROUNDS[Math.floor(Math.random() * MINORITY_WINS_ROUNDS.length)];
 
     room.phase = "voting";
     room.modeData = challenge;
@@ -862,14 +1304,30 @@ export class KalakGameEngine {
       isCorrect: false,
       ownerIds: []
     })));
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotVotes(room);
   }
 
-  startReverseTrapRound(room) {
-    const challenge = REVERSE_TRAP_ROUNDS[Math.floor(Math.random() * REVERSE_TRAP_ROUNDS.length)];
+  startReverseTrapRound(room, question = null) {
+    const content = contentPayload(question);
+    const challenge = question
+      ? {
+        prompt: contentPrompt(question, question.prompt),
+        trap: content.trap || question.correctAnswer,
+        options: content.options || [],
+        explanation: content.explanation || ""
+      }
+      : REVERSE_TRAP_ROUNDS[Math.floor(Math.random() * REVERSE_TRAP_ROUNDS.length)];
 
     room.phase = "voting";
     room.modeData = challenge;
@@ -886,15 +1344,32 @@ export class KalakGameEngine {
       isTrap: text === challenge.trap,
       ownerIds: []
     })));
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotVotes(room);
   }
 
-  startDirectChoiceRound(room, mode) {
+  startDirectChoiceRound(room, mode, question = null) {
     const rounds = DIRECT_CHOICE_ROUNDS[mode] || [];
-    const challenge = rounds[Math.floor(Math.random() * rounds.length)];
+    const content = contentPayload(question);
+    const challenge = question
+      ? {
+        category: question.category,
+        prompt: contentPrompt(question, question.prompt),
+        correct: content.correct || question.correctAnswer,
+        options: content.options || [],
+        explanation: content.explanation || ""
+      }
+      : rounds[Math.floor(Math.random() * rounds.length)];
 
     room.phase = "voting";
     room.modeData = {
@@ -913,14 +1388,29 @@ export class KalakGameEngine {
       isCorrect: text === challenge.correct,
       ownerIds: []
     })));
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotVotes(room);
   }
 
-  startMindMatchRound(room) {
-    const challenge = MIND_MATCH_ROUNDS[Math.floor(Math.random() * MIND_MATCH_ROUNDS.length)];
+  startMindMatchRound(room, question = null) {
+    const content = contentPayload(question);
+    const challenge = question
+      ? {
+        category: question.category,
+        prompt: contentPrompt(question, question.prompt),
+        options: content.options || []
+      }
+      : MIND_MATCH_ROUNDS[Math.floor(Math.random() * MIND_MATCH_ROUNDS.length)];
 
     room.phase = "voting";
     room.modeData = challenge;
@@ -936,14 +1426,31 @@ export class KalakGameEngine {
       isCorrect: false,
       ownerIds: []
     })));
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotVotes(room);
   }
 
-  startClosestNumberRound(room) {
-    const challenge = CLOSEST_NUMBER_ROUNDS[Math.floor(Math.random() * CLOSEST_NUMBER_ROUNDS.length)];
+  startClosestNumberRound(room, question = null) {
+    const content = contentPayload(question);
+    const challenge = question
+      ? {
+        category: question.category,
+        prompt: contentPrompt(question, question.prompt),
+        answer: content.answer,
+        unit: content.unit || "",
+        explanation: content.explanation || ""
+      }
+      : CLOSEST_NUMBER_ROUNDS[Math.floor(Math.random() * CLOSEST_NUMBER_ROUNDS.length)];
 
     room.phase = "answering";
     room.modeData = challenge;
@@ -953,14 +1460,25 @@ export class KalakGameEngine {
       prompt: challenge.prompt,
       difficulty: "medium"
     };
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
     room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
     this.emitRoom(room);
     this.scheduleBotAnswers(room);
   }
 
-  startHotTakeRound(room) {
-    const prompt = HOT_TAKE_PROMPTS[Math.floor(Math.random() * HOT_TAKE_PROMPTS.length)];
+  startHotTakeRound(room, question = null) {
+    const prompt = contentPrompt(
+      question,
+      HOT_TAKE_PROMPTS[Math.floor(Math.random() * HOT_TAKE_PROMPTS.length)]
+    );
 
     room.phase = "answering";
     room.modeData = { prompt };
@@ -970,6 +1488,14 @@ export class KalakGameEngine {
       prompt,
       difficulty: "medium"
     };
+    if (question) {
+      room.question = {
+        ...room.question,
+        id: contentQuestionId(question, room.question.id),
+        category: contentCategory(question, room.question.category),
+        difficulty: contentDifficulty(question)
+      };
+    }
     room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
     room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
     this.emitRoom(room);
@@ -991,6 +1517,7 @@ export class KalakGameEngine {
           text: this.botAnswerText(liveRoom, bot),
           submittedAt: Date.now()
         });
+        this.cumulative.botAnswerSubmissions += 1;
 
         this.emitRoom(liveRoom);
 
@@ -1029,6 +1556,7 @@ export class KalakGameEngine {
           optionId: choice.id,
           votedAt: Date.now()
         });
+        this.cumulative.botVoteSubmissions += 1;
 
         this.emitRoom(liveRoom);
 
@@ -2196,17 +2724,34 @@ export class KalakGameEngine {
   removePlayer(socket) {
     const code = socket.data.roomCode;
     const room = code ? this.rooms.get(code) : null;
+    const playerId = this.playerId(socket);
 
     if (!room) {
       return;
     }
 
-    const player = room.players.get(socket.id);
-    if (!player) {
+    const player = room.players.get(playerId);
+    if (!player || player.socketId !== socket.id) {
       return;
     }
 
-    this.removePlayerFromRoom(room, socket.id, `${player.name} غادر الغرفة.`);
+    player.connected = false;
+    player.disconnectedAt = Date.now();
+    player.socketId = null;
+    this.cumulative.disconnections += 1;
+    this.addSystemMessage(room, `${player.name} انقطع اتصاله. عنده ${Math.round(RECONNECT_GRACE_MS / 1000)} ثانية للرجوع.`);
+    this.emitRoom(room);
+    this.checkPhaseCompletion(room);
+
+    player.reconnectTimer = setTimeout(() => {
+      if (!this.rooms.has(room.code)) {
+        return;
+      }
+      const current = room.players.get(player.id);
+      if (current?.connected === false) {
+        this.removePlayerFromRoom(room, player.id, `${player.name} غادر الغرفة.`);
+      }
+    }, RECONNECT_GRACE_MS);
   }
 
   removePlayerFromRoom(room, playerId, message, { notify = false } = {}) {
@@ -2216,11 +2761,23 @@ export class KalakGameEngine {
     }
 
     if (notify) {
-      this.io.to(player.id).emit("room:kicked", { message });
+      this.io.to(this.privatePlayerRoom(room, player.id)).emit("room:kicked", { message });
     }
 
-    const playerSocket = this.io.sockets?.sockets?.get(player.id);
+    if (player.reconnectTimer) {
+      clearTimeout(player.reconnectTimer);
+      player.reconnectTimer = null;
+    }
+    if (!player.isBot) {
+      this.cumulative.playersLeft += 1;
+    }
+    if (notify) {
+      this.cumulative.kickRemovals += 1;
+    }
+
+    const playerSocket = player.socketId ? this.io.sockets?.sockets?.get(player.socketId) : null;
     playerSocket?.leave?.(room.code);
+    playerSocket?.leave?.(this.privatePlayerRoom(room, player.id));
     if (playerSocket?.data?.roomCode === room.code) {
       delete playerSocket.data.roomCode;
       delete playerSocket.data.playerId;
@@ -2231,15 +2788,17 @@ export class KalakGameEngine {
     room.votes.delete(player.id);
     this.clearKickVotesFor(room, player.id);
 
-    const humanPlayers = [...room.players.values()].filter((item) => !item.isBot);
+    const humanPlayers = [...room.players.values()].filter((item) => !item.isBot && item.connected !== false);
 
     if (room.hostId === player.id) {
       room.hostId = humanPlayers[0]?.id || null;
     }
 
-    if (humanPlayers.length === 0) {
+    const remainingHumans = [...room.players.values()].filter((item) => !item.isBot);
+    if (remainingHumans.length === 0) {
       this.clearTimer(room);
       this.rooms.delete(room.code);
+      this.cumulative.roomsClosed += 1;
       return player;
     }
 
@@ -2327,7 +2886,7 @@ export class KalakGameEngine {
   }
 
   activePlayers(room) {
-    return [...room.players.values()].filter((player) => !room.eliminatedPlayerIds.has(player.id));
+    return [...room.players.values()].filter((player) => player.connected !== false && !room.eliminatedPlayerIds.has(player.id));
   }
 
   eligibleAnswerers(room) {
@@ -2346,7 +2905,7 @@ export class KalakGameEngine {
   }
 
   kickVotersFor(room, targetId) {
-    return [...room.players.values()].filter((player) => player.id !== targetId && !player.isBot);
+    return [...room.players.values()].filter((player) => player.id !== targetId && !player.isBot && player.connected !== false);
   }
 
   clearKickVotesFor(room, playerId) {
@@ -2376,16 +2935,25 @@ export class KalakGameEngine {
     });
   }
 
+  playerId(socket) {
+    return socket.data.playerId || socket.id;
+  }
+
+  privatePlayerRoom(room, playerId) {
+    return `${room.code}:player:${playerId}`;
+  }
+
   requireRoom(socket) {
     const room = this.rooms.get(socket.data.roomCode);
-    if (!room || !room.players.has(socket.id)) {
+    const playerId = this.playerId(socket);
+    if (!room || !room.players.has(playerId)) {
       throw new Error("ادخل غرفة أولًا.");
     }
     return room;
   }
 
   requireHost(room, socket) {
-    if (room.hostId !== socket.id) {
+    if (room.hostId !== this.playerId(socket)) {
       throw new Error("هذا الأمر للمضيف فقط.");
     }
   }
@@ -2402,10 +2970,20 @@ export class KalakGameEngine {
     room.botTimers = [];
   }
 
+  recordRoomActivity(room) {
+    room.lastActivityAt = Date.now();
+    if ((room.phase === "finished" || room.results?.isFinal) && room.gameStartedAt && !room.statsFinalRecorded) {
+      room.statsFinalRecorded = true;
+      room.finishedAt = room.lastActivityAt;
+      this.cumulative.gamesFinished += 1;
+    }
+  }
+
   emitRoom(room) {
+    this.recordRoomActivity(room);
     for (const player of room.players.values()) {
       if (!player.isBot) {
-        this.io.to(player.id).emit("room:state", this.publicRoom(room, player.id));
+        this.io.to(this.privatePlayerRoom(room, player.id)).emit("room:state", this.publicRoom(room, player.id));
       }
     }
   }
@@ -2437,6 +3015,7 @@ export class KalakGameEngine {
           avatar: player.avatar,
           score: player.score,
           isBot: Boolean(player.isBot),
+          connected: player.connected !== false,
           eliminated: room.eliminatedPlayerIds.has(player.id),
           isHost: room.hostId === player.id,
           submitted: submissionsByPlayer.has(player.id),

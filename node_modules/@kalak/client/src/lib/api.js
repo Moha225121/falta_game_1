@@ -16,7 +16,7 @@ export async function api(path, options = {}) {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload.error || "Request failed.");
+    throw new Error(payload.error || "فشل الطلب.");
   }
 
   return payload;

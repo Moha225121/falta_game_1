@@ -1,47 +1,47 @@
 # فلتة
 
-Multiplayer party trivia game with bluffing mechanics. Players join a room, submit real or fake answers, vote anonymously, and score points for picking the truth or fooling others.
+لعبة جماعية للأسئلة والخداع. اللاعبون يدخلون غرفة، يكتبون إجابات صحيحة أو مزيفة، يصوتون بدون كشف الأسماء، ويحصلون على نقاط عند اختيار الحقيقة أو خداع الآخرين.
 
-## Stack
+## التقنية
 
-- Backend: Node.js, Express, Socket.IO
-- Data: file-backed JSON questions at `server/data/questions.json`
-- Frontend: React, Vite, responsive player UI
-- Admin: standalone `/admin-panel` question CRUD protected by `ADMIN_TOKEN`
+- الخادم: Node.js و Express و Socket.IO.
+- البيانات: أسئلة محفوظة في ملف JSON داخل `server/data/questions.json`، وتصنيفات الإدارة داخل `server/data/categories.json`.
+- الواجهة: React و Vite مع تصميم متجاوب للاعبين.
+- الإدارة: لوحة مستقلة على `/admin-panel` لإدارة الأسئلة والتصنيفات والإحصائيات، محمية بالمتغير `ADMIN_TOKEN`.
 
-## Run Locally
+## التشغيل المحلي
 
 ```bash
 npm install
 npm run dev
 ```
 
-The web app runs on `http://localhost:5173` and proxies API/socket traffic to `http://localhost:4000`.
+واجهة الويب تعمل على `http://localhost:5173`، وتحوّل طلبات API و Socket إلى `http://localhost:4000`.
 
-## Quick Solo Test
+## اختبار سريع بلا لاعبين
 
-1. Open `http://localhost:5173`.
-2. Create a room.
-3. Pick a game mode.
-4. For Kalak, pick any number of question type cards. Leaving `All types` checked includes every active category.
-5. In the lobby, click `Add bot` twice.
-6. Start the game.
-7. Submit your answer or vote when the mode asks you to.
+1. افتح `http://localhost:5173`.
+2. أنشئ غرفة.
+3. اختر طور اللعبة.
+4. في طور فلتة، اختر أي عدد من بطاقات أنواع الأسئلة. ترك خيار كل الأنواع مفعلا يعني استخدام كل التصنيفات النشطة.
+5. في غرفة الانتظار، اضغط إضافة لاعب آلي مرتين.
+6. ابدأ اللعبة.
+7. أرسل إجابتك أو صوت عندما يطلب منك الطور ذلك.
 
-Bots count toward the player minimum and automatically answer/vote for local testing.
+اللاعبون الآليون يُحسبون ضمن الحد الأدنى للاعبين، ويرسلون الإجابات والأصوات تلقائيا لتسهيل الاختبار المحلي.
 
-To run the production build through the API server:
+لتشغيل نسخة الإنتاج من خلال خادم API:
 
 ```bash
 npm run build
 npm start
 ```
 
-Then open `http://localhost:4000`.
+بعدها افتح `http://localhost:4000`.
 
-## Environment
+## البيئة
 
-Copy `.env.example` to `.env` and adjust values as needed.
+انسخ `.env.example` إلى `.env` وعدّل القيم حسب الحاجة.
 
 ```bash
 PORT=4000
@@ -53,31 +53,135 @@ ANSWER_SECONDS=30
 VOTE_SECONDS=30
 ```
 
-Admin is not linked from the player UI. Open it directly at `/admin-panel`.
+لوحة الإدارة غير ظاهرة من واجهة اللاعب. افتحها مباشرة من `/admin-panel`.
 
-All admin question/stat APIs require:
+كل واجهات إدارة الأسئلة والتصنيفات والإحصائيات تحتاج هذا الترويس:
 
 ```http
 Authorization: Bearer your-token
 ```
 
-## REST API
+## واجهات REST
 
 - `GET /api/health`
 - `GET /api/config`
 - `GET /api/categories`
 - `GET /api/game-modes`
-- `GET /api/stats` admin token required
-- `GET /api/questions` admin token required
-- `GET /api/questions/:id` admin token required
-- `POST /api/questions` admin token required
-- `PUT /api/questions/:id` admin token required
-- `DELETE /api/questions/:id` admin token required
+- `GET /api/question-types`
+- `GET /api/stats` يتطلب رمز الإدارة
+- `GET /api/category-records` يتطلب رمز الإدارة
+- `POST /api/category-records` يتطلب رمز الإدارة
+- `GET /api/questions` يتطلب رمز الإدارة
+- `GET /api/questions/:id` يتطلب رمز الإدارة
+- `POST /api/questions` يتطلب رمز الإدارة
+- `POST /api/questions/import` يتطلب رمز الإدارة
+- `PUT /api/questions/:id` يتطلب رمز الإدارة
+- `DELETE /api/questions/:id` يتطلب رمز الإدارة
 - `GET /api/rooms/:code`
 
-## Socket Events
+## أشكال إدخال الأسئلة
 
-Client emits:
+الأسئلة مرتبطة بالطور. التصنيفات مرتبطة بالطور أيضا، لذلك تصنيف الطعام في طور الدخيل مختلف عن تصنيف الطعام في طور فلتة.
+
+أنشئ سجل تصنيف أولا إذا كنت تريد ظهوره في قائمة الإدارة قبل إضافة أسئلة له:
+
+```http
+POST /api/category-records
+Authorization: Bearer your-token
+Content-Type: application/json
+```
+
+```json
+{
+  "mode": "imposter",
+  "category": "أكل",
+  "active": true
+}
+```
+
+كل سؤال يحتوي على حقول مشتركة:
+
+```json
+{
+  "mode": "kalak",
+  "category": "ليبيا",
+  "difficulty": "medium",
+  "source": "الإدارة",
+  "tags": ["محلي"],
+  "active": true
+}
+```
+
+حقول طور فلتة:
+
+```json
+{
+  "mode": "kalak",
+  "category": "ليبيا",
+  "prompt": "ما هي عاصمة ليبيا؟",
+  "correctAnswer": "طرابلس"
+}
+```
+
+حقول طور الدخيل:
+
+```json
+{
+  "mode": "imposter",
+  "category": "أكل",
+  "secretWord": "بازين",
+  "prompt": "اكتب وصفا من كلمة واحدة للكلمة السرية."
+}
+```
+
+حقول طور كذبة ذكية:
+
+```json
+{
+  "mode": "fake_fact",
+  "category": "علوم",
+  "statement": "الأخطبوط لديه ثلاثة قلوب.",
+  "answer": "true",
+  "explanation": "قلبان يضخان الدم إلى الخياشيم، وقلب واحد إلى باقي الجسم."
+}
+```
+
+حقول طور كشف الذكاء:
+
+```json
+{
+  "mode": "spot_ai",
+  "category": "كشف الذكاء",
+  "prompt": "اكتب عذرا مصقولا بشكل مريب للتأخر.",
+  "aiAnswer": "تأخرت بسبب ظروف غير متوقعة، وأقدر تفهمكم."
+}
+```
+
+حقول طور الحكم:
+
+```json
+{
+  "mode": "judge_pick",
+  "category": "الحكم",
+  "prompt": "اكتب عذرا يجعل الحكم يضحك.",
+  "gameAnswers": [
+    "المنبه قدم استقالته في الليل.",
+    "الزحمة دخلت معي في مفاوضات."
+  ]
+}
+```
+
+الاستيراد الجماعي يقبل مصفوفة مباشرة أو الشكل `{ "questions": [...] }`:
+
+```http
+POST /api/questions/import
+Authorization: Bearer your-token
+Content-Type: application/json
+```
+
+## أحداث Socket
+
+الأحداث التي يرسلها العميل:
 
 - `room:create`
 - `room:join`
@@ -91,15 +195,15 @@ Client emits:
 - `round:next`
 - `chat:send`
 
-Server emits:
+الأحداث التي يرسلها الخادم:
 
 - `room:state`
 - `game:error`
 
-## Scoring
+## النقاط
 
-- Vote for the correct answer: `+100`
-- Another player votes for your fake answer: `+50`
-- Submit the exact correct answer during answering: `+150`
+- التصويت للإجابة الصحيحة: `+100`
+- لاعب آخر يصوت لإجابتك المزيفة: `+50`
+- إرسال الإجابة الصحيحة حرفيا أثناء مرحلة الإجابة: `+150`
 
-The current playable modes are `Kalak`, `Imposter`, `Fake Fact`, `Last Survivor`, and `Spot The AI`. The extra modes are MVP implementations using local seed data in `server/src/gameModes.js`, so you can expand the content and scoring rules as the game grows.
+الأطوار الحالية المدارة من لوحة الإدارة هي: فلتة، الدخيل، كذبة ذكية، كشف الذكاء، والحكم.

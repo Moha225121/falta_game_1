@@ -1,58 +1,66 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rename } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { nanoid } from "nanoid";
-import { z } from "zod";
+import {
+  modeAnswerLabel,
+  normalizeQuestionInput,
+  normalizeStoredQuestion,
+  normalizeTags,
+  QUESTION_TYPE_DEFINITIONS,
+  QUESTION_MODE_IDS
+} from "./questionTypes.js";
 
 const dataFile = fileURLToPath(new URL("../data/questions.json", import.meta.url));
-
-const QuestionSchema = z.object({
-  category: z.string().trim().min(2).max(60),
-  prompt: z.string().trim().min(8).max(400),
-  correctAnswer: z.string().trim().min(1).max(160),
-  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
-  source: z.string().trim().max(160).optional().default(""),
-  tags: z.array(z.string().trim().min(1).max(40)).max(12).optional().default([]),
-  active: z.boolean().optional().default(true)
-});
-
-const QuestionUpdateSchema = QuestionSchema.partial();
-
-function normalizeQuestion(input) {
-  const parsed = QuestionSchema.parse({
-    ...input,
-    tags: normalizeTags(input.tags)
-  });
-
-  return parsed;
-}
-
-function normalizeTags(tags) {
-  if (Array.isArray(tags)) {
-    return tags.map((tag) => String(tag).trim()).filter(Boolean);
-  }
-
-  if (typeof tags === "string") {
-    return tags.split(",").map((tag) => tag.trim()).filter(Boolean);
-  }
-
-  return [];
-}
+const categoryFile = fileURLToPath(new URL("../data/categories.json", import.meta.url));
 
 async function readAll() {
   const raw = await readFile(dataFile, "utf8");
   const parsed = JSON.parse(raw);
-  return Array.isArray(parsed) ? parsed : parsed.questions || [];
+  const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
+
+  return questions.map((question) => ({
+    ...question,
+    ...normalizeStoredQuestion(question)
+  }));
 }
 
 async function writeAll(questions) {
   await mkdir(dirname(dataFile), { recursive: true });
-  await writeFile(dataFile, `${JSON.stringify(questions, null, 2)}\n`, "utf8");
+  const tmpFile = `${dataFile}.${process.pid}.${Date.now()}.tmp`;
+  await writeFile(tmpFile, `${JSON.stringify(questions, null, 2)}\n`, "utf8");
+  await rename(tmpFile, dataFile);
+}
+
+async function readCategoryRows() {
+  try {
+    const raw = await readFile(categoryFile, "utf8");
+    const parsed = JSON.parse(raw);
+    const rows = Array.isArray(parsed) ? parsed : parsed.categories || [];
+    return rows.map(normalizeCategoryRecord).filter(Boolean);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+}
+
+async function writeCategoryRows(rows) {
+  await mkdir(dirname(categoryFile), { recursive: true });
+  const tmpFile = `${categoryFile}.${process.pid}.${Date.now()}.tmp`;
+  await writeFile(tmpFile, `${JSON.stringify(rows, null, 2)}\n`, "utf8");
+  await rename(tmpFile, categoryFile);
 }
 
 function filterQuestions(questions, filters = {}) {
   let result = [...questions];
   const categories = normalizeCategoryFilter(filters);
+  const mode = normalizeModeFilter(filters.mode);
+
+  if (mode) {
+    result = result.filter((question) => (question.mode || "kalak") === mode);
+  }
 
   if (categories.length > 0) {
     const allowedCategories = new Set(categories.map((category) => category.toLowerCase()));
@@ -65,9 +73,18 @@ function filterQuestions(questions, filters = {}) {
   }
 
   if (filters.search) {
-    const search = filters.search.toLowerCase();
+    const search = String(filters.search).toLowerCase();
     result = result.filter((question) => {
-      return [question.prompt, question.correctAnswer, question.category, ...(question.tags || [])]
+      return [
+        question.mode,
+        question.prompt,
+        question.correctAnswer,
+        modeAnswerLabel(question),
+        question.category,
+        question.source,
+        ...(question.tags || []),
+        ...Object.values(question.content || {}).flatMap((value) => Array.isArray(value) ? value : [value])
+      ]
         .join(" ")
         .toLowerCase()
         .includes(search);
@@ -90,16 +107,194 @@ function normalizeCategoryFilter(filters = {}) {
     .filter((category) => category && category !== "all"))];
 }
 
+function normalizeModeFilter(mode) {
+  const value = String(mode || "").trim();
+  if (!value || value === "all") {
+    return "";
+  }
+
+  return QUESTION_MODE_IDS.has(value) ? value : "";
+}
+
+function badRequest(message) {
+  const error = new Error(message);
+  error.statusCode = 400;
+  return error;
+}
+
+function cleanCategoryMode(mode) {
+  const value = String(mode || "kalak").trim();
+  if (!QUESTION_MODE_IDS.has(value)) {
+    throw badRequest("طور التصنيف غير مدعوم.");
+  }
+  return value;
+}
+
+function cleanCategoryName(value) {
+  const name = String(value || "").trim().replace(/\s+/g, " ");
+  if (name.length < 2) {
+    throw badRequest("اسم التصنيف يحتاج حرفين على الأقل.");
+  }
+  if (name.length > 60) {
+    throw badRequest("اسم التصنيف يجب ألا يتجاوز 60 حرفًا.");
+  }
+  return name;
+}
+
+function categoryKey(mode, category) {
+  return `${mode}::${category.toLowerCase()}`;
+}
+
+function normalizeCategoryRecord(row = {}) {
+  try {
+    const mode = cleanCategoryMode(row.mode);
+    const name = cleanCategoryName(row.name ?? row.category);
+    return {
+      id: String(row.id || nanoid(8)),
+      mode,
+      name,
+      active: row.active !== false,
+      createdAt: String(row.createdAt || new Date().toISOString()),
+      updatedAt: String(row.updatedAt || row.createdAt || new Date().toISOString())
+    };
+  } catch {
+    return null;
+  }
+}
+
+function createQuestion(input, now = new Date().toISOString()) {
+  return {
+    id: nanoid(10),
+    ...normalizeQuestionInput(input),
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
 export class QuestionStore {
   async list(filters = {}) {
     const questions = await readAll();
     return filterQuestions(questions, filters);
   }
 
-  async categories() {
-    const questions = await readAll();
-    return [...new Set(questions.filter((question) => question.active).map((question) => question.category))]
+  async categories(filters = {}) {
+    const mode = filters.mode === undefined ? "kalak" : filters.mode;
+    const questions = await this.list({ ...filters, mode, active: true });
+    return [...new Set(questions.map((question) => question.category))]
       .sort((a, b) => a.localeCompare(b, "ar"));
+  }
+
+  async categoryRecords(filters = {}) {
+    const [questions, storedCategories] = await Promise.all([readAll(), readCategoryRows()]);
+    const rows = new Map();
+
+    const ensureRow = (mode, category, metadata = {}) => {
+      const cleanMode = cleanCategoryMode(mode);
+      const cleanName = cleanCategoryName(category);
+      const key = categoryKey(cleanMode, cleanName);
+
+      if (!rows.has(key)) {
+        rows.set(key, {
+          key,
+          id: "",
+          mode: cleanMode,
+          category: cleanName,
+          stored: false,
+          enabled: true,
+          total: 0,
+          active: 0,
+          hidden: 0,
+          createdAt: "",
+          updatedAt: "",
+          ...metadata
+        });
+      } else {
+        rows.set(key, {
+          ...rows.get(key),
+          ...metadata
+        });
+      }
+
+      return rows.get(key);
+    };
+
+    for (const type of QUESTION_TYPE_DEFINITIONS) {
+      ensureRow(type.id, type.category || "عام");
+    }
+
+    for (const category of storedCategories) {
+      ensureRow(category.mode, category.name, {
+        id: category.id,
+        stored: true,
+        enabled: category.active,
+        createdAt: category.createdAt,
+        updatedAt: category.updatedAt
+      });
+    }
+
+    for (const question of questions) {
+      const mode = question.mode || "kalak";
+      const row = ensureRow(mode, question.category || "عام");
+      row.total += 1;
+      if (question.active === false) {
+        row.hidden += 1;
+      } else {
+        row.active += 1;
+      }
+    }
+
+    const mode = normalizeModeFilter(filters.mode);
+    return [...rows.values()]
+      .filter((row) => !mode || row.mode === mode)
+      .sort((a, b) => {
+        const modeSort = a.mode.localeCompare(b.mode);
+        return modeSort || a.category.localeCompare(b.category, "ar");
+      });
+  }
+
+  async createCategory(input = {}) {
+    const mode = cleanCategoryMode(input.mode);
+    const name = cleanCategoryName(input.name ?? input.category);
+    const rows = await readCategoryRows();
+    const existing = rows.find((row) => row.mode === mode && row.name.toLowerCase() === name.toLowerCase());
+
+    if (existing) {
+      if (existing.active === false) {
+        existing.active = true;
+        existing.updatedAt = new Date().toISOString();
+        await writeCategoryRows(rows);
+      }
+      return {
+        ...existing,
+        category: existing.name,
+        stored: true,
+        enabled: existing.active,
+        total: 0,
+        active: 0,
+        hidden: 0
+      };
+    }
+
+    const now = new Date().toISOString();
+    const category = {
+      id: nanoid(8),
+      mode,
+      name,
+      active: input.active !== false,
+      createdAt: now,
+      updatedAt: now
+    };
+    await writeCategoryRows([...rows, category]);
+
+    return {
+      ...category,
+      category: category.name,
+      stored: true,
+      enabled: category.active,
+      total: 0,
+      active: 0,
+      hidden: 0
+    };
   }
 
   async stats() {
@@ -108,12 +303,18 @@ export class QuestionStore {
       acc[question.category] = (acc[question.category] || 0) + 1;
       return acc;
     }, {});
+    const byMode = questions.reduce((acc, question) => {
+      const mode = question.mode || "kalak";
+      acc[mode] = (acc[mode] || 0) + 1;
+      return acc;
+    }, {});
 
     return {
       total: questions.length,
       active: questions.filter((question) => question.active).length,
       inactive: questions.filter((question) => !question.active).length,
-      byCategory
+      byCategory,
+      byMode
     };
   }
 
@@ -123,24 +324,29 @@ export class QuestionStore {
   }
 
   async create(input) {
-    const now = new Date().toISOString();
-    const question = {
-      id: nanoid(10),
-      ...normalizeQuestion(input),
-      createdAt: now,
-      updatedAt: now
-    };
+    const question = createQuestion(input);
     const questions = await readAll();
     questions.push(question);
     await writeAll(questions);
     return question;
   }
 
+  async createMany(input) {
+    const rows = Array.isArray(input) ? input : input?.questions;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      const error = new Error("ملف الاستيراد يجب أن يحتوي على قائمة أسئلة غير فارغة.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const now = new Date().toISOString();
+    const created = rows.map((row) => createQuestion(row, now));
+    const questions = await readAll();
+    await writeAll([...questions, ...created]);
+    return created;
+  }
+
   async update(id, input) {
-    const parsed = QuestionUpdateSchema.parse({
-      ...input,
-      tags: input.tags === undefined ? undefined : normalizeTags(input.tags)
-    });
     const questions = await readAll();
     const index = questions.findIndex((question) => question.id === id);
 
@@ -148,8 +354,17 @@ export class QuestionStore {
       return null;
     }
 
+    const existing = questions[index];
+    const parsed = normalizeQuestionInput(
+      {
+        ...input,
+        tags: input.tags === undefined ? existing.tags : normalizeTags(input.tags)
+      },
+      existing
+    );
+
     questions[index] = {
-      ...questions[index],
+      ...existing,
       ...parsed,
       updatedAt: new Date().toISOString()
     };
@@ -170,12 +385,12 @@ export class QuestionStore {
     return true;
   }
 
-  async random({ category = "all", categories = [], excludeIds = [] } = {}) {
-    let questions = await this.list({ category, categories, active: true });
+  async random({ mode = "kalak", category = "all", categories = [], excludeIds = [] } = {}) {
+    let questions = await this.list({ mode, category, categories, active: true });
     questions = questions.filter((question) => !excludeIds.includes(question.id));
 
     if (questions.length === 0 && excludeIds.length > 0) {
-      questions = await this.list({ category, categories, active: true });
+      questions = await this.list({ mode, category, categories, active: true });
     }
 
     if (questions.length === 0) {

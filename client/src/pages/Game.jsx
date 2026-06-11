@@ -8,6 +8,7 @@ import {
   Crown,
   Gamepad2,
   Loader2,
+  LogOut,
   Play,
   Send,
   Settings,
@@ -47,6 +48,9 @@ const phaseLabels = {
   finished: "النهاية"
 };
 
+const savedRoomKey = "kalak:room";
+const sessionKey = "kalak:sessionId";
+
 function getActiveMode(room) {
   return room?.activeMode || room?.settings?.mode || selectedModeIds(room?.settings?.modes)[0];
 }
@@ -69,6 +73,52 @@ function persistPlayer(player) {
   return { ...player, name: cleanName };
 }
 
+function makeSessionId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID().replace(/-/g, "");
+  }
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function getSessionId() {
+  const existing = localStorage.getItem(sessionKey);
+  if (existing) {
+    return existing;
+  }
+  const next = makeSessionId();
+  localStorage.setItem(sessionKey, next);
+  return next;
+}
+
+function loadSavedRoom() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(savedRoomKey) || "null");
+    return parsed?.code && parsed?.sessionId ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberRoom(code, sessionId) {
+  if (!code || !sessionId) {
+    return null;
+  }
+  const next = {
+    code: String(code).toUpperCase(),
+    sessionId,
+    updatedAt: Date.now()
+  };
+  localStorage.setItem(savedRoomKey, JSON.stringify(next));
+  return next;
+}
+
+function clearSavedRoom(code) {
+  const saved = loadSavedRoom();
+  if (!saved || !code || saved.code === String(code).toUpperCase()) {
+    localStorage.removeItem(savedRoomKey);
+  }
+}
+
 function useKalakSocket() {
   const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
@@ -86,7 +136,17 @@ function useKalakSocket() {
 
 function ack(socket, event, payload = {}) {
   return new Promise((resolve, reject) => {
+    if (!socket?.connected) {
+      reject(new Error("الاتصال غير جاهز."));
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      reject(new Error("الاتصال بطيء. حاول مرة ثانية."));
+    }, 9000);
+
     socket.emit(event, payload, (response) => {
+      clearTimeout(timeout);
       if (response?.ok) {
         resolve(response);
       } else {
@@ -101,11 +161,13 @@ export default function Game() {
   const location = useLocation();
   const navigate = useNavigate();
   const { socket, connected } = useKalakSocket();
-  const autoActionDone = useRef(false);
+  const lastAutoKey = useRef("");
   const lastRoundKey = useRef("");
   const roundSplashTimer = useRef(null);
+  const [sessionId] = useState(() => getSessionId());
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
+  const [savedRoom, setSavedRoom] = useState(() => loadSavedRoom());
   const [categories, setCategories] = useState([]);
   const [gameModes, setGameModes] = useState(fallbackGameModes);
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
@@ -114,6 +176,8 @@ export default function Game() {
   const [answer, setAnswer] = useState("");
   const [selectedOption, setSelectedOption] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -130,6 +194,9 @@ export default function Game() {
 
     const onState = (nextRoom) => {
       setRoom(nextRoom);
+      if (nextRoom?.code && nextRoom?.me?.playerId) {
+        setSavedRoom(rememberRoom(nextRoom.code, nextRoom.me.playerId));
+      }
       setError("");
       const activeMode = getActiveMode(nextRoom);
       const roundKey = `${nextRoom.round}:${activeMode}`;
@@ -166,6 +233,10 @@ export default function Game() {
 
     const onError = (payload) => setError(payload.error || "حدث خطأ غير متوقع.");
     const onKicked = (payload) => {
+      if (room?.code) {
+        clearSavedRoom(room.code);
+        setSavedRoom(null);
+      }
       setRoom(null);
       setSelectedOption("");
       setAnswer("");
@@ -180,49 +251,79 @@ export default function Game() {
       socket.off("game:error", onError);
       socket.off("room:kicked", onKicked);
     };
-  }, [socket]);
+  }, [room?.code, socket]);
 
   useEffect(() => () => clearTimeout(roundSplashTimer.current), []);
 
   useEffect(() => {
-    if (!socket || !connected || autoActionDone.current || room) {
+    if (!socket || !connected) {
       return;
     }
 
     const state = location.state;
-    if (!state?.mode && !roomCode) {
-      return;
-    }
-
-    autoActionDone.current = true;
     const nextPlayer = persistPlayer(loadPlayer(state));
     setPlayer(nextPlayer);
+    const stored = loadSavedRoom();
+    const activeCode = room?.code || roomCode || state?.code || stored?.code || "";
+    const code = String(activeCode).trim().toUpperCase();
 
-    if (state?.mode === "create") {
+    if (state?.mode === "create" && !room) {
+      const key = `create:${socket.id}:${sessionId}`;
+      if (lastAutoKey.current === key) {
+        return;
+      }
+      lastAutoKey.current = key;
       perform(() => ack(socket, "room:create", {
         name: nextPlayer.name,
-        avatar: nextPlayer.avatar
+        avatar: nextPlayer.avatar,
+        sessionId
       }).then((response) => {
+        const nextSaved = rememberRoom(response.room.code, response.playerId || sessionId);
+        setSavedRoom(nextSaved);
         navigate(`/play/${response.room.code}`, { replace: true });
-      }));
+      }), "create");
       return;
     }
 
-    const code = roomCode || state?.code;
-    if (code) {
-      perform(() => ack(socket, "room:join", {
-        code,
-        name: nextPlayer.name,
-        avatar: nextPlayer.avatar
-      }));
+    if (!code) {
+      return;
     }
-  }, [connected, location.state, navigate, room, roomCode, socket]);
+
+    const savedSessionId = stored?.code === code ? stored.sessionId : sessionId;
+    const shouldRestore = Boolean(room?.code === code || stored?.code === code);
+    const event = shouldRestore ? "room:restore" : "room:join";
+    const key = `${event}:${socket.id}:${code}:${savedSessionId}`;
+    if (lastAutoKey.current === key) {
+      return;
+    }
+    lastAutoKey.current = key;
+
+    perform(() => ack(socket, event, {
+      code,
+      name: nextPlayer.name,
+      avatar: nextPlayer.avatar,
+      sessionId: savedSessionId
+    }).then((response) => {
+      const nextSaved = rememberRoom(response.room.code, response.playerId || savedSessionId);
+      setSavedRoom(nextSaved);
+      if (roomCode !== response.room.code) {
+        navigate(`/play/${response.room.code}`, { replace: true });
+      }
+    }).catch((caught) => {
+      if (event === "room:restore") {
+        clearSavedRoom(code);
+        setSavedRoom(null);
+      }
+      throw caught;
+    }), shouldRestore ? "restore" : "join");
+  }, [connected, location.state, navigate, room?.code, roomCode, sessionId, socket]);
 
   const me = useMemo(() => room?.players.find((item) => item.id === room.me?.playerId), [room]);
   const isHost = Boolean(room?.me?.isHost);
 
-  async function perform(action) {
+  async function perform(action, actionName = "action") {
     setBusy(true);
+    setPendingAction(actionName);
     setError("");
     try {
       await action();
@@ -230,27 +331,37 @@ export default function Game() {
       setError(caught.message);
     } finally {
       setBusy(false);
+      setPendingAction("");
     }
   }
 
   function createRoom(event) {
     event?.preventDefault();
-    if (!socket) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
       return;
     }
     const nextPlayer = persistPlayer(player);
     setPlayer(nextPlayer);
     perform(() => ack(socket, "room:create", {
       name: nextPlayer.name,
-      avatar: nextPlayer.avatar
+      avatar: nextPlayer.avatar,
+      sessionId
     }).then((response) => {
+      const nextSaved = rememberRoom(response.room.code, response.playerId || sessionId);
+      setSavedRoom(nextSaved);
       navigate(`/play/${response.room.code}`, { replace: true });
-    }));
+    }), "create");
   }
 
   function joinRoom(event) {
     event.preventDefault();
-    if (!socket || !joinCode.trim()) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
+      return;
+    }
+    if (!joinCode.trim()) {
+      setError("اكتب كود الغرفة أولًا.");
       return;
     }
     const nextPlayer = persistPlayer(player);
@@ -258,43 +369,54 @@ export default function Game() {
     perform(() => ack(socket, "room:join", {
       code: joinCode.trim().toUpperCase(),
       name: nextPlayer.name,
-      avatar: nextPlayer.avatar
+      avatar: nextPlayer.avatar,
+      sessionId
     }).then((response) => {
+      const nextSaved = rememberRoom(response.room.code, response.playerId || sessionId);
+      setSavedRoom(nextSaved);
       navigate(`/play/${response.room.code}`, { replace: true });
-    }));
+    }), "join");
   }
 
   function updateSettings(next) {
-    if (!socket) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
       return;
     }
-    perform(() => ack(socket, "room:updateSettings", next));
+    perform(() => ack(socket, "room:updateSettings", next), "settings");
   }
 
   function addBot() {
-    if (!socket) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
       return;
     }
-    perform(() => ack(socket, "room:addBot"));
+    perform(() => ack(socket, "room:addBot"), "bot");
   }
 
   function endGame() {
-    if (!socket) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
       return;
     }
-    perform(() => ack(socket, "game:end"));
+    perform(() => ack(socket, "game:end"), "end");
   }
 
   function kickVote(playerId) {
-    if (!socket) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
       return;
     }
-    perform(() => ack(socket, "player:kickVote", { playerId }));
+    perform(() => ack(socket, "player:kickVote", { playerId }), "kick");
   }
 
   function submitAnswer(event) {
     event.preventDefault();
-    if (!socket || !answer.trim()) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
+      return;
+    }
+    if (!answer.trim()) {
       return;
     }
     perform(() => ack(socket, "answer:submit", { text: answer }).then((response) => {
@@ -305,26 +427,56 @@ export default function Game() {
         return;
       }
       setNotice("");
-    }));
+    }), "answer");
   }
 
   function vote(optionId) {
-    if (!socket) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
       return;
     }
     setSelectedOption(optionId);
-    perform(() => ack(socket, "vote:submit", { optionId }));
+    perform(() => ack(socket, "vote:submit", { optionId }), "vote");
   }
 
-  function sendChat(message) {
-    if (!socket) {
-      return;
+  async function sendChat(message) {
+    if (!socket || !connected) {
+      const error = new Error("الاتصال غير جاهز.");
+      setError(error.message);
+      throw error;
     }
-    ack(socket, "chat:send", { message }).catch((caught) => setError(caught.message));
+    setChatBusy(true);
+    setError("");
+    try {
+      await ack(socket, "chat:send", { message });
+    } catch (caught) {
+      setError(caught.message);
+      throw caught;
+    } finally {
+      setChatBusy(false);
+    }
   }
 
   function copyCode() {
     navigator.clipboard?.writeText(room.code).catch(() => {});
+    setNotice("تم نسخ كود الغرفة.");
+  }
+
+  function leaveRoom() {
+    const code = room?.code;
+    clearSavedRoom(code);
+    setSavedRoom(null);
+
+    if (!socket || !connected) {
+      setRoom(null);
+      navigate("/play", { replace: true });
+      return;
+    }
+
+    perform(() => ack(socket, "room:leave").finally(() => {
+      setRoom(null);
+      navigate("/play", { replace: true });
+    }), "leave");
   }
 
   if (!room) {
@@ -349,8 +501,8 @@ export default function Game() {
 
           <div className="home-action-grid">
             <button className="primary-button" type="button" onClick={createRoom} disabled={!connected || busy}>
-              <Play size={18} />
-              <span>إنشاء</span>
+              <ActionIcon loading={pendingAction === "create"} icon={Play} />
+              <span>{pendingAction === "create" ? "جاري الإنشاء" : "إنشاء"}</span>
             </button>
 
             <form className="join-inline" onSubmit={joinRoom}>
@@ -366,11 +518,27 @@ export default function Game() {
                 />
               </label>
               <button className="secondary-button" type="submit" disabled={!connected || busy}>
-                <ArrowLeft size={18} />
-                <span>دخول</span>
+                <ActionIcon loading={pendingAction === "join" || pendingAction === "restore"} icon={ArrowLeft} />
+                <span>{pendingAction === "join" || pendingAction === "restore" ? "جاري الدخول" : "دخول"}</span>
               </button>
             </form>
           </div>
+
+          {savedRoom?.code ? (
+            <div className="resume-room-strip">
+              <span>غرفة محفوظة <b dir="ltr">{savedRoom.code}</b></span>
+              <button className="ghost-button" type="button" onClick={() => navigate(`/play/${savedRoom.code}`)} disabled={!connected || busy}>
+                <ActionIcon loading={pendingAction === "restore"} icon={ArrowLeft} />
+                <span>متابعة</span>
+              </button>
+              <button className="icon-button" type="button" onClick={() => {
+                clearSavedRoom(savedRoom.code);
+                setSavedRoom(null);
+              }} aria-label="مسح الغرفة المحفوظة">
+                <X size={16} />
+              </button>
+            </div>
+          ) : null}
         </section>
         {error ? <div className="toast error">{error}</div> : null}
       </main>
@@ -390,16 +558,32 @@ export default function Game() {
         <div className="room-actions">
           {isHost && room.phase !== "lobby" ? (
             <button className="secondary-button" type="button" onClick={endGame} disabled={busy}>
-              <Square size={16} />
-              <span>إنهاء اللعبة</span>
+              <ActionIcon loading={pendingAction === "end"} icon={Square} size={16} />
+              <span>{pendingAction === "end" ? "جاري الإنهاء" : "إنهاء اللعبة"}</span>
             </button>
           ) : null}
           <button className="icon-text-button" type="button" onClick={copyCode}>
             <Clipboard size={17} />
             <span>نسخ الكود</span>
           </button>
+          <button className="icon-text-button danger-action" type="button" onClick={leaveRoom} disabled={pendingAction === "leave"}>
+            <ActionIcon loading={pendingAction === "leave"} icon={LogOut} size={17} />
+            <span>{pendingAction === "leave" ? "جاري الخروج" : "خروج"}</span>
+          </button>
         </div>
       </section>
+
+      {!connected ? (
+        <div className="connection-banner">
+          <Loader2 className="spin" size={18} />
+          <span>الاتصال انقطع. نحاول نرجعك لنفس الغرفة...</span>
+        </div>
+      ) : pendingAction === "restore" ? (
+        <div className="connection-banner">
+          <Loader2 className="spin" size={18} />
+          <span>جاري استرجاع جلستك في الغرفة...</span>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="toast error">
@@ -431,9 +615,11 @@ export default function Game() {
               config={config}
               isHost={isHost}
               busy={busy}
+              connected={connected}
+              pendingAction={pendingAction}
               onUpdate={updateSettings}
               onAddBot={addBot}
-              onStart={() => perform(() => ack(socket, "game:start"))}
+              onStart={() => perform(() => ack(socket, "game:start"), "start")}
             />
           ) : null}
 
@@ -445,6 +631,8 @@ export default function Game() {
               setAnswer={setAnswer}
               onSubmit={submitAnswer}
               busy={busy}
+              connected={connected}
+              pendingAction={pendingAction}
             />
           ) : null}
 
@@ -455,6 +643,8 @@ export default function Game() {
               selectedOption={selectedOption}
               onVote={vote}
               busy={busy}
+              connected={connected}
+              pendingAction={pendingAction}
             />
           ) : null}
 
@@ -463,7 +653,9 @@ export default function Game() {
               room={room}
               isHost={isHost}
               busy={busy}
-              onNext={() => perform(() => ack(socket, "round:next"))}
+              connected={connected}
+              pendingAction={pendingAction}
+              onNext={() => perform(() => ack(socket, "round:next"), "next")}
             />
           ) : null}
 
@@ -474,12 +666,16 @@ export default function Game() {
 
         <aside className="side-zone">
           <Scoreboard players={room.players} compact />
-          <PlayersPanel room={room} busy={busy} onKickVote={kickVote} />
-          <Chat messages={room.messages} onSend={sendChat} />
+          <PlayersPanel room={room} busy={busy} connected={connected} pendingAction={pendingAction} onKickVote={kickVote} />
+          <Chat messages={room.messages} onSend={sendChat} connected={connected} sending={chatBusy} />
         </aside>
       </section>
     </main>
   );
+}
+
+function ActionIcon({ loading, icon: Icon, size = 18 }) {
+  return loading ? <Loader2 className="spin" size={size} /> : <Icon size={size} />;
 }
 
 function RoundSplash({ splash, gameModes }) {
@@ -540,8 +736,9 @@ function PlayerFields({ player, setPlayer }) {
   );
 }
 
-function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, onAddBot, onStart }) {
-  const canStart = room.players.length >= config.minPlayers;
+function Lobby({ room, categories, gameModes, config, isHost, busy, connected, pendingAction, onUpdate, onAddBot, onStart }) {
+  const connectedPlayers = room.players.filter((player) => player.connected !== false);
+  const canStart = connectedPlayers.length >= config.minPlayers;
   const canAddBot = isHost && room.players.length < config.maxPlayers;
   const selectedModes = selectedModeIds(room.settings.modes ?? room.settings.mode);
   const limits = roundLimits(selectedModes.length);
@@ -570,9 +767,9 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
 
       {isHost ? (
         <div className="bot-controls">
-          <button className="secondary-button" type="button" onClick={onAddBot} disabled={!canAddBot || busy}>
-            <UserPlus size={18} />
-            <span>إضافة لاعب آلي</span>
+          <button className="secondary-button" type="button" onClick={onAddBot} disabled={!connected || !canAddBot || busy}>
+            <ActionIcon loading={pendingAction === "bot"} icon={UserPlus} />
+            <span>{pendingAction === "bot" ? "جاري الإضافة" : "إضافة لاعب آلي"}</span>
           </button>
           <span className="mini-chip">
             <Bot size={14} />
@@ -593,6 +790,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
                   <span>آلي</span>
                 </span>
               ) : null}
+              {player.connected === false ? <span className="mini-chip offline-chip">غير متصل</span> : null}
               {player.isHost ? <Crown size={16} /> : null}
             </div>
           </div>
@@ -610,7 +808,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
             modes={gameModes}
             selected={selectedModes}
             onChange={updateModes}
-            disabled={!isHost}
+            disabled={!connected || !isHost}
           />
         </div>
         {selectedModes.includes("kalak") ? <div className="settings-categories">
@@ -619,7 +817,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
             categories={categories}
             selected={room.settings.categories || []}
             onChange={(nextCategories) => onUpdate({ categories: nextCategories })}
-            disabled={!isHost}
+            disabled={!connected || !isHost}
           />
         </div> : null}
         <div className="settings-grid">
@@ -631,7 +829,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
               max={limits.max}
               step={limits.step}
               value={room.settings.rounds}
-              disabled={!isHost}
+              disabled={!connected || !isHost}
               onChange={(event) => onUpdate({ rounds: normalizeRoundCount(event.target.value, selectedModes.length) })}
             />
           </label>
@@ -642,7 +840,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
               min="20"
               max="60"
               value={room.settings.answerSeconds}
-              disabled={!isHost}
+              disabled={!connected || !isHost}
               onChange={(event) => onUpdate({ answerSeconds: event.target.value })}
             />
           </label>
@@ -653,7 +851,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
               min="15"
               max="45"
               value={room.settings.voteSeconds}
-              disabled={!isHost}
+              disabled={!connected || !isHost}
               onChange={(event) => onUpdate({ voteSeconds: event.target.value })}
             />
           </label>
@@ -661,9 +859,9 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
       </div>
 
       {isHost ? (
-        <button className="primary-button wide-button" type="button" onClick={onStart} disabled={!canStart || busy}>
-          <Play size={18} />
-          <span>{canStart ? "بدء اللعبة" : `تحتاج ${config.minPlayers} لاعبين`}</span>
+        <button className="primary-button wide-button" type="button" onClick={onStart} disabled={!connected || !canStart || busy}>
+          <ActionIcon loading={pendingAction === "start"} icon={Play} />
+          <span>{pendingAction === "start" ? "جاري البدء" : canStart ? "بدء اللعبة" : `تحتاج ${config.minPlayers} لاعبين متصلين`}</span>
         </button>
       ) : (
         <div className="waiting-strip">
@@ -675,7 +873,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, onUpdate, on
   );
 }
 
-function Answering({ room, me, answer, setAnswer, onSubmit, busy }) {
+function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pendingAction }) {
   const submitted = Boolean(me?.submitted);
   const activeMode = getActiveMode(room);
   const isImposterMode = activeMode === "imposter";
@@ -736,9 +934,9 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy }) {
             placeholder={placeholder}
             autoFocus
           />
-          <button className="primary-button" type="submit" disabled={busy || !answer.trim()}>
-            <Send size={18} />
-            <span>إرسال</span>
+          <button className="primary-button" type="submit" disabled={!connected || busy || !answer.trim()}>
+            <ActionIcon loading={pendingAction === "answer"} icon={Send} />
+            <span>{pendingAction === "answer" ? "جاري الإرسال" : "إرسال"}</span>
           </button>
         </form>
       )}
@@ -748,7 +946,7 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy }) {
   );
 }
 
-function Voting({ room, me, selectedOption, onVote, busy }) {
+function Voting({ room, me, selectedOption, onVote, busy, connected, pendingAction }) {
   return (
     <section className="panel stage-panel">
       <div className="stage-heading">
@@ -770,10 +968,10 @@ function Voting({ room, me, selectedOption, onVote, busy }) {
             className={`answer-option ${selectedOption === option.id ? "selected" : ""}`}
             key={option.id}
             type="button"
-            disabled={busy || me?.voted || option.isOwn || me?.canVote === false}
+            disabled={!connected || busy || me?.voted || option.isOwn || me?.canVote === false}
             onClick={() => onVote(option.id)}
           >
-            <span className="option-index">{index + 1}</span>
+            <span className="option-index">{pendingAction === "vote" && selectedOption === option.id ? <Loader2 className="spin" size={16} /> : index + 1}</span>
             <span className="option-body">
               <strong>{option.text}</strong>
               {option.clue ? <small>الوصف: {option.clue}</small> : null}
@@ -855,7 +1053,7 @@ function revealOwnerLabel(room, option) {
   return option.ownerNames.length ? `كتبها: ${option.ownerNames.join("، ")}` : "بدون صاحب";
 }
 
-function Results({ room, isHost, busy, onNext }) {
+function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
   const isFinal = room.results?.isFinal || room.round >= room.settings.rounds;
 
   return (
@@ -906,9 +1104,9 @@ function Results({ room, isHost, busy, onNext }) {
       </div>
 
       {isHost ? (
-        <button className="primary-button wide-button" type="button" onClick={onNext} disabled={busy}>
-          <Sparkles size={18} />
-          <span>{isFinal ? "إنهاء المباراة" : "الجولة التالية"}</span>
+        <button className="primary-button wide-button" type="button" onClick={onNext} disabled={!connected || busy}>
+          <ActionIcon loading={pendingAction === "next"} icon={Sparkles} />
+          <span>{pendingAction === "next" ? "جاري النقل" : isFinal ? "إنهاء المباراة" : "الجولة التالية"}</span>
         </button>
       ) : null}
     </section>
@@ -965,7 +1163,7 @@ function ProgressStrip({ players, kind, voting = false, answering = false }) {
   );
 }
 
-function PlayersPanel({ room, busy, onKickVote }) {
+function PlayersPanel({ room, busy, connected, pendingAction, onKickVote }) {
   const currentPlayerId = room.me?.playerId;
   const kickVotes = new Map((room.kickVotes || []).map((vote) => [vote.targetId, vote]));
 
@@ -986,6 +1184,7 @@ function PlayersPanel({ room, busy, onKickVote }) {
               <Avatar avatar={player.avatar} name={player.name} />
               <span className="player-name">{player.name}</span>
               {player.eliminated ? <span className="mini-chip eliminated-chip">خارج</span> : null}
+              {player.connected === false ? <span className="mini-chip offline-chip">غير متصل</span> : null}
               {player.isBot ? (
                 <span className="mini-chip bot-chip">
                   <Bot size={13} />
@@ -1002,10 +1201,10 @@ function PlayersPanel({ room, busy, onKickVote }) {
                   type="button"
                   aria-label={`تصويت لطرد ${player.name}`}
                   title="تصويت للطرد"
-                  disabled={busy}
+                  disabled={!connected || busy}
                   onClick={() => onKickVote(player.id)}
                 >
-                  <UserMinus size={14} />
+                  {pendingAction === "kick" ? <Loader2 className="spin" size={14} /> : <UserMinus size={14} />}
                 </button>
               ) : null}
             </div>

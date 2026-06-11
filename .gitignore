@@ -1,0 +1,4 @@
+.env
+server/.env
+server.dev.log
+server.dev.err.log

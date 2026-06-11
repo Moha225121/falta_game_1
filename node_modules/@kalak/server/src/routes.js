@@ -1,5 +1,6 @@
 import express from "express";
 import { GAME_MODES } from "./gameModes.js";
+import { questionTypes } from "./questionTypes.js";
 
 function requireAdmin(config) {
   return (req, res, next) => {
@@ -46,15 +47,33 @@ export function createApiRouter({ store, game, config }) {
   });
 
   router.get("/categories", asyncRoute(async (req, res) => {
-    res.json(await store.categories());
+    res.json(await store.categories(req.query));
   }));
 
   router.get("/game-modes", (req, res) => {
     res.json(GAME_MODES);
   });
 
+  router.get("/question-types", (req, res) => {
+    res.json(questionTypes());
+  });
+
   router.get("/stats", adminOnly, asyncRoute(async (req, res) => {
-    res.json(await store.stats());
+    const questionStats = await store.stats();
+    res.json({
+      ...questionStats,
+      questions: questionStats,
+      live: game.getStatistics()
+    });
+  }));
+
+  router.get("/category-records", adminOnly, asyncRoute(async (req, res) => {
+    res.json(await store.categoryRecords(req.query));
+  }));
+
+  router.post("/category-records", adminOnly, asyncRoute(async (req, res) => {
+    const category = await store.createCategory(req.body);
+    res.status(201).json(category);
   }));
 
   router.get("/questions", adminOnly, asyncRoute(async (req, res) => {
@@ -73,6 +92,14 @@ export function createApiRouter({ store, game, config }) {
   router.post("/questions", adminOnly, asyncRoute(async (req, res) => {
     const question = await store.create(req.body);
     res.status(201).json(question);
+  }));
+
+  router.post("/questions/import", adminOnly, asyncRoute(async (req, res) => {
+    const questions = await store.createMany(req.body);
+    res.status(201).json({
+      inserted: questions.length,
+      questions
+    });
   }));
 
   router.put("/questions/:id", adminOnly, asyncRoute(async (req, res) => {
@@ -103,6 +130,11 @@ export function createApiRouter({ store, game, config }) {
   });
 
   router.use((err, req, res, next) => {
+    if (err.statusCode) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
+
     if (err.name === "ZodError") {
       res.status(400).json({ error: "فشل التحقق من البيانات.", details: err.flatten() });
       return;

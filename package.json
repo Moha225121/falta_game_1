@@ -2,7 +2,7 @@
   "name": "libyan-kalak",
   "version": "1.0.0",
   "private": true,
-  "description": "Falta multiplayer bluffing trivia game with Node.js API, realtime web client, and admin panel.",
+  "description": "لعبة فلتة الجماعية للأسئلة والخداع مع واجهة Node.js، عميل ويب مباشر، ولوحة إدارة.",
   "workspaces": [
     "server",
     "client"
