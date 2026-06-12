@@ -594,7 +594,7 @@ export default function Game() {
   const inMatch = activeMatchPhases.has(room.phase);
 
   return (
-    <main className="game-screen">
+    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""}`}>
       <section className="room-header">
         <div>
           <div className="hero-kicker">
@@ -659,7 +659,7 @@ export default function Game() {
 
       <section className="game-layout">
         <div className="play-zone" ref={playZoneRef}>
-          {["answering", "voting", "results"].includes(room.phase) ? (
+          {!inMatch && ["answering", "voting", "results"].includes(room.phase) ? (
             <RoundStrip room={room} gameModes={gameModes} />
           ) : null}
 

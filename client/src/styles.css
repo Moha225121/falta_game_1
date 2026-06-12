@@ -820,6 +820,16 @@ button:disabled {
   color: var(--gold);
 }
 
+.match-focus-screen .room-header,
+.match-focus-screen .connection-banner {
+  width: min(920px, 100%);
+  margin-inline: auto;
+}
+
+.match-focus-screen .room-header {
+  margin-bottom: 14px;
+}
+
 .room-actions {
   gap: 12px;
   flex-wrap: wrap;
@@ -834,10 +844,51 @@ button:disabled {
   flex-wrap: wrap;
 }
 
-.mobile-menu-trigger,
-.drawer-backdrop,
-.match-drawer {
+.mobile-menu-trigger {
   display: none;
+}
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.48);
+  border: 0;
+  transition: opacity 180ms ease;
+}
+
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.match-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  display: none;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 12px;
+  width: min(390px, calc(100vw - 24px));
+  padding: 16px;
+  transform: translateX(105%);
+  visibility: hidden;
+  pointer-events: none;
+  background: var(--panel-strong);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: transform 220ms ease;
+}
+
+.match-drawer.open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .status-dot {
@@ -940,6 +991,12 @@ button:disabled {
   align-items: start;
 }
 
+.match-focus-screen .game-layout {
+  grid-template-columns: minmax(0, min(920px, 100%));
+  justify-content: center;
+  gap: 0;
+}
+
 .play-zone,
 .side-zone {
   min-width: 0;
@@ -953,6 +1010,34 @@ button:disabled {
 .side-zone {
   display: grid;
   gap: 14px;
+}
+
+.match-focus-screen .play-zone {
+  width: 100%;
+  max-width: 920px;
+  justify-self: center;
+}
+
+.match-focus-screen .side-zone,
+.match-focus-screen .desktop-room-actions,
+.match-focus-screen .play-zone > .round-strip {
+  display: none;
+}
+
+.match-focus-screen .mobile-menu-trigger {
+  display: inline-flex;
+}
+
+.match-focus-screen .drawer-backdrop {
+  display: block;
+}
+
+.match-focus-screen .match-drawer {
+  display: grid;
+}
+
+.match-focus-screen .stage-panel {
+  min-height: auto;
 }
 
 .drawer-head,
@@ -2584,12 +2669,14 @@ button:disabled {
 
   .match-drawer {
     position: fixed;
+    top: auto;
     inset-inline: 0;
     bottom: 0;
     z-index: 61;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
     gap: 12px;
+    width: auto;
     max-height: min(82vh, 680px);
     padding: 14px;
     transform: translateY(105%);
@@ -2597,6 +2684,7 @@ button:disabled {
     pointer-events: none;
     background: var(--panel-strong);
     border: 1px solid var(--line);
+    border-left: 1px solid var(--line);
     border-bottom: 0;
     border-radius: 8px 8px 0 0;
     box-shadow: var(--shadow);
