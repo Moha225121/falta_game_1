@@ -169,6 +169,13 @@ function cleanSessionId(value) {
     .slice(0, 64) || nanoid(16);
 }
 
+function cleanRoomCode(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, ROOM_CODE_LENGTH);
+}
+
 function cleanAvatar(avatar = {}) {
   return {
     persona: cleanPersona(avatar.persona || avatar.id),
@@ -312,7 +319,7 @@ export class KalakGameEngine {
   }
 
   getRoom(code) {
-    const room = this.rooms.get(String(code || "").toUpperCase());
+    const room = this.rooms.get(cleanRoomCode(code));
     return room ? this.publicRoom(room, null) : null;
   }
 
@@ -535,9 +542,13 @@ export class KalakGameEngine {
   }
 
   async joinRoom(socket, payload = {}) {
-    const code = String(payload.code || "").trim().toUpperCase();
+    const code = cleanRoomCode(payload.code);
     const room = this.rooms.get(code);
     const sessionId = cleanSessionId(payload.sessionId);
+
+    if (code.length !== ROOM_CODE_LENGTH) {
+      throw new Error("اكتب كود غرفة صحيح من 5 خانات.");
+    }
 
     if (!room) {
       throw new Error("كود الغرفة غير موجود.");
@@ -572,9 +583,13 @@ export class KalakGameEngine {
   }
 
   async restoreRoom(socket, payload = {}) {
-    const code = String(payload.code || "").trim().toUpperCase();
+    const code = cleanRoomCode(payload.code);
     const room = this.rooms.get(code);
     const sessionId = cleanSessionId(payload.sessionId);
+
+    if (code.length !== ROOM_CODE_LENGTH) {
+      throw new Error("اكتب كود غرفة صحيح من 5 خانات.");
+    }
 
     if (!room) {
       throw new Error("هذه الغرفة انتهت أو انقطعت.");
@@ -593,8 +608,15 @@ export class KalakGameEngine {
   }
 
   async leaveRoom(socket) {
-    const room = this.requireRoom(socket);
+    const room = socket.data.roomCode ? this.rooms.get(socket.data.roomCode) : null;
     const playerId = this.playerId(socket);
+
+    if (!room || !room.players.has(playerId)) {
+      delete socket.data.roomCode;
+      delete socket.data.playerId;
+      return { room: null };
+    }
+
     const player = room.players.get(playerId);
 
     this.removePlayerFromRoom(room, playerId, `${player?.name || "اللاعب"} غادر الغرفة.`);

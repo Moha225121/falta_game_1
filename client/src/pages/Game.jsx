@@ -6,14 +6,16 @@ import {
   Check,
   Clipboard,
   Crown,
-  Gamepad2,
   Loader2,
   LogOut,
+  Menu,
+  MessageCircle,
   Play,
   Send,
   Settings,
   Sparkles,
   Square,
+  Trophy,
   UserMinus,
   UserPlus,
   Users,
@@ -50,9 +52,18 @@ const phaseLabels = {
 
 const savedRoomKey = "kalak:room";
 const sessionKey = "kalak:sessionId";
+const roomCodeLength = 5;
+const activeMatchPhases = new Set(["answering", "voting", "results"]);
 
 function getActiveMode(room) {
   return room?.activeMode || room?.settings?.mode || selectedModeIds(room?.settings?.modes)[0];
+}
+
+function normalizeRoomCodeInput(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, roomCodeLength);
 }
 
 function gameModeName(gameModes, modeId) {
@@ -164,15 +175,18 @@ export default function Game() {
   const lastAutoKey = useRef("");
   const lastRoundKey = useRef("");
   const roundSplashTimer = useRef(null);
+  const playZoneRef = useRef(null);
   const [sessionId] = useState(() => getSessionId());
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerPanel, setDrawerPanel] = useState("score");
   const [savedRoom, setSavedRoom] = useState(() => loadSavedRoom());
   const [categories, setCategories] = useState([]);
   const [gameModes, setGameModes] = useState(fallbackGameModes);
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
   const [player, setPlayer] = useState(() => loadPlayer(location.state));
-  const [joinCode, setJoinCode] = useState(roomCode || "");
+  const [joinCode, setJoinCode] = useState(() => normalizeRoomCodeInput(roomCode));
   const [answer, setAnswer] = useState("");
   const [selectedOption, setSelectedOption] = useState("");
   const [busy, setBusy] = useState(false);
@@ -186,6 +200,12 @@ export default function Game() {
     api("/game-modes").then(setGameModes).catch(() => {});
     api("/config").then(setConfig).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!room) {
+      setJoinCode(normalizeRoomCodeInput(roomCode));
+    }
+  }, [room, roomCode]);
 
   useEffect(() => {
     if (!socket) {
@@ -256,6 +276,24 @@ export default function Game() {
   useEffect(() => () => clearTimeout(roundSplashTimer.current), []);
 
   useEffect(() => {
+    if (!room || !activeMatchPhases.has(room.phase)) {
+      return undefined;
+    }
+
+    setDrawerOpen(false);
+    if (!globalThis.matchMedia?.("(max-width: 760px)").matches) {
+      return undefined;
+    }
+
+    const scrollTimer = setTimeout(() => {
+      const target = playZoneRef.current?.querySelector(".stage-panel") || playZoneRef.current;
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+
+    return () => clearTimeout(scrollTimer);
+  }, [room?.phase, room?.round, room?.activeMode]);
+
+  useEffect(() => {
     if (!socket || !connected) {
       return;
     }
@@ -265,7 +303,7 @@ export default function Game() {
     setPlayer(nextPlayer);
     const stored = loadSavedRoom();
     const activeCode = room?.code || roomCode || state?.code || stored?.code || "";
-    const code = String(activeCode).trim().toUpperCase();
+    const code = normalizeRoomCodeInput(activeCode);
 
     if (state?.mode === "create" && !room) {
       const key = `create:${socket.id}:${sessionId}`;
@@ -360,14 +398,17 @@ export default function Game() {
       setError("الاتصال غير جاهز.");
       return;
     }
-    if (!joinCode.trim()) {
-      setError("اكتب كود الغرفة أولًا.");
+    const code = normalizeRoomCodeInput(joinCode);
+    if (code.length !== roomCodeLength) {
+      setJoinCode(code);
+      setError("اكتب كود غرفة صحيح من 5 خانات.");
       return;
     }
+    setJoinCode(code);
     const nextPlayer = persistPlayer(player);
     setPlayer(nextPlayer);
     perform(() => ack(socket, "room:join", {
-      code: joinCode.trim().toUpperCase(),
+      code,
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
       sessionId
@@ -466,17 +507,18 @@ export default function Game() {
     const code = room?.code;
     clearSavedRoom(code);
     setSavedRoom(null);
+    setDrawerOpen(false);
+    setRoom(null);
+    navigate("/play", { replace: true });
 
     if (!socket || !connected) {
-      setRoom(null);
-      navigate("/play", { replace: true });
       return;
     }
 
-    perform(() => ack(socket, "room:leave").finally(() => {
-      setRoom(null);
-      navigate("/play", { replace: true });
-    }), "leave");
+    setPendingAction("leave");
+    ack(socket, "room:leave")
+      .catch(() => {})
+      .finally(() => setPendingAction(""));
   }
 
   if (!room) {
@@ -511,9 +553,13 @@ export default function Game() {
                 <input
                   className="room-code-input"
                   value={joinCode}
-                  onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
-                  maxLength={5}
+                  onChange={(event) => setJoinCode(normalizeRoomCodeInput(event.target.value))}
+                  maxLength={12}
                   dir="ltr"
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  autoComplete="one-time-code"
+                  spellCheck={false}
                   placeholder="A7K2Q"
                 />
               </label>
@@ -545,6 +591,8 @@ export default function Game() {
     );
   }
 
+  const inMatch = activeMatchPhases.has(room.phase);
+
   return (
     <main className="game-screen">
       <section className="room-header">
@@ -553,23 +601,31 @@ export default function Game() {
             <span className={`status-dot ${connected ? "online" : ""}`} />
             <span>{phaseLabels[room.phase]}</span>
           </div>
-          <h1>غرفة <b dir="ltr">{room.code}</b></h1>
+          <h1>{inMatch ? phaseLabels[room.phase] : <>غرفة <b dir="ltr">{room.code}</b></>}</h1>
         </div>
         <div className="room-actions">
-          {isHost && room.phase !== "lobby" ? (
-            <button className="secondary-button" type="button" onClick={endGame} disabled={busy}>
-              <ActionIcon loading={pendingAction === "end"} icon={Square} size={16} />
-              <span>{pendingAction === "end" ? "جاري الإنهاء" : "إنهاء اللعبة"}</span>
+          <button className="icon-text-button mobile-menu-trigger" type="button" onClick={() => setDrawerOpen(true)}>
+            <Menu size={17} />
+            <span>القائمة</span>
+          </button>
+          <div className="desktop-room-actions">
+            {isHost && room.phase !== "lobby" ? (
+              <button className="secondary-button" type="button" onClick={endGame} disabled={busy}>
+                <ActionIcon loading={pendingAction === "end"} icon={Square} size={16} />
+                <span>{pendingAction === "end" ? "جاري الإنهاء" : "إنهاء اللعبة"}</span>
+              </button>
+            ) : null}
+            {room.phase === "lobby" ? (
+              <button className="icon-text-button" type="button" onClick={copyCode}>
+                <Clipboard size={17} />
+                <span>نسخ الكود</span>
+              </button>
+            ) : null}
+            <button className="icon-text-button danger-action" type="button" onClick={leaveRoom} disabled={pendingAction === "leave"}>
+              <ActionIcon loading={pendingAction === "leave"} icon={LogOut} size={17} />
+              <span>{pendingAction === "leave" ? "جاري الخروج" : "خروج"}</span>
             </button>
-          ) : null}
-          <button className="icon-text-button" type="button" onClick={copyCode}>
-            <Clipboard size={17} />
-            <span>نسخ الكود</span>
-          </button>
-          <button className="icon-text-button danger-action" type="button" onClick={leaveRoom} disabled={pendingAction === "leave"}>
-            <ActionIcon loading={pendingAction === "leave"} icon={LogOut} size={17} />
-            <span>{pendingAction === "leave" ? "جاري الخروج" : "خروج"}</span>
-          </button>
+          </div>
         </div>
       </section>
 
@@ -602,7 +658,7 @@ export default function Game() {
       <RoundSplash splash={roundSplash} gameModes={gameModes} />
 
       <section className="game-layout">
-        <div className="play-zone">
+        <div className="play-zone" ref={playZoneRef}>
           {["answering", "voting", "results"].includes(room.phase) ? (
             <RoundStrip room={room} gameModes={gameModes} />
           ) : null}
@@ -665,17 +721,134 @@ export default function Game() {
         </div>
 
         <aside className="side-zone">
-          <Scoreboard players={room.players} compact />
-          <PlayersPanel room={room} busy={busy} connected={connected} pendingAction={pendingAction} onKickVote={kickVote} />
-          <Chat messages={room.messages} onSend={sendChat} connected={connected} sending={chatBusy} />
+          <MatchExtras
+            room={room}
+            busy={busy}
+            connected={connected}
+            pendingAction={pendingAction}
+            chatBusy={chatBusy}
+            onKickVote={kickVote}
+            onSendChat={sendChat}
+          />
         </aside>
       </section>
+
+      <MatchDrawer
+        open={drawerOpen}
+        panel={drawerPanel}
+        setPanel={setDrawerPanel}
+        onClose={() => setDrawerOpen(false)}
+        room={room}
+        isHost={isHost}
+        busy={busy}
+        connected={connected}
+        pendingAction={pendingAction}
+        chatBusy={chatBusy}
+        onKickVote={kickVote}
+        onSendChat={sendChat}
+        onCopyCode={copyCode}
+        onEndGame={endGame}
+        onLeave={leaveRoom}
+      />
     </main>
   );
 }
 
 function ActionIcon({ loading, icon: Icon, size = 18 }) {
   return loading ? <Loader2 className="spin" size={size} /> : <Icon size={size} />;
+}
+
+function MatchExtras({ room, busy, connected, pendingAction, chatBusy, onKickVote, onSendChat }) {
+  return (
+    <>
+      <Scoreboard players={room.players} compact />
+      <PlayersPanel room={room} busy={busy} connected={connected} pendingAction={pendingAction} onKickVote={onKickVote} />
+      <Chat messages={room.messages} onSend={onSendChat} connected={connected} sending={chatBusy} />
+    </>
+  );
+}
+
+function MatchDrawer({
+  open,
+  panel,
+  setPanel,
+  onClose,
+  room,
+  isHost,
+  busy,
+  connected,
+  pendingAction,
+  chatBusy,
+  onKickVote,
+  onSendChat,
+  onCopyCode,
+  onEndGame,
+  onLeave
+}) {
+  const tabs = [
+    { id: "score", label: "الترتيب", icon: Trophy },
+    { id: "players", label: "اللاعبون", icon: Users },
+    { id: "chat", label: "الدردشة", icon: MessageCircle },
+    { id: "actions", label: "خيارات", icon: Settings }
+  ];
+
+  return (
+    <>
+      <button className={`drawer-backdrop ${open ? "open" : ""}`} type="button" aria-label="إغلاق القائمة" onClick={onClose} />
+      <aside className={`match-drawer ${open ? "open" : ""}`} aria-hidden={!open}>
+        <div className="drawer-head">
+          <strong>{tabs.find((tab) => tab.id === panel)?.label || "القائمة"}</strong>
+          <button className="icon-button" type="button" onClick={onClose} aria-label="إغلاق القائمة">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="drawer-tabs" role="tablist" aria-label="قائمة المباراة">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button
+              className={panel === id ? "active" : ""}
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={panel === id}
+              onClick={() => setPanel(id)}
+            >
+              <Icon size={17} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="drawer-body">
+          {panel === "score" ? <Scoreboard players={room.players} compact /> : null}
+          {panel === "players" ? (
+            <PlayersPanel room={room} busy={busy} connected={connected} pendingAction={pendingAction} onKickVote={onKickVote} />
+          ) : null}
+          {panel === "chat" ? <Chat messages={room.messages} onSend={onSendChat} connected={connected} sending={chatBusy} /> : null}
+          {panel === "actions" ? (
+            <div className="drawer-action-list">
+              {room.phase === "lobby" ? (
+                <button className="icon-text-button" type="button" onClick={onCopyCode}>
+                  <Clipboard size={17} />
+                  <span>نسخ الكود</span>
+                </button>
+              ) : null}
+              {isHost && room.phase !== "lobby" ? (
+                <button className="secondary-button" type="button" onClick={onEndGame} disabled={busy}>
+                  <ActionIcon loading={pendingAction === "end"} icon={Square} size={16} />
+                  <span>{pendingAction === "end" ? "جاري الإنهاء" : "إنهاء اللعبة"}</span>
+                </button>
+              ) : null}
+              <button className="icon-text-button danger-action" type="button" onClick={onLeave} disabled={pendingAction === "leave"}>
+                <ActionIcon loading={pendingAction === "leave"} icon={LogOut} size={17} />
+                <span>{pendingAction === "leave" ? "جاري الخروج" : "خروج"}</span>
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </aside>
+    </>
+  );
 }
 
 function RoundSplash({ splash, gameModes }) {
@@ -932,7 +1105,6 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
             onChange={(event) => setAnswer(event.target.value)}
             maxLength={160}
             placeholder={placeholder}
-            autoFocus
           />
           <button className="primary-button" type="submit" disabled={!connected || busy || !answer.trim()}>
             <ActionIcon loading={pendingAction === "answer"} icon={Send} />

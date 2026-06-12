@@ -826,6 +826,20 @@ button:disabled {
   justify-content: flex-end;
 }
 
+.desktop-room-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mobile-menu-trigger,
+.drawer-backdrop,
+.match-drawer {
+  display: none;
+}
+
 .status-dot {
   width: 10px;
   height: 10px;
@@ -939,6 +953,56 @@ button:disabled {
 .side-zone {
   display: grid;
   gap: 14px;
+}
+
+.drawer-head,
+.drawer-tabs,
+.drawer-action-list {
+  display: grid;
+  gap: 10px;
+}
+
+.drawer-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.drawer-head strong {
+  font-size: 1.05rem;
+}
+
+.drawer-tabs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.drawer-tabs button {
+  min-width: 0;
+  min-height: 46px;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.drawer-tabs button.active {
+  color: #061114;
+  background: var(--gold);
+  border-color: rgba(255, 255, 255, 0.44);
+}
+
+.drawer-body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.drawer-action-list > * {
+  width: 100%;
+  justify-content: center;
 }
 
 .stage-panel {
@@ -2384,6 +2448,14 @@ button:disabled {
     justify-content: stretch;
   }
 
+  .desktop-room-actions {
+    display: none;
+  }
+
+  .mobile-menu-trigger {
+    display: inline-flex;
+  }
+
   .room-actions > *,
   .stats-strip span,
   .manager-toolbar select,
@@ -2392,22 +2464,83 @@ button:disabled {
     width: 100%;
   }
 
+  .game-layout {
+    gap: 10px;
+  }
+
+  .play-zone {
+    gap: 10px;
+  }
+
+  .side-zone {
+    display: none;
+  }
+
+  .play-zone > .round-strip {
+    display: none;
+  }
+
   .stage-panel {
     min-height: auto;
-    padding: 18px;
+    padding: 14px;
+  }
+
+  .stage-heading {
+    gap: 10px;
+    margin-bottom: 14px;
   }
 
   .stage-heading h2 {
-    font-size: 1.45rem;
+    font-size: 1.32rem;
   }
 
   .answer-timer {
     width: 100%;
     justify-content: center;
+    min-height: 54px;
+    padding: 0 12px;
+  }
+
+  .answer-timer .timer-ring {
+    width: 36px;
+    height: 36px;
+  }
+
+  .answer-timer .timer-copy strong {
+    font-size: 1.28rem;
+  }
+
+  .answer-form {
+    gap: 10px;
+  }
+
+  .answer-form textarea {
+    min-height: 124px;
+    font-size: 1rem;
+  }
+
+  .role-card {
+    margin-bottom: 10px;
+    padding: 12px;
+  }
+
+  .role-card strong {
+    font-size: 1.12rem;
+  }
+
+  .locked-answer {
+    min-height: 150px;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .answer-option {
     grid-template-columns: auto minmax(0, 1fr);
+    min-height: 68px;
+    padding: 12px;
   }
 
   .round-strip {
@@ -2421,6 +2554,77 @@ button:disabled {
 
   .answer-option .mini-chip {
     grid-column: 1 / -1;
+  }
+
+  .progress-strip {
+    margin-top: 14px;
+    gap: 8px;
+  }
+
+  .mini-player-list {
+    display: none;
+  }
+
+  .drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.48);
+    border: 0;
+    transition: opacity 180ms ease;
+  }
+
+  .drawer-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .match-drawer {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 61;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 12px;
+    max-height: min(82vh, 680px);
+    padding: 14px;
+    transform: translateY(105%);
+    visibility: hidden;
+    pointer-events: none;
+    background: var(--panel-strong);
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    box-shadow: var(--shadow);
+    transition: transform 220ms ease;
+  }
+
+  .match-drawer.open {
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .drawer-body .scoreboard,
+  .drawer-body .players-panel,
+  .drawer-body .chat-panel {
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .drawer-body .scoreboard.compact .score-list,
+  .drawer-body .player-list {
+    max-height: 42vh;
+    overflow: auto;
+  }
+
+  .drawer-body .chat-panel {
+    min-height: 52vh;
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
 
   .avatar-line {
