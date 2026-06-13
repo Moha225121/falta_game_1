@@ -1,4 +1,5 @@
 const configuredMaxPlayers = Number(process.env.MAX_PLAYERS || 6);
+const fixedTurnSeconds = 60;
 
 export const config = {
   port: Number(process.env.PORT || 4000),
@@ -6,8 +7,8 @@ export const config = {
   adminToken: process.env.ADMIN_TOKEN || "",
   minPlayers: Number(process.env.MIN_PLAYERS || 3),
   maxPlayers: Number.isFinite(configuredMaxPlayers) ? Math.max(3, Math.min(6, configuredMaxPlayers)) : 6,
-  answerSeconds: Number(process.env.ANSWER_SECONDS || 30),
-  voteSeconds: Number(process.env.VOTE_SECONDS || 30)
+  answerSeconds: fixedTurnSeconds,
+  voteSeconds: fixedTurnSeconds
 };
 
 export function clampNumber(value, min, max, fallback) {

@@ -66,6 +66,15 @@ function normalizeRoomCodeInput(value) {
     .slice(0, roomCodeLength);
 }
 
+function roundChoices(modeCount = 1) {
+  const limits = roundLimits(modeCount);
+  const choices = [];
+  for (let value = limits.min; value <= limits.max; value += limits.step) {
+    choices.push(value);
+  }
+  return choices;
+}
+
 function gameModeName(gameModes, modeId) {
   return gameModes.find((mode) => mode.id === modeId)?.name || "طور اللعبة";
 }
@@ -161,10 +170,16 @@ function ack(socket, event, payload = {}) {
       if (response?.ok) {
         resolve(response);
       } else {
-        reject(new Error(response?.error || "فشل تنفيذ الأمر."));
+        const error = new Error(response?.error || "فشل تنفيذ الأمر.");
+        error.code = response?.errorCode || "";
+        reject(error);
       }
     });
   });
+}
+
+function isRecoverableRoomError(error) {
+  return error?.code === "ROOM_UNAVAILABLE" || error?.code === "SESSION_MISSING";
 }
 
 export default function Game() {
@@ -348,9 +363,18 @@ export default function Game() {
         navigate(`/play/${response.room.code}`, { replace: true });
       }
     }).catch((caught) => {
-      if (event === "room:restore") {
+      if (event === "room:restore" || isRecoverableRoomError(caught)) {
         clearSavedRoom(code);
         setSavedRoom(null);
+      }
+      if (isRecoverableRoomError(caught)) {
+        setRoom(null);
+        setJoinCode("");
+        if (roomCode) {
+          navigate("/play", { replace: true });
+        }
+        setNotice("الغرفة القديمة غير متاحة الآن. افتح غرفة جديدة أو اكتب كود غرفة موجودة.");
+        return;
       }
       throw caught;
     }), shouldRestore ? "restore" : "join");
@@ -587,6 +611,7 @@ export default function Game() {
           ) : null}
         </section>
         {error ? <div className="toast error">{error}</div> : null}
+        {notice ? <div className="toast success">{notice}</div> : null}
       </main>
     );
   }
@@ -914,7 +939,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
   const canStart = connectedPlayers.length >= config.minPlayers;
   const canAddBot = isHost && room.players.length < config.maxPlayers;
   const selectedModes = selectedModeIds(room.settings.modes ?? room.settings.mode);
-  const limits = roundLimits(selectedModes.length);
+  const rounds = roundChoices(selectedModes.length);
 
   function updateModes(nextModes) {
     const modes = selectedModeIds(nextModes);
@@ -996,37 +1021,15 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
         <div className="settings-grid">
           <label>
             الجولات
-            <input
-              type="number"
-              min={limits.min}
-              max={limits.max}
-              step={limits.step}
+            <select
               value={room.settings.rounds}
               disabled={!connected || !isHost}
               onChange={(event) => onUpdate({ rounds: normalizeRoundCount(event.target.value, selectedModes.length) })}
-            />
-          </label>
-          <label>
-            وقت الإجابة
-            <input
-              type="number"
-              min="20"
-              max="60"
-              value={room.settings.answerSeconds}
-              disabled={!connected || !isHost}
-              onChange={(event) => onUpdate({ answerSeconds: event.target.value })}
-            />
-          </label>
-          <label>
-            وقت التصويت
-            <input
-              type="number"
-              min="15"
-              max="45"
-              value={room.settings.voteSeconds}
-              disabled={!connected || !isHost}
-              onChange={(event) => onUpdate({ voteSeconds: event.target.value })}
-            />
+            >
+              {rounds.map((roundCount) => (
+                <option key={roundCount} value={roundCount}>{roundCount}</option>
+              ))}
+            </select>
           </label>
         </div>
       </div>

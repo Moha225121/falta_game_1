@@ -176,6 +176,12 @@ function cleanRoomCode(value) {
     .slice(0, ROOM_CODE_LENGTH);
 }
 
+function codedError(message, code) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
 function cleanAvatar(avatar = {}) {
   return {
     persona: cleanPersona(avatar.persona || avatar.id),
@@ -311,10 +317,16 @@ export class KalakGameEngine {
         ack({ ok: true, ...result });
       }
     } catch (error) {
+      const payload = {
+        ok: false,
+        error: error.message || "حدث خطأ غير متوقع.",
+        errorCode: error.code || "UNKNOWN_ERROR"
+      };
       if (typeof ack === "function") {
-        ack({ ok: false, error: error.message || "حدث خطأ غير متوقع." });
+        ack(payload);
+      } else {
+        socket.emit("game:error", payload);
       }
-      socket.emit("game:error", { error: error.message || "حدث خطأ غير متوقع." });
     }
   }
 
@@ -551,7 +563,7 @@ export class KalakGameEngine {
     }
 
     if (!room) {
-      throw new Error("كود الغرفة غير موجود.");
+      throw codedError("كود الغرفة غير موجود.", "ROOM_UNAVAILABLE");
     }
 
     const existingPlayer = room.players.get(sessionId);
@@ -592,7 +604,7 @@ export class KalakGameEngine {
     }
 
     if (!room) {
-      throw new Error("هذه الغرفة انتهت أو انقطعت.");
+      throw codedError("هذه الغرفة انتهت أو انقطعت.", "ROOM_UNAVAILABLE");
     }
 
     const player = room.players.get(sessionId);
@@ -601,7 +613,7 @@ export class KalakGameEngine {
         return this.joinRoom(socket, payload);
       }
 
-      throw new Error("لم نجد جلستك في هذه الغرفة.");
+      throw codedError("لم نجد جلستك في هذه الغرفة.", "SESSION_MISSING");
     }
 
     return this.restorePlayer(socket, room, player, payload);
@@ -2914,8 +2926,8 @@ export class KalakGameEngine {
       category: categories.length === 1 ? categories[0] : "all",
       categories,
       rounds,
-      answerSeconds: clampNumber(input.answerSeconds, 20, 60, this.config.answerSeconds),
-      voteSeconds: clampNumber(input.voteSeconds, 15, 45, this.config.voteSeconds)
+      answerSeconds: this.config.answerSeconds,
+      voteSeconds: this.config.voteSeconds
     };
   }
 
