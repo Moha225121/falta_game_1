@@ -238,5 +238,872 @@
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_001",
+    "category": "تكنولوجيا",
+    "prompt": "ما الاسم المختصر لوحدة المعالجة المركزية في الحاسوب؟",
+    "correctAnswer": "CPU",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "حاسوب",
+      "عتاد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_002",
+    "category": "تكنولوجيا",
+    "prompt": "أي ذاكرة تفقد بياناتها غالبا عند إطفاء الجهاز: RAM أم SSD؟",
+    "correctAnswer": "RAM",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "حاسوب",
+      "ذاكرة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_003",
+    "category": "تكنولوجيا",
+    "prompt": "ما البروتوكول الآمن المستخدم غالبا لتصفح مواقع الويب المشفرة؟",
+    "correctAnswer": "HTTPS",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "ويب",
+      "أمن"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_004",
+    "category": "تكنولوجيا",
+    "prompt": "ما وظيفة نظام DNS في الإنترنت؟",
+    "correctAnswer": "تحويل أسماء النطاقات إلى عناوين IP",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "شبكات",
+      "إنترنت"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_005",
+    "category": "تكنولوجيا",
+    "prompt": "ما نظام التشغيل المفتوح المصدر الذي يعتمد عليه أندرويد في نواته؟",
+    "correctAnswer": "لينكس",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "أنظمة تشغيل",
+      "أندرويد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_006",
+    "category": "تكنولوجيا",
+    "prompt": "ماذا تعني API في البرمجة؟",
+    "correctAnswer": "واجهة برمجة التطبيقات",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "برمجة",
+      "واجهات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_007",
+    "category": "تكنولوجيا",
+    "prompt": "ما اللغة المستخدمة أساسا لبناء هيكل صفحات الويب؟",
+    "correctAnswer": "HTML",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "ويب",
+      "برمجة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_008",
+    "category": "تكنولوجيا",
+    "prompt": "ما اللغة المستخدمة غالبا لتنسيق ألوان ومظهر صفحات الويب؟",
+    "correctAnswer": "CSS",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "ويب",
+      "تصميم"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_009",
+    "category": "تكنولوجيا",
+    "prompt": "ما اللغة المشهورة التي تضيف التفاعل داخل المتصفح؟",
+    "correctAnswer": "JavaScript",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "ويب",
+      "برمجة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_010",
+    "category": "تكنولوجيا",
+    "prompt": "ما اسم نظام التحكم بالإصدارات المستخدم كثيرا مع GitHub؟",
+    "correctAnswer": "Git",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "برمجة",
+      "أدوات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_011",
+    "category": "تكنولوجيا",
+    "prompt": "ما الصيغة النصية الشائعة لتبادل البيانات بين الخادم والمتصفح؟",
+    "correctAnswer": "JSON",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "بيانات",
+      "ويب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_012",
+    "category": "تكنولوجيا",
+    "prompt": "ما نوع قاعدة البيانات الذي يستخدم الجداول والصفوف عادة؟",
+    "correctAnswer": "قاعدة بيانات علائقية",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "قواعد بيانات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_013",
+    "category": "تكنولوجيا",
+    "prompt": "ما اللغة القياسية الشائعة للاستعلام من قواعد البيانات العلائقية؟",
+    "correctAnswer": "SQL",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "قواعد بيانات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_014",
+    "category": "تكنولوجيا",
+    "prompt": "كم يبلغ طول عنوان IPv6 بالبت؟",
+    "correctAnswer": "128 بت",
+    "difficulty": "hard",
+    "source": "Seed: Technology",
+    "tags": [
+      "شبكات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_015",
+    "category": "تكنولوجيا",
+    "prompt": "ما اسم النظام الذي يرشح حركة الشبكة حسب قواعد أمنية؟",
+    "correctAnswer": "جدار الحماية",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "شبكات",
+      "أمن"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_016",
+    "category": "تكنولوجيا",
+    "prompt": "ما المقصود بالمصادقة الثنائية؟",
+    "correctAnswer": "استخدام عاملين للتحقق من هوية المستخدم",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "أمن",
+      "حسابات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_017",
+    "category": "تكنولوجيا",
+    "prompt": "ما الهجوم الذي يخدع المستخدم برسالة مزيفة لسرقة كلمة المرور؟",
+    "correctAnswer": "التصيد الاحتيالي",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "أمن"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_018",
+    "category": "تكنولوجيا",
+    "prompt": "ما المصطلح الذي يعني تخزين بيانات مؤقتا لتسريع الوصول إليها؟",
+    "correctAnswer": "الكاش أو الذاكرة المخبأة",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "أداء",
+      "حاسوب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_019",
+    "category": "تكنولوجيا",
+    "prompt": "ما التقنية التي تشغل التطبيقات داخل حاويات معزولة مثل Docker؟",
+    "correctAnswer": "الحاويات",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "خوادم",
+      "DevOps"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_020",
+    "category": "تكنولوجيا",
+    "prompt": "ما الخدمة التي توفر موارد حوسبة عبر الإنترنت بدلا من امتلاك الخوادم محليا؟",
+    "correctAnswer": "الحوسبة السحابية",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "سحابة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_021",
+    "category": "تكنولوجيا",
+    "prompt": "ما المصطلح الذي يعني زمن التأخير بين إرسال الطلب واستلام الاستجابة؟",
+    "correctAnswer": "زمن الاستجابة أو Latency",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "شبكات",
+      "أداء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_022",
+    "category": "تكنولوجيا",
+    "prompt": "ما المصطلح الذي يصف كمية البيانات التي يمكن نقلها خلال زمن معين؟",
+    "correctAnswer": "عرض النطاق أو Bandwidth",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "شبكات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_023",
+    "category": "تكنولوجيا",
+    "prompt": "ما نوع التخزين الأسرع غالبا: SSD أم القرص الصلب HDD؟",
+    "correctAnswer": "SSD",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "عتاد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_024",
+    "category": "تكنولوجيا",
+    "prompt": "ما اسم البرامج الخبيثة التي تطلب فدية بعد تشفير ملفات الضحية؟",
+    "correctAnswer": "برمجيات الفدية",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "أمن"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_025",
+    "category": "تكنولوجيا",
+    "prompt": "في الذكاء الاصطناعي، ما اسم المجال الذي يجعل النموذج يتعلم من البيانات؟",
+    "correctAnswer": "تعلم الآلة",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "ذكاء اصطناعي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_001",
+    "category": "هندسة",
+    "prompt": "ما وحدة قياس القوة في النظام الدولي؟",
+    "correctAnswer": "نيوتن",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "فيزياء",
+      "ميكانيكا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_002",
+    "category": "هندسة",
+    "prompt": "ما العلاقة الأساسية في قانون أوم؟",
+    "correctAnswer": "V = I × R",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "كهرباء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_003",
+    "category": "هندسة",
+    "prompt": "ما اسم المخطط الذي يوضح أبعاد القطعة قبل تصنيعها؟",
+    "correctAnswer": "الرسم الهندسي",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تصميم"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_004",
+    "category": "هندسة",
+    "prompt": "ماذا تعني CAD في التصميم الهندسي؟",
+    "correctAnswer": "التصميم بمساعدة الحاسوب",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تصميم",
+      "حاسوب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_005",
+    "category": "هندسة",
+    "prompt": "ما المادة التي تتكون عادة من إسمنت وماء وركام ناعم وخشن؟",
+    "correctAnswer": "الخرسانة",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "مدني"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_006",
+    "category": "هندسة",
+    "prompt": "ما نوع القوة التي تسحب المادة وتطيلها؟",
+    "correctAnswer": "قوة الشد",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "ميكانيكا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_007",
+    "category": "هندسة",
+    "prompt": "ما نوع القوة التي تضغط المادة وتقصرها؟",
+    "correctAnswer": "قوة الضغط",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "ميكانيكا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_008",
+    "category": "هندسة",
+    "prompt": "ما المقصود بالإجهاد في الميكانيكا؟",
+    "correctAnswer": "القوة مقسومة على المساحة",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "ميكانيكا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_009",
+    "category": "هندسة",
+    "prompt": "ما اسم النسبة المستخدمة لزيادة الأمان بين مقاومة التصميم والحمل المتوقع؟",
+    "correctAnswer": "معامل الأمان",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تصميم",
+      "سلامة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_010",
+    "category": "هندسة",
+    "prompt": "ما اسم اللوحة التي تثبت عليها المكونات الإلكترونية وتوصل بينها بمسارات نحاسية؟",
+    "correctAnswer": "لوحة الدوائر المطبوعة PCB",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "إلكترونيات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_011",
+    "category": "هندسة",
+    "prompt": "ما الفرق المختصر بين الحساس والمشغل؟",
+    "correctAnswer": "الحساس يقيس، والمشغل ينفذ حركة أو فعلا",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تحكم",
+      "ميكاترونكس"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_012",
+    "category": "هندسة",
+    "prompt": "ماذا تعني HVAC في المباني؟",
+    "correctAnswer": "التدفئة والتهوية وتكييف الهواء",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "مباني"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_013",
+    "category": "هندسة",
+    "prompt": "ما المقصود بنظام CNC في التصنيع؟",
+    "correctAnswer": "التحكم الرقمي بالحاسوب",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تصنيع"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_014",
+    "category": "هندسة",
+    "prompt": "ما القانون الأول للديناميكا الحرارية باختصار؟",
+    "correctAnswer": "الطاقة لا تفنى ولا تستحدث بل تتحول",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "حرارة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_015",
+    "category": "هندسة",
+    "prompt": "ما وحدة الطاقة الكهربائية التي تظهر كثيرا في فواتير الكهرباء؟",
+    "correctAnswer": "كيلوواط ساعة",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "كهرباء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_016",
+    "category": "هندسة",
+    "prompt": "ما التخصص الذي يجمع الميكانيكا والإلكترونيات والتحكم والبرمجة؟",
+    "correctAnswer": "هندسة الميكاترونكس",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "ميكاترونكس"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_017",
+    "category": "هندسة",
+    "prompt": "ما اسم النموذج الأولي الذي يبنى لاختبار فكرة قبل الإنتاج النهائي؟",
+    "correctAnswer": "Prototype",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تصميم"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_018",
+    "category": "هندسة",
+    "prompt": "ما معنى التفاوتات في التصنيع؟",
+    "correctAnswer": "الانحرافات المسموحة عن الأبعاد المطلوبة",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تصنيع"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_019",
+    "category": "هندسة",
+    "prompt": "ما اسم التدهور الذي يصيب المعادن بسبب تفاعل كيميائي أو كهروكيميائي؟",
+    "correctAnswer": "التآكل",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "مواد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_020",
+    "category": "هندسة",
+    "prompt": "ما اسم تحليل يقسم الجسم إلى عناصر صغيرة لحساب الإجهادات والتشوهات عدديا؟",
+    "correctAnswer": "تحليل العناصر المحدودة",
+    "difficulty": "hard",
+    "source": "Seed: Engineering",
+    "tags": [
+      "تحليل",
+      "محاكاة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_001",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "في أي مدينة تقع الجامعة الليبية الدولية؟",
+    "correctAnswer": "بنغازي",
+    "difficulty": "easy",
+    "source": "https://ar.limu.edu.ly/حول-الجامعة-3/عن-الجامعة/",
+    "tags": [
+      "LIMU",
+      "بنغازي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_002",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما تاريخ الافتتاح الرسمي للجامعة الليبية الدولية للعلوم الطبية حسب موقعها؟",
+    "correctAnswer": "20-10-2007",
+    "difficulty": "hard",
+    "source": "https://ar.limu.edu.ly/حول-الجامعة-3/عن-الجامعة/",
+    "tags": [
+      "تاريخ",
+      "LIMU"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_003",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما المجال الذي كانت الجامعة الليبية الدولية أول جامعة وطنية خاصة فيه؟",
+    "correctAnswer": "التعليم الطبي",
+    "difficulty": "medium",
+    "source": "https://ar.limu.edu.ly/حول-الجامعة-3/عن-الجامعة/",
+    "tags": [
+      "تعليم طبي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_004",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "في أي منطقة وشارع يظهر عنوان الجامعة الليبية الدولية في صفحة التواصل؟",
+    "correctAnswer": "الفويهات - شارع القيروان",
+    "difficulty": "medium",
+    "source": "https://ar.limu.edu.ly/الرسوم-الدراسية/",
+    "tags": [
+      "عنوان"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_005",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما نطاق الموقع الرسمي للجامعة الليبية الدولية؟",
+    "correctAnswer": "limu.edu.ly",
+    "difficulty": "easy",
+    "source": "https://limu.edu.ly/",
+    "tags": [
+      "موقع"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_006",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما البريد الإلكتروني العام المنشور للتواصل مع الجامعة الليبية الدولية؟",
+    "correctAnswer": "info@limu.edu.ly",
+    "difficulty": "medium",
+    "source": "https://ar.limu.edu.ly/الرسوم-الدراسية/",
+    "tags": [
+      "تواصل"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_007",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما الكليات الثلاث الظاهرة في صفحة كليات الجامعة الليبية الدولية؟",
+    "correctAnswer": "العلوم الطبية والصحية، العلوم الإنسانية والاجتماعية، الهندسة والتكنولوجيا",
+    "difficulty": "hard",
+    "source": "https://ar.limu.edu.ly/الكليات/",
+    "tags": [
+      "كليات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_008",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "أي برنامج صيدلي فريد تذكره الجامعة ضمن تخصصاتها غير المتوفرة في الجامعات الليبية الأخرى؟",
+    "correctAnswer": "برنامج دكتور صيدلة Pharm D",
+    "difficulty": "medium",
+    "source": "https://ar.limu.edu.ly/حول-الجامعة-3/عن-الجامعة/",
+    "tags": [
+      "صيدلة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_009",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما التخصص الصحي التقني الفريد الذي تذكره الجامعة ضمن تخصصاتها؟",
+    "correctAnswer": "المعلوماتية الصحية",
+    "difficulty": "medium",
+    "source": "https://ar.limu.edu.ly/حول-الجامعة-3/عن-الجامعة/",
+    "tags": [
+      "تقنية صحية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_010",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما التخصص الهندسي الفريد الذي تذكره صفحة عن الجامعة ضمن تخصصاتها؟",
+    "correctAnswer": "هندسة الميكاترونكس",
+    "difficulty": "medium",
+    "source": "https://ar.limu.edu.ly/حول-الجامعة-3/عن-الجامعة/",
+    "tags": [
+      "هندسة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_011",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "أي كلية في الجامعة الليبية الدولية تضم برامج مثل هندسة البرمجيات والذكاء الاصطناعي؟",
+    "correctAnswer": "كلية الهندسة والتكنولوجيا",
+    "difficulty": "easy",
+    "source": "https://ar.limu.edu.ly/الكليات/",
+    "tags": [
+      "هندسة",
+      "تقنية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_012",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما برنامج الشبكات المذكور في صفحة كلية الهندسة والتكنولوجيا؟",
+    "correctAnswer": "برنامج الشبكات والأمن السيبراني",
+    "difficulty": "medium",
+    "source": "https://ar.limu.edu.ly/الكليات/",
+    "tags": [
+      "شبكات",
+      "أمن سيبراني"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_013",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "في دليل الاعتماد، أي برنامج في كلية الصيدلة جدد اعتماده سنة 2022؟",
+    "correctAnswer": "برنامج دكتور صيدلة",
+    "difficulty": "hard",
+    "source": "https://accreditation.qaa.ly/private-institutions/الجامعة-الليبية-الدولية-للعلوم-الطبي/",
+    "tags": [
+      "اعتماد",
+      "صيدلة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_014",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "في التصنيف المحلي العام للجامعات الليبية، ما ترتيب الجامعة الليبية الدولية للعلوم الطبية في التصنيف العام؟",
+    "correctAnswer": "الثالث",
+    "difficulty": "hard",
+    "source": "https://qaa.ly/التصنيف-العام-للجامعات-الليبية/",
+    "tags": [
+      "تصنيف"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_015",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "في التصنيف المحلي، في أي بُعد جاءت الجامعة الليبية الدولية للعلوم الطبية في المركز الأول؟",
+    "correctAnswer": "البعد الدولي",
+    "difficulty": "hard",
+    "source": "https://qaa.ly/التصنيف-العام-للجامعات-الليبية/",
+    "tags": [
+      "تصنيف",
+      "بعد دولي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-14T00:00:00.000Z",
+    "updatedAt": "2026-06-14T00:00:00.000Z"
   }
 ]
