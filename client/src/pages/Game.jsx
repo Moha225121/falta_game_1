@@ -10,6 +10,8 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  ChevronDown,
+  ChevronUp,
   Play,
   Send,
   Settings,
@@ -64,15 +66,6 @@ function normalizeRoomCodeInput(value) {
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, "")
     .slice(0, roomCodeLength);
-}
-
-function roundChoices(modeCount = 1) {
-  const limits = roundLimits(modeCount);
-  const choices = [];
-  for (let value = limits.min; value <= limits.max; value += limits.step) {
-    choices.push(value);
-  }
-  return choices;
 }
 
 function gameModeName(gameModes, modeId) {
@@ -939,7 +932,9 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
   const canStart = connectedPlayers.length >= config.minPlayers;
   const canAddBot = isHost && room.players.length < config.maxPlayers;
   const selectedModes = selectedModeIds(room.settings.modes ?? room.settings.mode);
-  const rounds = roundChoices(selectedModes.length);
+  const limits = roundLimits(selectedModes.length);
+  const canDecreaseRounds = connected && isHost && room.settings.rounds > limits.min;
+  const canIncreaseRounds = connected && isHost && room.settings.rounds < limits.max;
 
   function updateModes(nextModes) {
     const modes = selectedModeIds(nextModes);
@@ -948,6 +943,11 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
       modes,
       rounds: normalizeRoundCount(currentCycles * modes.length, modes.length)
     });
+  }
+
+  function updateRounds(direction) {
+    const nextRounds = Number(room.settings.rounds) + (limits.step * direction);
+    onUpdate({ rounds: normalizeRoundCount(nextRounds, selectedModes.length) });
   }
 
   return (
@@ -1018,19 +1018,29 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
             disabled={!connected || !isHost}
           />
         </div> : null}
-        <div className="settings-grid">
-          <label>
-            الجولات
-            <select
-              value={room.settings.rounds}
-              disabled={!connected || !isHost}
-              onChange={(event) => onUpdate({ rounds: normalizeRoundCount(event.target.value, selectedModes.length) })}
+        <div className="settings-grid round-settings-grid">
+          <div className="round-stepper" aria-label="الجولات">
+            <span className="field-label">الجولات</span>
+            <button
+              className="round-step-button"
+              type="button"
+              disabled={!canIncreaseRounds || busy}
+              onClick={() => updateRounds(1)}
+              aria-label="زيادة الجولات"
             >
-              {rounds.map((roundCount) => (
-                <option key={roundCount} value={roundCount}>{roundCount}</option>
-              ))}
-            </select>
-          </label>
+              <ChevronUp size={34} />
+            </button>
+            <strong className="round-step-value">{room.settings.rounds}</strong>
+            <button
+              className="round-step-button"
+              type="button"
+              disabled={!canDecreaseRounds || busy}
+              onClick={() => updateRounds(-1)}
+              aria-label="تقليل الجولات"
+            >
+              <ChevronDown size={34} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1072,7 +1082,6 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
           className="answer-timer"
           deadline={room.phaseEndsAt}
           durationSeconds={room.settings.answerSeconds}
-          label="وقت الإجابة"
         />
       </div>
 
@@ -1133,7 +1142,6 @@ function Voting({ room, me, selectedOption, onVote, busy, connected, pendingActi
           className="answer-timer"
           deadline={room.phaseEndsAt}
           durationSeconds={room.settings.voteSeconds}
-          label="وقت التصويت"
         />
       </div>
 

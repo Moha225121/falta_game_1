@@ -1371,6 +1371,54 @@ button:disabled {
   gap: 14px;
 }
 
+.round-settings-grid {
+  grid-template-columns: minmax(220px, 360px);
+}
+
+.round-stepper {
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) 96px minmax(70px, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.round-stepper .field-label {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.round-step-value {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(246, 184, 74, 0.32);
+  border-radius: var(--radius);
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
+.round-step-button {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  color: #061114;
+  background: var(--gold);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 26px rgba(246, 184, 74, 0.18);
+}
+
+.round-step-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
 .waiting-strip {
   justify-content: center;
   gap: 10px;

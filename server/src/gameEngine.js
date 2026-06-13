@@ -847,7 +847,7 @@ export class KalakGameEngine {
     const playerId = this.playerId(socket);
 
     if (room.phase !== "answering") {
-      throw new Error("وقت الإجابة انتهى.");
+      throw new Error("انتهى الوقت.");
     }
 
     if (!this.eligibleAnswerers(room).some((player) => player.id === playerId)) {
@@ -893,7 +893,7 @@ export class KalakGameEngine {
     const playerId = this.playerId(socket);
 
     if (room.phase !== "voting") {
-      throw new Error("وقت التصويت انتهى.");
+      throw new Error("انتهى الوقت.");
     }
 
     const voters = this.eligibleVoters(room);
