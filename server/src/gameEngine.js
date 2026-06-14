@@ -98,10 +98,83 @@ function normalizeAnswer(value) {
     .toLowerCase()
     .normalize("NFKD")
     .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/\u0640/g, "")
     .replace(/[\u0623\u0625\u0622]/g, "\u0627")
+    .replace(/\u0624/g, "\u0648")
+    .replace(/\u0626/g, "\u064A")
     .replace(/\u0649/g, "\u064A")
     .replace(/\u0629/g, "\u0647")
+    .replace(/[\u06A9\u06AA]/g, "\u0643")
+    .replace(/[\u06CC\u064A]/g, "\u064A")
     .replace(/[^a-z0-9\u0600-\u06FF]+/g, "");
+}
+
+function answerDistanceLimit(normalized) {
+  if (!normalized || /^[0-9]+$/.test(normalized)) {
+    return 0;
+  }
+
+  if (normalized.length < 5) {
+    return 0;
+  }
+
+  return normalized.length < 9 ? 1 : 2;
+}
+
+function levenshteinDistanceWithin(left, right, maxDistance) {
+  if (left === right) {
+    return 0;
+  }
+
+  if (Math.abs(left.length - right.length) > maxDistance) {
+    return maxDistance + 1;
+  }
+
+  let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    let rowMinimum = current[0];
+
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+      const distance = Math.min(
+        previous[rightIndex] + 1,
+        current[rightIndex - 1] + 1,
+        previous[rightIndex - 1] + cost
+      );
+      current[rightIndex] = distance;
+      rowMinimum = Math.min(rowMinimum, distance);
+    }
+
+    if (rowMinimum > maxDistance) {
+      return maxDistance + 1;
+    }
+
+    previous = current;
+  }
+
+  return previous[right.length];
+}
+
+function answersMatch(value, expected) {
+  const normalizedValue = normalizeAnswer(value);
+  const normalizedExpected = normalizeAnswer(expected);
+
+  if (!normalizedValue || !normalizedExpected) {
+    return false;
+  }
+
+  if (normalizedValue === normalizedExpected) {
+    return true;
+  }
+
+  const maxDistance = Math.min(
+    answerDistanceLimit(normalizedValue),
+    answerDistanceLimit(normalizedExpected)
+  );
+
+  return maxDistance > 0 && levenshteinDistanceWithin(normalizedValue, normalizedExpected, maxDistance) <= maxDistance;
 }
 
 function parseNumericAnswer(value) {
@@ -861,7 +934,7 @@ export class KalakGameEngine {
 
     this.cumulative.answerSubmissions += 1;
 
-    if (this.currentMode(room) === "kalak" && normalizeAnswer(text) === normalizeAnswer(room.question.correctAnswer)) {
+    if (this.currentMode(room) === "kalak" && answersMatch(text, room.question.correctAnswer)) {
       if (!room.correctWriterIds.includes(playerId)) {
         room.correctWriterIds.push(playerId);
       }
@@ -1679,10 +1752,10 @@ export class KalakGameEngine {
     }
 
     const existing = new Set([...room.submissions.values()].map((submission) => normalizeAnswer(submission.text)));
-    const correct = normalizeAnswer(room.question.correctAnswer);
+    const correct = room.question.correctAnswer;
     const candidates = shuffle(BOT_FAKE_ANSWERS).filter((answer) => {
       const normalized = normalizeAnswer(answer);
-      return normalized && normalized !== correct && !existing.has(normalized);
+      return normalized && !answersMatch(answer, correct) && !existing.has(normalized);
     });
 
     return candidates[0] || `إجابة غامضة ${Math.floor(10 + Math.random() * 90)}`;
@@ -1734,14 +1807,13 @@ export class KalakGameEngine {
     this.clearTimer(room);
 
     const correct = room.question.correctAnswer;
-    const normalizedCorrect = normalizeAnswer(correct);
     const fakeGroups = new Map();
     const correctWriterIds = new Set(room.correctWriterIds || []);
 
     for (const submission of room.submissions.values()) {
       const normalized = normalizeAnswer(submission.text);
 
-      if (normalized && normalized === normalizedCorrect) {
+      if (answersMatch(submission.text, correct)) {
         correctWriterIds.add(submission.playerId);
         continue;
       }

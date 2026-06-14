@@ -6,7 +6,10 @@
     "correctAnswer": "طرابلس",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["محلي", "جغرافيا"],
+    "tags": [
+      "محلي",
+      "جغرافيا"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -18,7 +21,10 @@
     "correctAnswer": "الخمس",
     "difficulty": "medium",
     "source": "Seed",
-    "tags": ["محلي", "تاريخ"],
+    "tags": [
+      "محلي",
+      "تاريخ"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -30,7 +36,10 @@
     "correctAnswer": "الدينار الليبي",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["محلي", "اقتصاد"],
+    "tags": [
+      "محلي",
+      "اقتصاد"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -42,7 +51,10 @@
     "correctAnswer": "البحر الأبيض المتوسط",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["محلي", "جغرافيا"],
+    "tags": [
+      "محلي",
+      "جغرافيا"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -54,7 +66,9 @@
     "correctAnswer": "المحيط الهادئ",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["عالم"],
+    "tags": [
+      "عالم"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -66,7 +80,9 @@
     "correctAnswer": "أمريكا الجنوبية",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["عالم"],
+    "tags": [
+      "عالم"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -78,7 +94,9 @@
     "correctAnswer": "نهر النيل",
     "difficulty": "medium",
     "source": "Seed",
-    "tags": ["أنهار"],
+    "tags": [
+      "أنهار"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -90,7 +108,9 @@
     "correctAnswer": "حنبعل",
     "difficulty": "medium",
     "source": "Seed",
-    "tags": ["قديم"],
+    "tags": [
+      "قديم"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -102,7 +122,9 @@
     "correctAnswer": "الحضارة المصرية القديمة",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["قديم"],
+    "tags": [
+      "قديم"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -114,7 +136,9 @@
     "correctAnswer": "المريخ",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["فضاء"],
+    "tags": [
+      "فضاء"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -126,7 +150,9 @@
     "correctAnswer": "ثاني أكسيد الكربون",
     "difficulty": "medium",
     "source": "Seed",
-    "tags": ["أحياء"],
+    "tags": [
+      "أحياء"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -138,7 +164,9 @@
     "correctAnswer": "ثلاثة",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["رياضيات"],
+    "tags": [
+      "رياضيات"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -150,7 +178,9 @@
     "correctAnswer": "11",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["كرة القدم"],
+    "tags": [
+      "كرة القدم"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -162,7 +192,9 @@
     "correctAnswer": "تنس الطاولة",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["ألعاب"],
+    "tags": [
+      "ألعاب"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -174,7 +206,9 @@
     "correctAnswer": "البرتغالية",
     "difficulty": "medium",
     "source": "Seed",
-    "tags": ["لغات"],
+    "tags": [
+      "لغات"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -186,7 +220,9 @@
     "correctAnswer": "الترمومتر",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["أدوات"],
+    "tags": [
+      "أدوات"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -198,7 +234,9 @@
     "correctAnswer": "James Cameron",
     "difficulty": "medium",
     "source": "Seed",
-    "tags": ["سينما"],
+    "tags": [
+      "سينما"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -210,7 +248,9 @@
     "correctAnswer": "Star Wars",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["خيال علمي"],
+    "tags": [
+      "خيال علمي"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -222,7 +262,9 @@
     "correctAnswer": "Mario",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["كلاسيك"],
+    "tags": [
+      "كلاسيك"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -234,7 +276,9 @@
     "correctAnswer": "العصا",
     "difficulty": "easy",
     "source": "Seed",
-    "tags": ["Minecraft"],
+    "tags": [
+      "Minecraft"
+    ],
     "active": true,
     "createdAt": "2026-06-08T00:00:00.000Z",
     "updatedAt": "2026-06-08T00:00:00.000Z"
@@ -1105,5 +1149,318 @@
     "active": true,
     "createdAt": "2026-06-14T00:00:00.000Z",
     "updatedAt": "2026-06-14T00:00:00.000Z"
+  },
+  {
+    "id": "q_lib_005",
+    "category": "ليبيا",
+    "prompt": "ما المدينة الليبية التي تُعرف بأنها ثاني أكبر مدينة في ليبيا؟",
+    "correctAnswer": "بنغازي",
+    "difficulty": "easy",
+    "source": "Seed: Libya",
+    "tags": [
+      "محلي",
+      "مدن"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_lib_006",
+    "category": "ليبيا",
+    "prompt": "ما اسم الصحراء الكبرى التي تمتد في مساحة واسعة من جنوب ليبيا؟",
+    "correctAnswer": "الصحراء الكبرى",
+    "difficulty": "easy",
+    "source": "Seed: Libya",
+    "tags": [
+      "محلي",
+      "جغرافيا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_geo_004",
+    "category": "جغرافيا",
+    "prompt": "ما أعلى قمة جبلية في العالم؟",
+    "correctAnswer": "جبل إيفرست",
+    "difficulty": "easy",
+    "source": "Seed: Geography",
+    "tags": [
+      "جبال"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_geo_005",
+    "category": "جغرافيا",
+    "prompt": "في أي قارة تقع كينيا؟",
+    "correctAnswer": "أفريقيا",
+    "difficulty": "easy",
+    "source": "Seed: Geography",
+    "tags": [
+      "قارات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_hist_003",
+    "category": "تاريخ",
+    "prompt": "من هو أول رئيس للولايات المتحدة الأمريكية؟",
+    "correctAnswer": "جورج واشنطن",
+    "difficulty": "medium",
+    "source": "Seed: History",
+    "tags": [
+      "شخصيات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_hist_004",
+    "category": "تاريخ",
+    "prompt": "في أي مدينة وُقعت وثيقة الاستقلال الأمريكية سنة 1776؟",
+    "correctAnswer": "فيلادلفيا",
+    "difficulty": "medium",
+    "source": "Seed: History",
+    "tags": [
+      "أمريكا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_sci_004",
+    "category": "علوم",
+    "prompt": "ما العضو المسؤول عن ضخ الدم في جسم الإنسان؟",
+    "correctAnswer": "القلب",
+    "difficulty": "easy",
+    "source": "Seed: Science",
+    "tags": [
+      "أحياء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_sci_005",
+    "category": "علوم",
+    "prompt": "ما المادة التي تغطي معظم سطح كوكب الأرض؟",
+    "correctAnswer": "الماء",
+    "difficulty": "easy",
+    "source": "Seed: Science",
+    "tags": [
+      "طبيعة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_sport_003",
+    "category": "رياضة",
+    "prompt": "كم عدد الحلقات في شعار الألعاب الأولمبية؟",
+    "correctAnswer": "5",
+    "difficulty": "easy",
+    "source": "Seed: Sports",
+    "tags": [
+      "أولمبياد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_sport_004",
+    "category": "رياضة",
+    "prompt": "في أي رياضة يستخدم اللاعبون كرة وسلة مرتفعة؟",
+    "correctAnswer": "كرة السلة",
+    "difficulty": "easy",
+    "source": "Seed: Sports",
+    "tags": [
+      "ألعاب جماعية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_culture_003",
+    "category": "ثقافة عامة",
+    "prompt": "ما الآلة الموسيقية التي تحتوي عادة على مفاتيح بيضاء وسوداء؟",
+    "correctAnswer": "البيانو",
+    "difficulty": "easy",
+    "source": "Seed: Culture",
+    "tags": [
+      "موسيقى"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_culture_004",
+    "category": "ثقافة عامة",
+    "prompt": "ما اسم الفن الياباني المعروف بطي الورق لصناعة أشكال مختلفة؟",
+    "correctAnswer": "الأوريغامي",
+    "difficulty": "medium",
+    "source": "Seed: Culture",
+    "tags": [
+      "فنون"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_movies_003",
+    "category": "أفلام ومسلسلات",
+    "prompt": "ما اسم المدينة الخيالية التي يحميها باتمان؟",
+    "correctAnswer": "غوثام",
+    "difficulty": "easy",
+    "source": "Seed: Movies",
+    "tags": [
+      "أبطال خارقون"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_movies_004",
+    "category": "أفلام ومسلسلات",
+    "prompt": "ما اسم مدرسة السحر في سلسلة هاري بوتر؟",
+    "correctAnswer": "هوغوورتس",
+    "difficulty": "easy",
+    "source": "Seed: Movies",
+    "tags": [
+      "خيال"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_games_003",
+    "category": "ألعاب فيديو",
+    "prompt": "في ألعاب FIFA، ما الرياضة الأساسية التي تلعبها؟",
+    "correctAnswer": "كرة القدم",
+    "difficulty": "easy",
+    "source": "Seed: Games",
+    "tags": [
+      "رياضة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_games_004",
+    "category": "ألعاب فيديو",
+    "prompt": "ما اسم الشركة المرتبطة بجهاز الألعاب PlayStation؟",
+    "correctAnswer": "Sony",
+    "difficulty": "easy",
+    "source": "Seed: Games",
+    "tags": [
+      "أجهزة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_026",
+    "category": "تكنولوجيا",
+    "prompt": "ماذا يعني الاختصار URL في عالم الويب؟",
+    "correctAnswer": "محدد موقع الموارد",
+    "difficulty": "medium",
+    "source": "Seed: Technology",
+    "tags": [
+      "ويب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_tech_027",
+    "category": "تكنولوجيا",
+    "prompt": "أي نوع من الملفات يستخدم الامتداد PNG عادة؟",
+    "correctAnswer": "صورة",
+    "difficulty": "easy",
+    "source": "Seed: Technology",
+    "tags": [
+      "ملفات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_021",
+    "category": "هندسة",
+    "prompt": "ما وحدة قياس القوة في النظام الدولي؟",
+    "correctAnswer": "نيوتن",
+    "difficulty": "easy",
+    "source": "Seed: Engineering",
+    "tags": [
+      "فيزياء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_eng_022",
+    "category": "هندسة",
+    "prompt": "ما وظيفة الصمام في أنظمة الأنابيب؟",
+    "correctAnswer": "التحكم في تدفق السوائل أو الغازات",
+    "difficulty": "medium",
+    "source": "Seed: Engineering",
+    "tags": [
+      "ميكانيكا",
+      "أنابيب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_016",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما الاختصار الشائع لاسم الجامعة الليبية الدولية بالإنجليزية؟",
+    "correctAnswer": "LIMU",
+    "difficulty": "easy",
+    "source": "Seed: LIMU",
+    "tags": [
+      "LIMU",
+      "اختصار"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_limu_017",
+    "category": "الجامعة الليبية الدولية",
+    "prompt": "ما المجالان اللذان يجمعهما اسم كلية الهندسة والتكنولوجيا في الجامعة الليبية الدولية؟",
+    "correctAnswer": "الهندسة والتكنولوجيا",
+    "difficulty": "easy",
+    "source": "Seed: LIMU",
+    "tags": [
+      "هندسة",
+      "تكنولوجيا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-15T00:00:00.000Z",
+    "updatedAt": "2026-06-15T00:00:00.000Z"
   }
 ]

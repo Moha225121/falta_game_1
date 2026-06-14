@@ -1235,7 +1235,7 @@ button:disabled {
 
 .category-picker {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 10px;
 }
 
@@ -1311,12 +1311,12 @@ button:disabled {
 
 .category-card {
   min-width: 0;
-  min-height: 66px;
+  min-height: 78px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 26px;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 12px;
   text-align: start;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.07);
@@ -1326,9 +1326,10 @@ button:disabled {
 }
 
 .category-card strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .category-card.active {
