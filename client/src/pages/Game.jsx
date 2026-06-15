@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Bot,
   Check,
+  CircleAlert,
   Clipboard,
   Crown,
   Loader2,
@@ -52,8 +53,6 @@ const phaseLabels = {
   finished: "النهاية"
 };
 
-const savedRoomKey = "kalak:room";
-const sessionKey = "kalak:sessionId";
 const roomCodeLength = 5;
 const activeMatchPhases = new Set(["answering", "voting", "results"]);
 
@@ -91,45 +90,6 @@ function makeSessionId() {
     return globalThis.crypto.randomUUID().replace(/-/g, "");
   }
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
-}
-
-function getSessionId() {
-  const existing = localStorage.getItem(sessionKey);
-  if (existing) {
-    return existing;
-  }
-  const next = makeSessionId();
-  localStorage.setItem(sessionKey, next);
-  return next;
-}
-
-function loadSavedRoom() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(savedRoomKey) || "null");
-    return parsed?.code && parsed?.sessionId ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function rememberRoom(code, sessionId) {
-  if (!code || !sessionId) {
-    return null;
-  }
-  const next = {
-    code: String(code).toUpperCase(),
-    sessionId,
-    updatedAt: Date.now()
-  };
-  localStorage.setItem(savedRoomKey, JSON.stringify(next));
-  return next;
-}
-
-function clearSavedRoom(code) {
-  const saved = loadSavedRoom();
-  if (!saved || !code || saved.code === String(code).toUpperCase()) {
-    localStorage.removeItem(savedRoomKey);
-  }
 }
 
 function useKalakSocket() {
@@ -171,10 +131,6 @@ function ack(socket, event, payload = {}) {
   });
 }
 
-function isRecoverableRoomError(error) {
-  return error?.code === "ROOM_UNAVAILABLE" || error?.code === "SESSION_MISSING";
-}
-
 export default function Game() {
   const { roomCode } = useParams();
   const location = useLocation();
@@ -184,12 +140,11 @@ export default function Game() {
   const lastRoundKey = useRef("");
   const roundSplashTimer = useRef(null);
   const playZoneRef = useRef(null);
-  const [sessionId] = useState(() => getSessionId());
+  const [sessionId] = useState(() => makeSessionId());
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerPanel, setDrawerPanel] = useState("score");
-  const [savedRoom, setSavedRoom] = useState(() => loadSavedRoom());
   const [categories, setCategories] = useState([]);
   const [gameModes, setGameModes] = useState(fallbackGameModes);
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
@@ -204,10 +159,30 @@ export default function Game() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
+    localStorage.removeItem("kalak:room");
+    localStorage.removeItem("kalak:sessionId");
     api("/categories").then(setCategories).catch(() => setCategories([]));
     api("/game-modes").then(setGameModes).catch(() => {});
     api("/config").then(setConfig).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!error) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => setError(""), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
+  useEffect(() => {
+    if (!notice) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => setNotice(""), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
     if (!room) {
@@ -222,9 +197,6 @@ export default function Game() {
 
     const onState = (nextRoom) => {
       setRoom(nextRoom);
-      if (nextRoom?.code && nextRoom?.me?.playerId) {
-        setSavedRoom(rememberRoom(nextRoom.code, nextRoom.me.playerId));
-      }
       setError("");
       const activeMode = getActiveMode(nextRoom);
       const roundKey = `${nextRoom.round}:${activeMode}`;
@@ -261,10 +233,6 @@ export default function Game() {
 
     const onError = (payload) => setError(payload.error || "حدث خطأ غير متوقع.");
     const onKicked = (payload) => {
-      if (room?.code) {
-        clearSavedRoom(room.code);
-        setSavedRoom(null);
-      }
       setRoom(null);
       setSelectedOption("");
       setAnswer("");
@@ -282,6 +250,21 @@ export default function Game() {
   }, [room?.code, socket]);
 
   useEffect(() => () => clearTimeout(roundSplashTimer.current), []);
+
+  useEffect(() => {
+    if (!socket || !room?.code) {
+      return undefined;
+    }
+
+    const leaveOnUnload = () => {
+      if (socket.connected) {
+        socket.emit("room:leave");
+      }
+    };
+
+    window.addEventListener("beforeunload", leaveOnUnload);
+    return () => window.removeEventListener("beforeunload", leaveOnUnload);
+  }, [room?.code, socket]);
 
   useEffect(() => {
     if (!room || !activeMatchPhases.has(room.phase)) {
@@ -309,8 +292,7 @@ export default function Game() {
     const state = location.state;
     const nextPlayer = persistPlayer(loadPlayer(state));
     setPlayer(nextPlayer);
-    const stored = loadSavedRoom();
-    const activeCode = room?.code || roomCode || state?.code || "";
+    const activeCode = room?.code || (state?.mode === "join" ? roomCode : "") || state?.code || "";
     const code = normalizeRoomCodeInput(activeCode);
 
     if (state?.mode === "create" && !room) {
@@ -324,8 +306,6 @@ export default function Game() {
         avatar: nextPlayer.avatar,
         sessionId
       }).then((response) => {
-        const nextSaved = rememberRoom(response.room.code, response.playerId || sessionId);
-        setSavedRoom(nextSaved);
         navigate(`/play/${response.room.code}`, { replace: true });
       }), "create");
       return;
@@ -335,11 +315,9 @@ export default function Game() {
       return;
     }
 
-    const savedSessionId = stored?.code === code ? stored.sessionId : sessionId;
-    const shouldRestore = Boolean(room?.code === code || stored?.code === code);
-    const wasSavedRoomAttempt = shouldRestore && stored?.code === code;
+    const shouldRestore = Boolean(room?.code === code);
     const event = shouldRestore ? "room:restore" : "room:join";
-    const key = `${event}:${socket.id}:${code}:${savedSessionId}`;
+    const key = `${event}:${socket.id}:${code}:${sessionId}`;
     if (lastAutoKey.current === key) {
       return;
     }
@@ -349,28 +327,11 @@ export default function Game() {
       code,
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
-      sessionId: savedSessionId
+      sessionId
     }).then((response) => {
-      const nextSaved = rememberRoom(response.room.code, response.playerId || savedSessionId);
-      setSavedRoom(nextSaved);
       if (roomCode !== response.room.code) {
         navigate(`/play/${response.room.code}`, { replace: true });
       }
-    }).catch((caught) => {
-      if (wasSavedRoomAttempt || event === "room:restore") {
-        clearSavedRoom(code);
-        setSavedRoom(null);
-      }
-      if (isRecoverableRoomError(caught) && wasSavedRoomAttempt) {
-        setRoom(null);
-        setJoinCode("");
-        if (roomCode) {
-          navigate("/play", { replace: true });
-        }
-        setNotice("الغرفة القديمة غير متاحة الآن. افتح غرفة جديدة أو اكتب كود غرفة موجودة.");
-        return;
-      }
-      throw caught;
     }), shouldRestore ? "restore" : "join");
   }, [connected, location.state, navigate, room?.code, roomCode, sessionId, socket]);
 
@@ -404,8 +365,6 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId
     }).then((response) => {
-      const nextSaved = rememberRoom(response.room.code, response.playerId || sessionId);
-      setSavedRoom(nextSaved);
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "create");
   }
@@ -431,8 +390,6 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId
     }).then((response) => {
-      const nextSaved = rememberRoom(response.room.code, response.playerId || sessionId);
-      setSavedRoom(nextSaved);
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "join");
   }
@@ -522,9 +479,6 @@ export default function Game() {
   }
 
   function leaveRoom() {
-    const code = room?.code;
-    clearSavedRoom(code);
-    setSavedRoom(null);
     setDrawerOpen(false);
     setRoom(null);
     navigate("/play", { replace: true });
@@ -588,24 +542,9 @@ export default function Game() {
             </form>
           </div>
 
-          {savedRoom?.code ? (
-            <div className="resume-room-strip">
-              <span>غرفة محفوظة <b dir="ltr">{savedRoom.code}</b></span>
-              <button className="ghost-button" type="button" onClick={() => navigate(`/play/${savedRoom.code}`)} disabled={!connected || busy}>
-                <ActionIcon loading={pendingAction === "restore"} icon={ArrowLeft} />
-                <span>متابعة</span>
-              </button>
-              <button className="icon-button" type="button" onClick={() => {
-                clearSavedRoom(savedRoom.code);
-                setSavedRoom(null);
-              }} aria-label="مسح الغرفة المحفوظة">
-                <X size={16} />
-              </button>
-            </div>
-          ) : null}
         </section>
-        {error ? <div className="toast error">{error}</div> : null}
-        {notice ? <div className="toast success">{notice}</div> : null}
+        {error ? <Toast type="error" icon={CircleAlert} message={error} onClose={() => setError("")} /> : null}
+        {notice ? <Toast type="success" icon={Check} message={notice} onClose={() => setNotice("")} /> : null}
       </main>
     );
   }
@@ -661,17 +600,11 @@ export default function Game() {
       ) : null}
 
       {error ? (
-        <div className="toast error">
-          <X size={16} />
-          <span>{error}</span>
-        </div>
+        <Toast type="error" icon={CircleAlert} message={error} onClose={() => setError("")} />
       ) : null}
 
       {notice ? (
-        <div className="toast success">
-          <Check size={16} />
-          <span>{notice}</span>
-        </div>
+        <Toast type="success" icon={Check} message={notice} onClose={() => setNotice("")} />
       ) : null}
 
       <RoundSplash splash={roundSplash} gameModes={gameModes} />
@@ -1314,6 +1247,18 @@ function Finished({ room, onHome }) {
         <span>العودة</span>
       </button>
     </section>
+  );
+}
+
+function Toast({ type, icon: Icon, message, onClose }) {
+  return (
+    <div className={`toast ${type}`} role={type === "error" ? "alert" : "status"}>
+      <Icon size={17} />
+      <span>{message}</span>
+      <button className="toast-close" type="button" onClick={onClose} aria-label="إغلاق الرسالة">
+        <X size={15} />
+      </button>
+    </div>
   );
 }
 
