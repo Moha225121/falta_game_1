@@ -310,7 +310,7 @@ export default function Game() {
     const nextPlayer = persistPlayer(loadPlayer(state));
     setPlayer(nextPlayer);
     const stored = loadSavedRoom();
-    const activeCode = room?.code || roomCode || state?.code || stored?.code || "";
+    const activeCode = room?.code || roomCode || state?.code || "";
     const code = normalizeRoomCodeInput(activeCode);
 
     if (state?.mode === "create" && !room) {
@@ -337,6 +337,7 @@ export default function Game() {
 
     const savedSessionId = stored?.code === code ? stored.sessionId : sessionId;
     const shouldRestore = Boolean(room?.code === code || stored?.code === code);
+    const wasSavedRoomAttempt = shouldRestore && stored?.code === code;
     const event = shouldRestore ? "room:restore" : "room:join";
     const key = `${event}:${socket.id}:${code}:${savedSessionId}`;
     if (lastAutoKey.current === key) {
@@ -356,11 +357,11 @@ export default function Game() {
         navigate(`/play/${response.room.code}`, { replace: true });
       }
     }).catch((caught) => {
-      if (event === "room:restore" || isRecoverableRoomError(caught)) {
+      if (wasSavedRoomAttempt || event === "room:restore") {
         clearSavedRoom(code);
         setSavedRoom(null);
       }
-      if (isRecoverableRoomError(caught)) {
+      if (isRecoverableRoomError(caught) && wasSavedRoomAttempt) {
         setRoom(null);
         setJoinCode("");
         if (roomCode) {

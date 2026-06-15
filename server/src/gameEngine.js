@@ -81,6 +81,7 @@ const BOT_FAKE_ANSWERS = [
 const BOT_CORRECT_ANSWER_RATE = 0.18;
 const BOT_CORRECT_VOTE_RATE = 0.42;
 const RECONNECT_GRACE_MS = 45_000;
+const LOBBY_RECONNECT_GRACE_MS = 5 * 60_000;
 const LIVE_GAME_PHASES = new Set(["answering", "voting", "results"]);
 const PHASE_ORDER = ["lobby", "answering", "voting", "results", "finished"];
 
@@ -587,7 +588,7 @@ export class KalakGameEngine {
 
   assignHostIfNeeded(room, preferredPlayerId = null) {
     const currentHost = room.hostId ? room.players.get(room.hostId) : null;
-    if (currentHost && !currentHost.isBot && currentHost.connected !== false) {
+    if (currentHost && !currentHost.isBot && (currentHost.connected !== false || room.phase === "lobby")) {
       return currentHost.id;
     }
 
@@ -703,6 +704,13 @@ export class KalakGameEngine {
     }
 
     const player = room.players.get(playerId);
+
+    if (room.phase === "lobby" && room.hostId === playerId) {
+      this.closeRoom(room, "المضيف غادر الغرفة، انتهت الغرفة.", { excludeSocketId: socket.id });
+      delete socket.data.roomCode;
+      delete socket.data.playerId;
+      return { room: null };
+    }
 
     this.removePlayerFromRoom(room, playerId, `${player?.name || "اللاعب"} غادر الغرفة.`);
     return { room: null };
@@ -2864,6 +2872,32 @@ export class KalakGameEngine {
     });
   }
 
+  closeRoom(room, message, { excludeSocketId = null } = {}) {
+    this.clearTimer(room);
+
+    for (const player of room.players.values()) {
+      if (player.reconnectTimer) {
+        clearTimeout(player.reconnectTimer);
+        player.reconnectTimer = null;
+      }
+
+      const playerSocket = player.socketId ? this.io.sockets?.sockets?.get(player.socketId) : null;
+      if (playerSocket?.id && playerSocket.id !== excludeSocketId) {
+        playerSocket.emit("room:kicked", { message });
+      }
+
+      playerSocket?.leave?.(room.code);
+      playerSocket?.leave?.(this.privatePlayerRoom(room, player.id));
+      if (playerSocket?.data?.roomCode === room.code) {
+        delete playerSocket.data.roomCode;
+        delete playerSocket.data.playerId;
+      }
+    }
+
+    this.rooms.delete(room.code);
+    this.cumulative.roomsClosed += 1;
+  }
+
   removePlayer(socket) {
     const code = socket.data.roomCode;
     const room = code ? this.rooms.get(code) : null;
@@ -2882,7 +2916,8 @@ export class KalakGameEngine {
     player.disconnectedAt = Date.now();
     player.socketId = null;
     this.cumulative.disconnections += 1;
-    this.addSystemMessage(room, `${player.name} انقطع اتصاله. عنده ${Math.round(RECONNECT_GRACE_MS / 1000)} ثانية للرجوع.`);
+    const reconnectGrace = room.phase === "lobby" ? LOBBY_RECONNECT_GRACE_MS : RECONNECT_GRACE_MS;
+    this.addSystemMessage(room, `${player.name} انقطع اتصاله. عنده ${Math.round(reconnectGrace / 1000)} ثانية للرجوع.`);
     this.emitRoom(room);
     this.checkPhaseCompletion(room);
 
@@ -2900,7 +2935,7 @@ export class KalakGameEngine {
       if (current?.connected === false) {
         this.removePlayerFromRoom(room, player.id, `${player.name} غادر الغرفة.`);
       }
-    }, RECONNECT_GRACE_MS);
+    }, reconnectGrace);
   }
 
   removePlayerFromRoom(room, playerId, message, { notify = false, preserveEmptyLobby = false } = {}) {
