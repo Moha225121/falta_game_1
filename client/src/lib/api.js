@@ -1,11 +1,7 @@
-export const API_BASE = import.meta.env.VITE_API_URL || "/api";
-
-export function apiUrl(path) {
-  return `${API_BASE}${path}`;
-}
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 export async function api(path, options = {}) {
-  const response = await fetch(apiUrl(path), {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
