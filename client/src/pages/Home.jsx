@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Gamepad2, LogIn, Users } from "lucide-react";
-import { api } from "../lib/api.js";
-import { cleanRoomSessionOnEntry, clearRoomSessionCache } from "../lib/roomSession.js";
-import { getLocalItem, readJsonLocalItem, setLocalItem } from "../lib/storage.js";
+import { api, apiUrl } from "../lib/api.js";
 import { AvatarPicker } from "../components/Avatar.jsx";
 
 const defaultAvatar = {
@@ -16,12 +14,42 @@ const defaultAvatar = {
   mouth: "smile",
   accessory: "headset"
 };
+const activeRoomSessionKey = "kalak:activeRoomSession";
+const pendingRoomLeaveKey = "kalak:pendingRoomLeave";
+const roomSessionStorageKeys = [
+  "kalak:room",
+  "kalak:roomCode",
+  "kalak:sessionId",
+  "kalak:playerId",
+  activeRoomSessionKey,
+  pendingRoomLeaveKey
+];
 
 function savedPlayer() {
   return {
-    name: getLocalItem("kalak:name") || "",
-    avatar: readJsonLocalItem("kalak:avatar", defaultAvatar) || defaultAvatar
+    name: localStorage.getItem("kalak:name") || "",
+    avatar: JSON.parse(localStorage.getItem("kalak:avatar") || "null") || defaultAvatar
   };
+}
+
+function clearRoomSessionCache() {
+  for (const key of roomSessionStorageKeys) {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }
+}
+
+function storageJson(key) {
+  const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 function normalizeRoomCode(value) {
@@ -31,6 +59,30 @@ function normalizeRoomCode(value) {
     .slice(0, 5);
 }
 
+function normalizeRoomSession(value = {}) {
+  const code = normalizeRoomCode(value.code);
+  const playerId = String(value.playerId || value.sessionId || "").trim();
+  if (code.length !== 5 || !playerId) {
+    return null;
+  }
+
+  return { code, playerId };
+}
+
+function sendPendingRoomLeave() {
+  const pendingLeave = normalizeRoomSession(storageJson(pendingRoomLeaveKey));
+  if (!pendingLeave) {
+    return;
+  }
+
+  fetch(apiUrl("/rooms/leave"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pendingLeave),
+    keepalive: true
+  }).catch(() => {});
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
@@ -38,24 +90,24 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
-    cleanRoomSessionOnEntry();
+    sendPendingRoomLeave();
+    clearRoomSessionCache();
     api("/config").then(setConfig).catch(() => {});
   }, []);
 
   function persistPlayer(next = { name, avatar }) {
     const cleanName = next.name.trim() || `لاعب ${Math.floor(1000 + Math.random() * 9000)}`;
-    setLocalItem("kalak:name", cleanName);
-    setLocalItem("kalak:avatar", JSON.stringify(next.avatar));
+    localStorage.setItem("kalak:name", cleanName);
+    localStorage.setItem("kalak:avatar", JSON.stringify(next.avatar));
     return { ...next, name: cleanName };
   }
 
-  function createRoom(event) {
+  function startPlay(event) {
     event?.preventDefault();
     clearRoomSessionCache();
     const player = persistPlayer();
     navigate("/play", {
       state: {
-        mode: "create",
         name: player.name,
         avatar: player.avatar
       }
@@ -113,9 +165,9 @@ export default function Home() {
         </div>
 
         <div className="home-action-grid">
-          <button className="primary-button" type="button" onClick={createRoom}>
+          <button className="primary-button" type="button" onClick={startPlay}>
             <Gamepad2 size={18} />
-            <span>إنشاء غرفة</span>
+            <span>ابدأ اللعب</span>
           </button>
 
           <form className="join-inline" onSubmit={joinRoom}>
