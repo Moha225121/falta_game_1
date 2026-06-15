@@ -16,8 +16,6 @@ import {
   MODE_IDS,
   REVERSE_TRAP_ROUNDS,
   SPLIT_STEAL_SCENARIOS,
-  SPOT_AI_ANSWERS,
-  SPOT_AI_PROMPTS,
   TARGET_GUESS_ROUNDS
 } from "./gameModes.js";
 
@@ -1241,11 +1239,6 @@ export class KalakGameEngine {
       return;
     }
 
-    if (mode === "spot_ai") {
-      this.startSpotAiRound(room, content);
-      return;
-    }
-
     if (mode === "judge_pick") {
       this.startJudgePickRound(room, content);
       return;
@@ -1371,36 +1364,6 @@ export class KalakGameEngine {
       id: `last_survivor_${room.round}`,
       category: "⚡ الفرصة الأخيرة",
       prompt: challenge,
-      difficulty: "medium"
-    };
-    if (question) {
-      room.question = {
-        ...room.question,
-        id: contentQuestionId(question, room.question.id),
-        category: contentCategory(question, room.question.category),
-        difficulty: contentDifficulty(question)
-      };
-    }
-    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
-    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
-    this.emitRoom(room);
-    this.scheduleBotAnswers(room);
-  }
-
-  startSpotAiRound(room, question = null) {
-    const index = Math.floor(Math.random() * SPOT_AI_PROMPTS.length);
-    const content = contentPayload(question);
-    const prompt = contentPrompt(question, SPOT_AI_PROMPTS[index]);
-    const aiAnswer = content.aiAnswer || question?.correctAnswer || SPOT_AI_ANSWERS[index % SPOT_AI_ANSWERS.length];
-
-    room.phase = "answering";
-    room.modeData = {
-      aiAnswer
-    };
-    room.question = {
-      id: `spot_ai_${room.round}`,
-      category: "كشف الذكاء",
-      prompt,
       difficulty: "medium"
     };
     if (question) {
@@ -1831,16 +1794,6 @@ export class KalakGameEngine {
       return candidate || `إجابة ${Math.floor(10 + Math.random() * 90)}`;
     }
 
-    if (mode === "spot_ai") {
-      return shuffle([
-        "تبدو مألوفة لكنها درامية قليلًا.",
-        "الأمر يعتمد على من يحكي القصة.",
-        "أصفها بأنها غريبة ومضحكة ولا تُنسى.",
-        "تبدو بسيطة حتى يبدأ الجميع في الجدال.",
-        "أفضل إجابة تكون قصيرة وصادقة وذكية قليلًا."
-      ])[0];
-    }
-
     if (mode === "closest_number") {
       const answer = Number(room.modeData?.answer || 10);
       const spread = Math.max(2, Math.round(Math.abs(answer) * 0.25));
@@ -1886,11 +1839,6 @@ export class KalakGameEngine {
 
     if (mode === "last_survivor") {
       this.finishLastSurvivorAnswering(room);
-      return;
-    }
-
-    if (mode === "spot_ai") {
-      this.finishSpotAiAnswering(room);
       return;
     }
 
@@ -2061,32 +2009,6 @@ export class KalakGameEngine {
     room.phase = "results";
     room.phaseEndsAt = null;
     this.emitRoom(room);
-  }
-
-  finishSpotAiAnswering(room) {
-    this.clearTimer(room);
-
-    const playerOptions = [...room.submissions.values()].map((submission) => ({
-      id: nanoid(8),
-      text: submission.text,
-      isCorrect: false,
-      ownerIds: [submission.playerId]
-    }));
-
-    room.options = shuffle([
-      ...playerOptions,
-      {
-        id: nanoid(8),
-        text: room.modeData.aiAnswer,
-        isCorrect: true,
-        ownerIds: ["ai"]
-      }
-    ]);
-    room.phase = "voting";
-    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
-    room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
-    this.emitRoom(room);
-    this.scheduleBotVotes(room);
   }
 
   finishHotTakeAnswering(room) {
@@ -2264,11 +2186,6 @@ export class KalakGameEngine {
       return;
     }
 
-    if (mode === "spot_ai") {
-      this.finishSpotAiVoting(room);
-      return;
-    }
-
     if (mode === "judge_pick") {
       this.finishJudgePickVoting(room);
       return;
@@ -2331,12 +2248,6 @@ export class KalakGameEngine {
 
     for (const playerId of room.players.keys()) {
       ensureAward(playerId);
-    }
-
-    for (const playerId of room.correctWriterIds) {
-      const award = ensureAward(playerId);
-      award.correctSubmission += 150;
-      award.total += 150;
     }
 
     for (const vote of room.votes.values()) {
@@ -2892,58 +2803,6 @@ export class KalakGameEngine {
         isCorrect: option.isCorrect,
         ownerIds: [],
         ownerNames: [],
-        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
-      }))
-    };
-    room.phase = "results";
-    room.phaseEndsAt = null;
-    this.emitRoom(room);
-  }
-
-  finishSpotAiVoting(room) {
-    this.clearTimer(room);
-
-    const awards = this.baseAwards(room);
-    const votes = this.publicVotes(room);
-    const aiOption = room.options.find((option) => option.isCorrect);
-
-    for (const vote of room.votes.values()) {
-      const option = room.options.find((item) => item.id === vote.optionId);
-      if (!option) {
-        continue;
-      }
-
-      if (option.isCorrect) {
-        const award = awards.get(vote.playerId);
-        award.correctVote += 100;
-        award.total += 100;
-        continue;
-      }
-
-      for (const ownerId of option.ownerIds) {
-        if (ownerId !== vote.playerId && awards.has(ownerId)) {
-          const award = awards.get(ownerId);
-          award.fakeVotes += 50;
-          award.total += 50;
-        }
-      }
-    }
-
-    this.applyAwards(room, awards);
-    room.results = {
-      correctAnswer: aiOption?.text || "",
-      summary: "تم كشف إجابة الذكاء الاصطناعي.",
-      isFinal: room.round >= room.settings.rounds,
-      votes,
-      awards: [...awards.values()].sort((a, b) => b.total - a.total),
-      revealedOptions: room.options.map((option) => ({
-        id: option.id,
-        text: option.text,
-        isCorrect: option.isCorrect,
-        ownerIds: option.ownerIds,
-        ownerNames: option.ownerIds.includes("ai")
-          ? ["الذكاء الاصطناعي"]
-          : option.ownerIds.map((id) => room.players.get(id)?.name || "غير معروف"),
         voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
       }))
     };

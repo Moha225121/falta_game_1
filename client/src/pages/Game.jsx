@@ -1255,10 +1255,6 @@ function revealLabel(room, option = {}) {
     return "الدخيل";
   }
 
-  if (mode === "spot_ai") {
-    return "إجابة الذكاء الاصطناعي";
-  }
-
   if (mode === "fake_fact") {
     return "الخيار الصحيح";
   }
@@ -1295,10 +1291,6 @@ function revealOwnerLabel(room, option) {
 
   if (mode === "imposter") {
     return option.ownerNames.join("، ");
-  }
-
-  if (mode === "spot_ai") {
-    return option.ownerNames.length ? `كتبها: ${option.ownerNames.join("، ")}` : "بدون صاحب";
   }
 
   if (mode === "last_survivor") {

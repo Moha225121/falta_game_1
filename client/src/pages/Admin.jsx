@@ -38,7 +38,7 @@ const fallbackQuestionTypes = [
   { id: "kalak", name: "شن الصح؟", kind: "trivia", category: "عام" },
   { id: "imposter", name: "الدخيل", kind: "secret_word", category: "الدخيل" },
   { id: "fake_fact", name: "كذبة ذكية", kind: "true_false", category: "كذبة ذكية" },
-  { id: "spot_ai", name: "كشف الذكاء", kind: "ai_prompt", category: "كشف الذكاء" },
+  { id: "minority_wins", name: "الأقلية تكسب", kind: "choice_poll", category: "الأقلية تكسب" },
   { id: "judge_pick", name: "الحكم", kind: "judge_prompt", category: "الحكم" }
 ];
 
@@ -59,7 +59,7 @@ const modeNameFallback = {
   kalak: "شن الصح؟",
   imposter: "الدخيل",
   fake_fact: "كذبة ذكية",
-  spot_ai: "كشف الذكاء",
+  minority_wins: "الأقلية تكسب",
   judge_pick: "الحكم"
 };
 
@@ -154,10 +154,6 @@ function answerPreview(question) {
 
   if (question.mode === "fake_fact") {
     return content.answer === "true" ? "صح" : "كذبة";
-  }
-
-  if (question.mode === "spot_ai") {
-    return content.aiAnswer || question.correctAnswer || "";
   }
 
   if (question.mode === "judge_pick") {

@@ -43,11 +43,11 @@ export const QUESTION_TYPE_DEFINITIONS = [
     summary: "معلومة يحددها المدير كصح أو كذبة مع شرح اختياري."
   },
   {
-    id: "spot_ai",
-    name: "كشف الذكاء",
-    kind: "ai_prompt",
-    category: "كشف الذكاء",
-    summary: "طلب كتابة مع إجابة جاهزة تمثل إجابة الذكاء الاصطناعي."
+    id: "minority_wins",
+    name: "الأقلية تكسب",
+    kind: "choice_poll",
+    category: "الأقلية تكسب",
+    summary: "سؤال اختيارات يفوز فيه اللاعبون الذين اختاروا الخيار الأقل تصويتًا."
   },
   {
     id: "judge_pick",
@@ -144,10 +144,6 @@ export function modeAnswerLabel(question = {}) {
     return content.answer === "true" ? "true" : "fake";
   }
 
-  if (mode === "spot_ai") {
-    return content.aiAnswer || question.correctAnswer || "";
-  }
-
   if (mode === "judge_pick") {
     return (content.gameAnswers || []).join(", ");
   }
@@ -228,16 +224,6 @@ function normalizeModeFields(mode, kind, input) {
       prompt: statement,
       correctAnswer: answer,
       content: { statement, answer, explanation }
-    };
-  }
-
-  if (mode === "spot_ai") {
-    const prompt = textFrom(input, ["prompt"], "prompt", 400, 8);
-    const aiAnswer = textFrom(input, ["aiAnswer", "correctAnswer", "answer"], "aiAnswer", 220, 1);
-    return {
-      prompt,
-      correctAnswer: aiAnswer,
-      content: { prompt, aiAnswer }
     };
   }
 
