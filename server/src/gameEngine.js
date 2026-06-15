@@ -374,7 +374,7 @@ export class KalakGameEngine {
     socket.on("room:create", (payload, ack) => this.handle(socket, ack, () => this.createRoom(socket, payload)));
     socket.on("room:join", (payload, ack) => this.handle(socket, ack, () => this.joinRoom(socket, payload)));
     socket.on("room:restore", (payload, ack) => this.handle(socket, ack, () => this.restoreRoom(socket, payload)));
-    socket.on("room:leave", (payload, ack) => this.handle(socket, ack, () => this.leaveRoom(socket)));
+    socket.on("room:leave", (payload, ack) => this.handle(socket, ack, () => this.leaveRoom(socket, payload)));
     socket.on("room:updateSettings", (payload, ack) => this.handle(socket, ack, () => this.updateSettings(socket, payload)));
     socket.on("room:addBot", (payload, ack) => this.handle(socket, ack, () => this.addBot(socket)));
     socket.on("room:removeBot", (payload, ack) => this.handle(socket, ack, () => this.removeBot(socket, payload)));
@@ -611,6 +611,8 @@ export class KalakGameEngine {
   }
 
   async createRoom(socket, payload = {}) {
+    this.detachSocketFromCurrentRoom(socket);
+
     const player = createPlayer(socket, payload);
     const code = this.generateRoomCode();
 
@@ -650,6 +652,11 @@ export class KalakGameEngine {
     }
 
     const existingPlayer = room.players.get(sessionId);
+    this.detachSocketFromCurrentRoom(socket, { keepCode: code, keepPlayerId: existingPlayer ? sessionId : null });
+    if (!this.rooms.has(code)) {
+      throw codedError("كود الغرفة غير موجود.", "ROOM_UNAVAILABLE");
+    }
+
     if (existingPlayer) {
       return this.restorePlayer(socket, room, existingPlayer, payload);
     }
@@ -699,25 +706,67 @@ export class KalakGameEngine {
       throw codedError("لم نجد جلستك في هذه الغرفة.", "SESSION_MISSING");
     }
 
+    this.detachSocketFromCurrentRoom(socket, { keepCode: code, keepPlayerId: player.id });
+    if (!this.rooms.has(code)) {
+      throw codedError("هذه الغرفة انتهت أو انقطعت.", "ROOM_UNAVAILABLE");
+    }
     return this.restorePlayer(socket, room, player, payload);
   }
 
-  async leaveRoom(socket) {
-    const room = socket.data.roomCode ? this.rooms.get(socket.data.roomCode) : null;
-    const playerId = this.playerId(socket);
+  detachSocketFromCurrentRoom(socket, { keepCode = "", keepPlayerId = "" } = {}) {
+    const currentCode = cleanRoomCode(socket.data.roomCode);
+    const currentPlayerId = String(socket.data.playerId || "");
+    const keepCurrentRoom = keepCode && keepPlayerId && currentCode === keepCode && currentPlayerId === keepPlayerId;
 
-    if (!room || !room.players.has(playerId)) {
+    if (!currentCode || keepCurrentRoom) {
+      return null;
+    }
+
+    const room = this.rooms.get(currentCode);
+    if (!room || !room.players.has(currentPlayerId)) {
       delete socket.data.roomCode;
       delete socket.data.playerId;
+      return null;
+    }
+
+    const player = room.players.get(currentPlayerId);
+    if (room.phase === "lobby" && room.hostId === currentPlayerId) {
+      this.closeRoom(room, "المضيف غادر الغرفة، انتهت الغرفة.", { excludeSocketId: socket.id });
+      delete socket.data.roomCode;
+      delete socket.data.playerId;
+      return player;
+    }
+
+    return this.removePlayerFromRoom(room, currentPlayerId, `${player?.name || "اللاعب"} غادر الغرفة.`);
+  }
+
+  async leaveRoom(socket, payload = {}) {
+    const requestedCode = cleanRoomCode(payload.code || socket.data.roomCode);
+    const requestedPlayerId = String(payload.playerId || socket.data.playerId || "");
+    const room = requestedCode ? this.rooms.get(requestedCode) : null;
+    const playerId = requestedPlayerId || this.playerId(socket);
+
+    if (!room || !room.players.has(playerId)) {
+      if (!requestedCode || socket.data.roomCode === requestedCode) {
+        delete socket.data.roomCode;
+        delete socket.data.playerId;
+      }
       return { room: null };
     }
 
     const player = room.players.get(playerId);
+    const socketOwnsRequestedPlayer = socket.data.roomCode === requestedCode && socket.data.playerId === playerId;
+
+    if (!socketOwnsRequestedPlayer && player.socketId !== socket.id) {
+      return { room: null };
+    }
 
     if (room.phase === "lobby" && room.hostId === playerId) {
       this.closeRoom(room, "المضيف غادر الغرفة، انتهت الغرفة.", { excludeSocketId: socket.id });
-      delete socket.data.roomCode;
-      delete socket.data.playerId;
+      if (socket.data.roomCode === requestedCode && socket.data.playerId === playerId) {
+        delete socket.data.roomCode;
+        delete socket.data.playerId;
+      }
       return { room: null };
     }
 

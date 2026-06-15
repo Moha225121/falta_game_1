@@ -22,6 +22,27 @@ function savedPlayer() {
   };
 }
 
+function clearRoomSessionCache() {
+  const roomKeys = [
+    "kalak:room",
+    "kalak:roomCode",
+    "kalak:sessionId",
+    "kalak:playerId"
+  ];
+
+  for (const key of roomKeys) {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }
+}
+
+function normalizeRoomCode(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 5);
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
@@ -29,6 +50,7 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
+    clearRoomSessionCache();
     api("/config").then(setConfig).catch(() => {});
   }, []);
 
@@ -41,6 +63,7 @@ export default function Home() {
 
   function createRoom(event) {
     event?.preventDefault();
+    clearRoomSessionCache();
     const player = persistPlayer();
     navigate("/play", {
       state: {
@@ -53,10 +76,11 @@ export default function Home() {
 
   function joinRoom(event) {
     event.preventDefault();
-    const code = joinCode.trim().toUpperCase();
+    const code = normalizeRoomCode(joinCode);
     if (!code) {
       return;
     }
+    clearRoomSessionCache();
     const player = persistPlayer();
     navigate(`/play/${code}`, {
       state: {
@@ -112,10 +136,10 @@ export default function Home() {
               <input
                 className="room-code-input"
                 value={joinCode}
-                onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+                onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
                 maxLength={5}
                 dir="ltr"
-                placeholder="A7K2Q"
+                placeholder="اكتب كود الغرفة"
               />
             </label>
             <button className="secondary-button" type="submit">

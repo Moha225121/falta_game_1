@@ -85,6 +85,20 @@ function persistPlayer(player) {
   return { ...player, name: cleanName };
 }
 
+function clearRoomSessionCache() {
+  const roomKeys = [
+    "kalak:room",
+    "kalak:roomCode",
+    "kalak:sessionId",
+    "kalak:playerId"
+  ];
+
+  for (const key of roomKeys) {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }
+}
+
 function makeSessionId() {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID().replace(/-/g, "");
@@ -140,7 +154,7 @@ export default function Game() {
   const lastRoundKey = useRef("");
   const roundSplashTimer = useRef(null);
   const playZoneRef = useRef(null);
-  const [sessionId] = useState(() => makeSessionId());
+  const [sessionId, setSessionId] = useState(() => makeSessionId());
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -159,11 +173,15 @@ export default function Game() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    localStorage.removeItem("kalak:room");
-    localStorage.removeItem("kalak:sessionId");
+    clearRoomSessionCache();
     api("/categories").then(setCategories).catch(() => setCategories([]));
     api("/game-modes").then(setGameModes).catch(() => {});
     api("/config").then(setConfig).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("pagehide", clearRoomSessionCache);
+    return () => window.removeEventListener("pagehide", clearRoomSessionCache);
   }, []);
 
   useEffect(() => {
@@ -337,18 +355,30 @@ export default function Game() {
     }
   }
 
+  function startFreshRoomSession() {
+    clearRoomSessionCache();
+    lastAutoKey.current = "";
+    setAnswer("");
+    setSelectedOption("");
+    setNotice("");
+    const nextSessionId = makeSessionId();
+    setSessionId(nextSessionId);
+    return nextSessionId;
+  }
+
   function createRoom(event) {
     event?.preventDefault();
     if (!socket || !connected) {
       setError("الاتصال غير جاهز.");
       return;
     }
+    const nextSessionId = startFreshRoomSession();
     const nextPlayer = persistPlayer(player);
     setPlayer(nextPlayer);
     perform(() => ack(socket, "room:create", {
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
-      sessionId
+      sessionId: nextSessionId
     }).then((response) => {
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "create");
@@ -367,13 +397,14 @@ export default function Game() {
       return;
     }
     setJoinCode(code);
+    const nextSessionId = startFreshRoomSession();
     const nextPlayer = persistPlayer(player);
     setPlayer(nextPlayer);
     perform(() => ack(socket, "room:join", {
       code,
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
-      sessionId
+      sessionId: nextSessionId
     }).then((response) => {
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "join");
@@ -474,18 +505,26 @@ export default function Game() {
   }
 
   function leaveRoom() {
+    const leavingCode = room?.code || "";
+    const leavingPlayerId = room?.me?.playerId || "";
     setDrawerOpen(false);
     setRoom(null);
+    setJoinCode("");
+    startFreshRoomSession();
     navigate("/play", { replace: true });
 
     if (!socket || !connected) {
       return;
     }
 
+    setBusy(true);
     setPendingAction("leave");
-    ack(socket, "room:leave")
+    ack(socket, "room:leave", { code: leavingCode, playerId: leavingPlayerId })
       .catch(() => {})
-      .finally(() => setPendingAction(""));
+      .finally(() => {
+        setBusy(false);
+        setPendingAction("");
+      });
   }
 
   if (!room) {
