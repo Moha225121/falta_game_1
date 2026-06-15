@@ -24,7 +24,7 @@ import {
   Users,
   X
 } from "lucide-react";
-import { api, apiUrl } from "../lib/api.js";
+import { api } from "../lib/api.js";
 import { fallbackGameModes } from "../lib/modes.js";
 import { normalizeRoundCount, roundLimits, selectedModeIds } from "../lib/rounds.js";
 import { createSocket } from "../lib/socket.js";
@@ -55,15 +55,6 @@ const phaseLabels = {
 
 const roomCodeLength = 5;
 const activeMatchPhases = new Set(["answering", "voting", "results"]);
-const activeRoomSessionKey = "kalak:activeRoomSession";
-const pendingRoomLeaveKey = "kalak:pendingRoomLeave";
-const roomSessionStorageKeys = [
-  "kalak:room",
-  "kalak:roomCode",
-  "kalak:sessionId",
-  "kalak:playerId",
-  activeRoomSessionKey
-];
 
 function getActiveMode(room) {
   return room?.activeMode || room?.settings?.mode || selectedModeIds(room?.settings?.modes)[0];
@@ -94,105 +85,18 @@ function persistPlayer(player) {
   return { ...player, name: cleanName };
 }
 
-function storageJson(key) {
-  const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
-  if (!raw) {
-    return null;
-  }
+function clearRoomSessionCache() {
+  const roomKeys = [
+    "kalak:room",
+    "kalak:roomCode",
+    "kalak:sessionId",
+    "kalak:playerId"
+  ];
 
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function writeStorageJson(key, value) {
-  const text = JSON.stringify(value);
-  localStorage.setItem(key, text);
-  sessionStorage.setItem(key, text);
-}
-
-function normalizeRoomSession(value = {}) {
-  const code = normalizeRoomCodeInput(value.code);
-  const playerId = String(value.playerId || value.sessionId || "").trim();
-  if (code.length !== roomCodeLength || !playerId) {
-    return null;
-  }
-
-  return { code, playerId };
-}
-
-function clearRoomSessionCache({ keepPendingLeave = false } = {}) {
-  for (const key of roomSessionStorageKeys) {
+  for (const key of roomKeys) {
     localStorage.removeItem(key);
     sessionStorage.removeItem(key);
   }
-  if (!keepPendingLeave) {
-    localStorage.removeItem(pendingRoomLeaveKey);
-    sessionStorage.removeItem(pendingRoomLeaveKey);
-  }
-}
-
-function readActiveRoomSession() {
-  return normalizeRoomSession(storageJson(activeRoomSessionKey));
-}
-
-function rememberRoomSession(session) {
-  const normalized = normalizeRoomSession(session);
-  if (!normalized) {
-    return null;
-  }
-
-  writeStorageJson(activeRoomSessionKey, normalized);
-  return normalized;
-}
-
-function queuePendingRoomLeave(session) {
-  const normalized = normalizeRoomSession(session);
-  if (!normalized) {
-    return null;
-  }
-
-  writeStorageJson(pendingRoomLeaveKey, normalized);
-  return normalized;
-}
-
-function sendRoomLeaveRequest(session, { keepalive = false } = {}) {
-  const normalized = normalizeRoomSession(session);
-  if (!normalized) {
-    return Promise.resolve(false);
-  }
-
-  return fetch(apiUrl("/rooms/leave"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(normalized),
-    keepalive
-  }).then((response) => response.ok).catch(() => false);
-}
-
-function sendRoomLeaveBeacon(session) {
-  const normalized = normalizeRoomSession(session);
-  if (!normalized) {
-    return false;
-  }
-
-  const body = JSON.stringify(normalized);
-  if (navigator.sendBeacon) {
-    const blob = new Blob([body], { type: "application/json" });
-    if (navigator.sendBeacon(apiUrl("/rooms/leave"), blob)) {
-      return true;
-    }
-  }
-
-  sendRoomLeaveRequest(normalized, { keepalive: true });
-  return false;
-}
-
-function navigationWasReload() {
-  const navigation = performance.getEntriesByType?.("navigation")?.[0];
-  return navigation?.type === "reload";
 }
 
 function makeSessionId() {
@@ -250,10 +154,6 @@ export default function Game() {
   const lastRoundKey = useRef("");
   const roundSplashTimer = useRef(null);
   const playZoneRef = useRef(null);
-  const activeRoomSessionRef = useRef(null);
-  const unloadTerminatedRef = useRef(false);
-  const bootedFromReload = useRef(navigationWasReload());
-  const initialRoomCode = useRef(roomCode);
   const [sessionId, setSessionId] = useState(() => makeSessionId());
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
@@ -273,47 +173,15 @@ export default function Game() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    const pendingLeave = normalizeRoomSession(storageJson(pendingRoomLeaveKey));
-    if (pendingLeave) {
-      sendRoomLeaveRequest(pendingLeave);
-    }
     clearRoomSessionCache();
-    activeRoomSessionRef.current = null;
-    if (bootedFromReload.current && initialRoomCode.current) {
-      navigate("/play", { replace: true });
-    }
     api("/categories").then(setCategories).catch(() => setCategories([]));
     api("/game-modes").then(setGameModes).catch(() => {});
     api("/config").then(setConfig).catch(() => {});
   }, []);
 
   useEffect(() => {
-    const terminateActiveRoomSession = () => {
-      if (unloadTerminatedRef.current) {
-        return;
-      }
-      unloadTerminatedRef.current = true;
-      const activeSession = activeRoomSessionRef.current || readActiveRoomSession();
-      if (activeSession) {
-        queuePendingRoomLeave(activeSession);
-        sendRoomLeaveBeacon(activeSession);
-      }
-      activeRoomSessionRef.current = null;
-      clearRoomSessionCache({ keepPendingLeave: Boolean(activeSession) });
-    };
-
-    const onPageHide = (event) => {
-      if (!event.persisted) {
-        terminateActiveRoomSession();
-      }
-    };
-
-    window.addEventListener("beforeunload", terminateActiveRoomSession);
-    window.addEventListener("pagehide", onPageHide);
-    return () => {
-      window.removeEventListener("beforeunload", terminateActiveRoomSession);
-      window.removeEventListener("pagehide", onPageHide);
-    };
+    window.addEventListener("pagehide", clearRoomSessionCache);
+    return () => window.removeEventListener("pagehide", clearRoomSessionCache);
   }, []);
 
   useEffect(() => {
@@ -348,11 +216,6 @@ export default function Game() {
     const onState = (nextRoom) => {
       setRoom(nextRoom);
       setError("");
-      const activeSession = rememberRoomSession({
-        code: nextRoom.code,
-        playerId: nextRoom.me?.playerId
-      });
-      activeRoomSessionRef.current = activeSession;
       const activeMode = getActiveMode(nextRoom);
       const roundKey = `${nextRoom.round}:${activeMode}`;
       const canShowSplash = nextRoom.round > 0 && ["answering", "voting"].includes(nextRoom.phase);
@@ -388,8 +251,6 @@ export default function Game() {
 
     const onError = (payload) => setError(payload.error || "حدث خطأ غير متوقع.");
     const onKicked = (payload) => {
-      activeRoomSessionRef.current = null;
-      clearRoomSessionCache();
       setRoom(null);
       setSelectedOption("");
       setAnswer("");
@@ -437,6 +298,22 @@ export default function Game() {
     const activeCode = room?.code || (state?.mode === "join" ? roomCode : "") || state?.code || "";
     const code = normalizeRoomCodeInput(activeCode);
 
+    if (state?.mode === "create" && !room) {
+      const key = `create:${socket.id}:${sessionId}`;
+      if (lastAutoKey.current === key) {
+        return;
+      }
+      lastAutoKey.current = key;
+      perform(() => ack(socket, "room:create", {
+        name: nextPlayer.name,
+        avatar: nextPlayer.avatar,
+        sessionId
+      }).then((response) => {
+        navigate(`/play/${response.room.code}`, { replace: true });
+      }), "create");
+      return;
+    }
+
     if (!code) {
       return;
     }
@@ -480,7 +357,6 @@ export default function Game() {
 
   function startFreshRoomSession() {
     clearRoomSessionCache();
-    activeRoomSessionRef.current = null;
     lastAutoKey.current = "";
     setAnswer("");
     setSelectedOption("");
@@ -504,10 +380,6 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId: nextSessionId
     }).then((response) => {
-      activeRoomSessionRef.current = rememberRoomSession({
-        code: response.room.code,
-        playerId: response.room.me?.playerId
-      });
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "create");
   }
@@ -534,10 +406,6 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId: nextSessionId
     }).then((response) => {
-      activeRoomSessionRef.current = rememberRoomSession({
-        code: response.room.code,
-        playerId: response.room.me?.playerId
-      });
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "join");
   }
