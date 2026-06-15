@@ -99,6 +99,15 @@ function clearRoomSessionCache() {
   }
 }
 
+function navigationWasReload() {
+  const navigation = globalThis.performance?.getEntriesByType?.("navigation")?.[0];
+  if (navigation?.type === "reload") {
+    return true;
+  }
+
+  return globalThis.performance?.navigation?.type === 1;
+}
+
 function makeSessionId() {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID().replace(/-/g, "");
@@ -171,6 +180,7 @@ export default function Game() {
   const [chatBusy, setChatBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [resettingReloadSession, setResettingReloadSession] = useState(() => Boolean(roomCode && navigationWasReload()));
 
   useEffect(() => {
     clearRoomSessionCache();
@@ -180,9 +190,45 @@ export default function Game() {
   }, []);
 
   useEffect(() => {
+    if (!resettingReloadSession) {
+      return;
+    }
+
+    clearRoomSessionCache();
+    lastAutoKey.current = "";
+    setRoom(null);
+    setJoinCode("");
+    setAnswer("");
+    setSelectedOption("");
+    setNotice("");
+    navigate("/play", { replace: true, state: null });
+  }, [navigate, resettingReloadSession]);
+
+  useEffect(() => {
+    if (resettingReloadSession && !roomCode) {
+      setResettingReloadSession(false);
+    }
+  }, [resettingReloadSession, roomCode]);
+
+  useEffect(() => {
     window.addEventListener("pagehide", clearRoomSessionCache);
     return () => window.removeEventListener("pagehide", clearRoomSessionCache);
   }, []);
+
+  useEffect(() => {
+    const code = room?.code || "";
+    const playerId = room?.me?.playerId || "";
+
+    function leaveRoomOnUnload() {
+      clearRoomSessionCache();
+      if (code && playerId && socket?.connected) {
+        socket.emit("room:leave", { code, playerId });
+      }
+    }
+
+    window.addEventListener("beforeunload", leaveRoomOnUnload);
+    return () => window.removeEventListener("beforeunload", leaveRoomOnUnload);
+  }, [room?.code, room?.me?.playerId, socket]);
 
   useEffect(() => {
     if (!error) {
@@ -292,6 +338,10 @@ export default function Game() {
       return;
     }
 
+    if (resettingReloadSession) {
+      return;
+    }
+
     const state = location.state;
     const nextPlayer = persistPlayer(loadPlayer(state));
     setPlayer(nextPlayer);
@@ -309,7 +359,7 @@ export default function Game() {
         avatar: nextPlayer.avatar,
         sessionId
       }).then((response) => {
-        navigate(`/play/${response.room.code}`, { replace: true });
+        navigate(`/play/${response.room.code}`, { replace: true, state: null });
       }), "create");
       return;
     }
@@ -332,11 +382,9 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId
     }).then((response) => {
-      if (roomCode !== response.room.code) {
-        navigate(`/play/${response.room.code}`, { replace: true });
-      }
+      navigate(`/play/${response.room.code}`, { replace: true, state: null });
     }), shouldRestore ? "restore" : "join");
-  }, [connected, location.state, navigate, room?.code, roomCode, sessionId, socket]);
+  }, [connected, location.state, navigate, resettingReloadSession, room?.code, roomCode, sessionId, socket]);
 
   const me = useMemo(() => room?.players.find((item) => item.id === room.me?.playerId), [room]);
   const isHost = Boolean(room?.me?.isHost);
@@ -380,7 +428,7 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId: nextSessionId
     }).then((response) => {
-      navigate(`/play/${response.room.code}`, { replace: true });
+      navigate(`/play/${response.room.code}`, { replace: true, state: null });
     }), "create");
   }
 
@@ -406,7 +454,7 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId: nextSessionId
     }).then((response) => {
-      navigate(`/play/${response.room.code}`, { replace: true });
+      navigate(`/play/${response.room.code}`, { replace: true, state: null });
     }), "join");
   }
 
