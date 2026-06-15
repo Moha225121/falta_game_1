@@ -55,6 +55,7 @@ const phaseLabels = {
 
 const roomCodeLength = 5;
 const activeMatchPhases = new Set(["answering", "voting", "results"]);
+const joinRetryDelays = [350, 800, 1400, 2200];
 
 function getActiveMode(room) {
   return room?.activeMode || room?.settings?.mode || selectedModeIds(room?.settings?.modes)[0];
@@ -108,6 +109,10 @@ function navigationWasReload() {
   return globalThis.performance?.navigation?.type === 1;
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function makeSessionId() {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID().replace(/-/g, "");
@@ -152,6 +157,64 @@ function ack(socket, event, payload = {}) {
       }
     });
   });
+}
+
+function isRoomUnavailable(error) {
+  return error?.code === "ROOM_UNAVAILABLE";
+}
+
+function isSocketNotReady(error) {
+  return !error?.code && /connected|connection|اتصال|الاتصال/i.test(error?.message || "");
+}
+
+function reconnectSocket(socket) {
+  if (!socket) {
+    return Promise.resolve(false);
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    let timeout = null;
+
+    const finish = (result) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timeout);
+      socket.off("connect", onConnect);
+      socket.off("connect_error", onConnectError);
+      resolve(result);
+    };
+    const onConnect = () => finish(true);
+    const onConnectError = () => finish(false);
+
+    timeout = setTimeout(() => finish(Boolean(socket.connected)), 2500);
+    socket.once("connect", onConnect);
+    socket.once("connect_error", onConnectError);
+    socket.disconnect();
+    setTimeout(() => socket.connect(), 80);
+  });
+}
+
+async function joinRoomReliably(socket, event, payload = {}) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= joinRetryDelays.length; attempt += 1) {
+    try {
+      return await ack(socket, event, payload);
+    } catch (caught) {
+      lastError = caught;
+      if (!(isRoomUnavailable(caught) || isSocketNotReady(caught)) || attempt >= joinRetryDelays.length) {
+        throw caught;
+      }
+
+      await delay(joinRetryDelays[attempt]);
+      await reconnectSocket(socket);
+    }
+  }
+
+  throw lastError;
 }
 
 export default function Game() {
@@ -376,7 +439,7 @@ export default function Game() {
     }
     lastAutoKey.current = key;
 
-    perform(() => ack(socket, event, {
+    perform(() => joinRoomReliably(socket, event, {
       code,
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
@@ -448,7 +511,7 @@ export default function Game() {
     const nextSessionId = startFreshRoomSession();
     const nextPlayer = persistPlayer(player);
     setPlayer(nextPlayer);
-    perform(() => ack(socket, "room:join", {
+    perform(() => joinRoomReliably(socket, "room:join", {
       code,
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
