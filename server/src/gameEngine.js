@@ -225,6 +225,10 @@ function cleanMessage(message) {
   return String(message || "").trim().replace(/\s+/g, " ").slice(0, 180);
 }
 
+function cleanAnswerText(text) {
+  return String(text || "").trim().replace(/\s+/g, " ").slice(0, 160);
+}
+
 function cleanAvatarValue(value, choices, fallback) {
   return choices.has(value) ? value : fallback;
 }
@@ -318,6 +322,7 @@ function createEmptyRoom(code, host, config) {
     usedQuestionIds: [],
     question: null,
     submissions: new Map(),
+    answerDrafts: new Map(),
     votes: new Map(),
     options: [],
     correctWriterIds: [],
@@ -377,6 +382,7 @@ export class KalakGameEngine {
     socket.on("player:kickVote", (payload, ack) => this.handle(socket, ack, () => this.voteKick(socket, payload)));
     socket.on("game:start", (payload, ack) => this.handle(socket, ack, () => this.startGame(socket)));
     socket.on("game:end", (payload, ack) => this.handle(socket, ack, () => this.endGame(socket)));
+    socket.on("answer:draft", (payload) => this.saveAnswerDraft(socket, payload));
     socket.on("answer:submit", (payload, ack) => this.handle(socket, ack, () => this.submitAnswer(socket, payload)));
     socket.on("vote:submit", (payload, ack) => this.handle(socket, ack, () => this.submitVote(socket, payload)));
     socket.on("round:next", (payload, ack) => this.handle(socket, ack, () => this.nextRound(socket)));
@@ -901,6 +907,7 @@ export class KalakGameEngine {
     room.round = 0;
     room.usedQuestionIds = [];
     room.submissions = new Map();
+    room.answerDrafts = new Map();
     room.votes = new Map();
     room.options = [];
     room.correctWriterIds = [];
@@ -923,6 +930,37 @@ export class KalakGameEngine {
     return { room: this.publicRoom(room, this.playerId(socket)) };
   }
 
+  saveAnswerDraft(socket, payload = {}) {
+    const room = socket.data.roomCode ? this.rooms.get(socket.data.roomCode) : null;
+    const playerId = this.playerId(socket);
+
+    if (!room || room.phase !== "answering") {
+      return;
+    }
+
+    room.answerDrafts = room.answerDrafts || new Map();
+
+    if (room.submissions.has(playerId)) {
+      return;
+    }
+
+    if (!this.eligibleAnswerers(room).some((player) => player.id === playerId && !player.isBot)) {
+      return;
+    }
+
+    const text = cleanAnswerText(payload.text);
+    if (text) {
+      room.answerDrafts.set(playerId, {
+        playerId,
+        text,
+        updatedAt: Date.now()
+      });
+      return;
+    }
+
+    room.answerDrafts.delete(playerId);
+  }
+
   async submitAnswer(socket, payload = {}) {
     const room = this.requireRoom(socket);
     const playerId = this.playerId(socket);
@@ -935,7 +973,7 @@ export class KalakGameEngine {
       throw new Error("أنت غير مشارك في هذه الجولة.");
     }
 
-    const text = String(payload.text || "").trim().replace(/\s+/g, " ").slice(0, 160);
+    const text = cleanAnswerText(payload.text);
     if (text.length < 1) {
       throw new Error("اكتب إجابة أولًا.");
     }
@@ -946,6 +984,7 @@ export class KalakGameEngine {
       if (!room.correctWriterIds.includes(playerId)) {
         room.correctWriterIds.push(playerId);
       }
+      room.answerDrafts.delete(playerId);
 
       return {
         room: this.publicRoom(room, playerId),
@@ -959,6 +998,7 @@ export class KalakGameEngine {
       text,
       submittedAt: Date.now()
     });
+    room.answerDrafts.delete(playerId);
 
     this.emitRoom(room);
 
@@ -1103,6 +1143,7 @@ export class KalakGameEngine {
     room.question = question;
     room.usedQuestionIds.push(question.id);
     room.submissions = new Map();
+    room.answerDrafts = new Map();
     room.votes = new Map();
     room.options = [];
     room.correctWriterIds = [];
@@ -1119,6 +1160,7 @@ export class KalakGameEngine {
     const mode = this.currentMode(room);
     room.round += 1;
     room.submissions = new Map();
+    room.answerDrafts = new Map();
     room.votes = new Map();
     room.options = [];
     room.correctWriterIds = [];
@@ -1332,12 +1374,14 @@ export class KalakGameEngine {
     const gameAnswers = Array.isArray(content.gameAnswers) && content.gameAnswers.length > 0
       ? content.gameAnswers
       : JUDGE_PICK_GAME_ANSWERS[promptIndex] || [];
+    const gameAnswer = shuffle(gameAnswers)[0] || "";
 
     room.phase = "answering";
     room.modeData = {
       judgeId: judge.id,
       prompt,
-      gameAnswers
+      gameAnswer,
+      gameAnswers: gameAnswer ? [gameAnswer] : []
     };
     room.question = {
       id: `judge_pick_${room.round}`,
@@ -1781,6 +1825,7 @@ export class KalakGameEngine {
     }
 
     const mode = this.currentMode(room);
+    this.promoteAnswerDrafts(room);
 
     if (mode === "imposter") {
       this.finishImposterAnswering(room);
@@ -2027,6 +2072,31 @@ export class KalakGameEngine {
     this.scheduleBotVotes(room);
   }
 
+  promoteAnswerDrafts(room) {
+    const eligibleIds = new Set(this.eligibleAnswerers(room).map((player) => player.id));
+
+    for (const draft of room.answerDrafts?.values?.() || []) {
+      if (!eligibleIds.has(draft.playerId) || room.submissions.has(draft.playerId)) {
+        continue;
+      }
+
+      const text = cleanAnswerText(draft.text);
+      if (!text) {
+        continue;
+      }
+
+      room.submissions.set(draft.playerId, {
+        playerId: draft.playerId,
+        text,
+        submittedAt: draft.updatedAt || Date.now(),
+        autoSubmitted: true
+      });
+      this.cumulative.answerSubmissions += 1;
+    }
+
+    room.answerDrafts = new Map();
+  }
+
   finishJudgePickAnswering(room) {
     this.clearTimer(room);
 
@@ -2040,13 +2110,14 @@ export class KalakGameEngine {
         source: "player"
       }));
 
-    const gameOptions = shuffle(room.modeData?.gameAnswers || []).map((text) => ({
+    const gameAnswer = room.modeData?.gameAnswer || shuffle(room.modeData?.gameAnswers || [])[0] || "";
+    const gameOptions = gameAnswer ? [{
       id: nanoid(8),
-      text,
+      text: gameAnswer,
       isCorrect: false,
       ownerIds: [],
       source: "game"
-    }));
+    }] : [];
 
     room.options = shuffle([...playerOptions, ...gameOptions]);
 
@@ -2969,6 +3040,7 @@ export class KalakGameEngine {
 
     room.players.delete(player.id);
     room.submissions.delete(player.id);
+    room.answerDrafts?.delete(player.id);
     room.votes.delete(player.id);
     this.clearKickVotesFor(room, player.id);
 

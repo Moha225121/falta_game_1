@@ -426,6 +426,16 @@ export default function Game() {
     perform(() => ack(socket, "player:kickVote", { playerId }), "kick");
   }
 
+  function updateAnswerDraft(value) {
+    setAnswer(value);
+
+    if (!socket || !connected || room?.phase !== "answering" || me?.submitted || me?.canSubmit === false) {
+      return;
+    }
+
+    socket.emit("answer:draft", { text: value });
+  }
+
   function submitAnswer(event) {
     event.preventDefault();
     if (!socket || !connected) {
@@ -636,7 +646,7 @@ export default function Game() {
               room={room}
               me={me}
               answer={answer}
-              setAnswer={setAnswer}
+              setAnswer={updateAnswerDraft}
               onSubmit={submitAnswer}
               busy={busy}
               connected={connected}
