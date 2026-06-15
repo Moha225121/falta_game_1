@@ -81,7 +81,6 @@ const BOT_FAKE_ANSWERS = [
 const BOT_CORRECT_ANSWER_RATE = 0.18;
 const BOT_CORRECT_VOTE_RATE = 0.42;
 const RECONNECT_GRACE_MS = 45_000;
-const LOBBY_RECONNECT_GRACE_MS = 5 * 60_000;
 const LIVE_GAME_PHASES = new Set(["answering", "voting", "results"]);
 const PHASE_ORDER = ["lobby", "answering", "voting", "results", "finished"];
 
@@ -592,9 +591,13 @@ export class KalakGameEngine {
     return [...room.players.values()].filter((player) => !player.isBot && player.connected !== false);
   }
 
+  lobbySeatCount(room) {
+    return [...room.players.values()].filter((player) => player.isBot || player.connected !== false).length;
+  }
+
   assignHostIfNeeded(room, preferredPlayerId = null) {
     const currentHost = room.hostId ? room.players.get(room.hostId) : null;
-    if (currentHost && !currentHost.isBot && (currentHost.connected !== false || room.phase === "lobby")) {
+    if (currentHost && !currentHost.isBot && currentHost.connected !== false) {
       return currentHost.id;
     }
 
@@ -603,7 +606,7 @@ export class KalakGameEngine {
       ? preferredPlayer
       : this.connectedHumans(room)[0] || null;
 
-    room.hostId = nextHost?.id || null;
+    room.hostId = nextHost?.id || (room.phase === "lobby" && currentHost && !currentHost.isBot ? currentHost.id : null);
     return room.hostId;
   }
 
@@ -655,7 +658,7 @@ export class KalakGameEngine {
       throw new Error("هذه المباراة بدأت بالفعل.");
     }
 
-    if (room.players.size >= this.config.maxPlayers) {
+    if (this.lobbySeatCount(room) >= this.config.maxPlayers) {
       throw new Error("هذه الغرفة ممتلئة.");
     }
 
@@ -796,7 +799,7 @@ export class KalakGameEngine {
       throw new Error("يمكن إضافة اللاعبين الآليين في غرفة الانتظار فقط.");
     }
 
-    if (room.players.size >= this.config.maxPlayers) {
+    if (this.lobbySeatCount(room) >= this.config.maxPlayers) {
       throw new Error("هذه الغرفة ممتلئة.");
     }
 
@@ -2987,7 +2990,15 @@ export class KalakGameEngine {
     player.disconnectedAt = Date.now();
     player.socketId = null;
     this.cumulative.disconnections += 1;
-    const reconnectGrace = room.phase === "lobby" ? LOBBY_RECONNECT_GRACE_MS : RECONNECT_GRACE_MS;
+
+    if (room.phase === "lobby") {
+      this.assignHostIfNeeded(room);
+      this.addSystemMessage(room, `${player.name} انقطع اتصاله. كود الغرفة يبقى شغال إلى أن يخرج المضيف من زر الخروج.`);
+      this.emitRoom(room);
+      return;
+    }
+
+    const reconnectGrace = RECONNECT_GRACE_MS;
     this.addSystemMessage(room, `${player.name} انقطع اتصاله. عنده ${Math.round(reconnectGrace / 1000)} ثانية للرجوع.`);
     this.emitRoom(room);
     this.checkPhaseCompletion(room);

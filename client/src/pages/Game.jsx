@@ -149,7 +149,7 @@ export default function Game() {
   const [gameModes, setGameModes] = useState(fallbackGameModes);
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
   const [player, setPlayer] = useState(() => loadPlayer(location.state));
-  const [joinCode, setJoinCode] = useState(() => normalizeRoomCodeInput(roomCode));
+  const [joinCode, setJoinCode] = useState("");
   const [answer, setAnswer] = useState("");
   const [selectedOption, setSelectedOption] = useState("");
   const [busy, setBusy] = useState(false);
@@ -186,9 +186,9 @@ export default function Game() {
 
   useEffect(() => {
     if (!room) {
-      setJoinCode(normalizeRoomCodeInput(roomCode));
+      setJoinCode("");
     }
-  }, [room, roomCode]);
+  }, [room]);
 
   useEffect(() => {
     if (!socket) {
@@ -250,21 +250,6 @@ export default function Game() {
   }, [room?.code, socket]);
 
   useEffect(() => () => clearTimeout(roundSplashTimer.current), []);
-
-  useEffect(() => {
-    if (!socket || !room?.code) {
-      return undefined;
-    }
-
-    const leaveOnUnload = () => {
-      if (socket.connected) {
-        socket.emit("room:leave");
-      }
-    };
-
-    window.addEventListener("beforeunload", leaveOnUnload);
-    return () => window.removeEventListener("beforeunload", leaveOnUnload);
-  }, [room?.code, socket]);
 
   useEffect(() => {
     if (!room || !activeMatchPhases.has(room.phase)) {
@@ -542,7 +527,7 @@ export default function Game() {
                   autoCapitalize="characters"
                   autoComplete="one-time-code"
                   spellCheck={false}
-                  placeholder="A7K2Q"
+                  placeholder="اكتب كود الغرفة"
                 />
               </label>
               <button className="secondary-button" type="submit" disabled={!connected || busy}>
