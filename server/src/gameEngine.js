@@ -774,6 +774,25 @@ export class KalakGameEngine {
     return { room: null };
   }
 
+  leavePlayerSession(payload = {}) {
+    const code = cleanRoomCode(payload.code);
+    const playerId = String(payload.playerId || payload.sessionId || "").trim();
+    const room = code ? this.rooms.get(code) : null;
+
+    if (!room || !playerId || !room.players.has(playerId)) {
+      return { room: null };
+    }
+
+    const player = room.players.get(playerId);
+    if (room.phase === "lobby" && room.hostId === playerId) {
+      this.closeRoom(room, "المضيف غادر الغرفة، انتهت الغرفة.");
+      return { room: null };
+    }
+
+    this.removePlayerFromRoom(room, playerId, `${player?.name || "اللاعب"} غادر الغرفة.`);
+    return { room: null };
+  }
+
   restorePlayer(socket, room, player, payload = {}) {
     const wasDisconnected = player.connected === false;
     this.bindPlayerSocket(socket, room, player, payload, { announceReturn: wasDisconnected });

@@ -27,6 +27,14 @@ import {
 import { api } from "../lib/api.js";
 import { fallbackGameModes } from "../lib/modes.js";
 import { normalizeRoundCount, roundLimits, selectedModeIds } from "../lib/rounds.js";
+import {
+  cleanRoomSessionOnEntry,
+  clearRoomSessionCache,
+  queuePendingRoomLeave,
+  readActiveRoomSession,
+  rememberRoomSession,
+  sendRoomLeaveBeacon
+} from "../lib/roomSession.js";
 import { createSocket } from "../lib/socket.js";
 import { Avatar, AvatarPicker } from "../components/Avatar.jsx";
 import { Chat } from "../components/Chat.jsx";
@@ -55,6 +63,7 @@ const phaseLabels = {
 
 const roomCodeLength = 5;
 const activeMatchPhases = new Set(["answering", "voting", "results"]);
+const initialDocumentPath = globalThis.location?.pathname || "";
 
 function getActiveMode(room) {
   return room?.activeMode || room?.settings?.mode || selectedModeIds(room?.settings?.modes)[0];
@@ -85,18 +94,9 @@ function persistPlayer(player) {
   return { ...player, name: cleanName };
 }
 
-function clearRoomSessionCache() {
-  const roomKeys = [
-    "kalak:room",
-    "kalak:roomCode",
-    "kalak:sessionId",
-    "kalak:playerId"
-  ];
-
-  for (const key of roomKeys) {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
-  }
+function navigationWasReload() {
+  const navigation = performance.getEntriesByType?.("navigation")?.[0];
+  return navigation?.type === "reload" && initialDocumentPath.startsWith("/play");
 }
 
 function makeSessionId() {
@@ -154,6 +154,10 @@ export default function Game() {
   const lastRoundKey = useRef("");
   const roundSplashTimer = useRef(null);
   const playZoneRef = useRef(null);
+  const activeRoomSessionRef = useRef(null);
+  const unloadTerminatedRef = useRef(false);
+  const bootedFromReload = useRef(navigationWasReload());
+  const initialRoomCode = useRef(roomCode);
   const [sessionId, setSessionId] = useState(() => makeSessionId());
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
@@ -173,15 +177,45 @@ export default function Game() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    clearRoomSessionCache();
+    cleanRoomSessionOnEntry();
+    activeRoomSessionRef.current = null;
+    if (bootedFromReload.current && initialRoomCode.current) {
+      navigate("/play", { replace: true });
+    }
     api("/categories").then(setCategories).catch(() => setCategories([]));
     api("/game-modes").then(setGameModes).catch(() => {});
     api("/config").then(setConfig).catch(() => {});
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
-    window.addEventListener("pagehide", clearRoomSessionCache);
-    return () => window.removeEventListener("pagehide", clearRoomSessionCache);
+    const terminateActiveRoomSession = () => {
+      if (unloadTerminatedRef.current) {
+        return;
+      }
+      unloadTerminatedRef.current = true;
+
+      const activeSession = activeRoomSessionRef.current || readActiveRoomSession();
+      if (activeSession) {
+        queuePendingRoomLeave(activeSession);
+        sendRoomLeaveBeacon(activeSession);
+      }
+
+      activeRoomSessionRef.current = null;
+      clearRoomSessionCache({ keepPendingLeave: Boolean(activeSession) });
+    };
+
+    const onPageHide = (event) => {
+      if (!event.persisted) {
+        terminateActiveRoomSession();
+      }
+    };
+
+    window.addEventListener("beforeunload", terminateActiveRoomSession);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      window.removeEventListener("beforeunload", terminateActiveRoomSession);
+      window.removeEventListener("pagehide", onPageHide);
+    };
   }, []);
 
   useEffect(() => {
@@ -216,6 +250,10 @@ export default function Game() {
     const onState = (nextRoom) => {
       setRoom(nextRoom);
       setError("");
+      activeRoomSessionRef.current = rememberRoomSession({
+        code: nextRoom.code,
+        playerId: nextRoom.me?.playerId
+      });
       const activeMode = getActiveMode(nextRoom);
       const roundKey = `${nextRoom.round}:${activeMode}`;
       const canShowSplash = nextRoom.round > 0 && ["answering", "voting"].includes(nextRoom.phase);
@@ -251,6 +289,8 @@ export default function Game() {
 
     const onError = (payload) => setError(payload.error || "حدث خطأ غير متوقع.");
     const onKicked = (payload) => {
+      activeRoomSessionRef.current = null;
+      clearRoomSessionCache();
       setRoom(null);
       setSelectedOption("");
       setAnswer("");
@@ -289,6 +329,10 @@ export default function Game() {
 
   useEffect(() => {
     if (!socket || !connected) {
+      return;
+    }
+
+    if (bootedFromReload.current) {
       return;
     }
 
@@ -357,6 +401,7 @@ export default function Game() {
 
   function startFreshRoomSession() {
     clearRoomSessionCache();
+    activeRoomSessionRef.current = null;
     lastAutoKey.current = "";
     setAnswer("");
     setSelectedOption("");
@@ -380,6 +425,10 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId: nextSessionId
     }).then((response) => {
+      activeRoomSessionRef.current = rememberRoomSession({
+        code: response.room.code,
+        playerId: response.room.me?.playerId
+      });
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "create");
   }
@@ -406,6 +455,10 @@ export default function Game() {
       avatar: nextPlayer.avatar,
       sessionId: nextSessionId
     }).then((response) => {
+      activeRoomSessionRef.current = rememberRoomSession({
+        code: response.room.code,
+        playerId: response.room.me?.playerId
+      });
       navigate(`/play/${response.room.code}`, { replace: true });
     }), "join");
   }
@@ -510,6 +563,7 @@ export default function Game() {
     setDrawerOpen(false);
     setRoom(null);
     setJoinCode("");
+    activeRoomSessionRef.current = null;
     startFreshRoomSession();
     navigate("/play", { replace: true });
 

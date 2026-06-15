@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Gamepad2, LogIn, Users } from "lucide-react";
 import { api } from "../lib/api.js";
+import { cleanRoomSessionOnEntry, clearRoomSessionCache } from "../lib/roomSession.js";
 import { AvatarPicker } from "../components/Avatar.jsx";
 
 const defaultAvatar = {
@@ -22,20 +23,6 @@ function savedPlayer() {
   };
 }
 
-function clearRoomSessionCache() {
-  const roomKeys = [
-    "kalak:room",
-    "kalak:roomCode",
-    "kalak:sessionId",
-    "kalak:playerId"
-  ];
-
-  for (const key of roomKeys) {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
-  }
-}
-
 function normalizeRoomCode(value) {
   return String(value || "")
     .toUpperCase()
@@ -50,7 +37,7 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
-    clearRoomSessionCache();
+    cleanRoomSessionOnEntry();
     api("/config").then(setConfig).catch(() => {});
   }, []);
 
