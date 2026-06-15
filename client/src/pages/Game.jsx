@@ -35,6 +35,7 @@ import {
   rememberRoomSession,
   sendRoomLeaveBeacon
 } from "../lib/roomSession.js";
+import { getLocalItem, readJsonLocalItem, setLocalItem } from "../lib/storage.js";
 import { createSocket } from "../lib/socket.js";
 import { Avatar, AvatarPicker } from "../components/Avatar.jsx";
 import { Chat } from "../components/Chat.jsx";
@@ -82,20 +83,20 @@ function gameModeName(gameModes, modeId) {
 
 function loadPlayer(state) {
   return {
-    name: state?.name || localStorage.getItem("kalak:name") || "",
-    avatar: state?.avatar || JSON.parse(localStorage.getItem("kalak:avatar") || "null") || defaultAvatar
+    name: state?.name || getLocalItem("kalak:name") || "",
+    avatar: state?.avatar || readJsonLocalItem("kalak:avatar", defaultAvatar) || defaultAvatar
   };
 }
 
 function persistPlayer(player) {
   const cleanName = player.name.trim() || `لاعب ${Math.floor(1000 + Math.random() * 9000)}`;
-  localStorage.setItem("kalak:name", cleanName);
-  localStorage.setItem("kalak:avatar", JSON.stringify(player.avatar));
+  setLocalItem("kalak:name", cleanName);
+  setLocalItem("kalak:avatar", JSON.stringify(player.avatar));
   return { ...player, name: cleanName };
 }
 
 function navigationWasReload() {
-  const navigation = performance.getEntriesByType?.("navigation")?.[0];
+  const navigation = globalThis.performance?.getEntriesByType?.("navigation")?.[0];
   return navigation?.type === "reload" && initialDocumentPath.startsWith("/play");
 }
 

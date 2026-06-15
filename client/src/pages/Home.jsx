@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Gamepad2, LogIn, Users } from "lucide-react";
 import { api } from "../lib/api.js";
 import { cleanRoomSessionOnEntry, clearRoomSessionCache } from "../lib/roomSession.js";
+import { getLocalItem, readJsonLocalItem, setLocalItem } from "../lib/storage.js";
 import { AvatarPicker } from "../components/Avatar.jsx";
 
 const defaultAvatar = {
@@ -18,8 +19,8 @@ const defaultAvatar = {
 
 function savedPlayer() {
   return {
-    name: localStorage.getItem("kalak:name") || "",
-    avatar: JSON.parse(localStorage.getItem("kalak:avatar") || "null") || defaultAvatar
+    name: getLocalItem("kalak:name") || "",
+    avatar: readJsonLocalItem("kalak:avatar", defaultAvatar) || defaultAvatar
   };
 }
 
@@ -43,8 +44,8 @@ export default function Home() {
 
   function persistPlayer(next = { name, avatar }) {
     const cleanName = next.name.trim() || `لاعب ${Math.floor(1000 + Math.random() * 9000)}`;
-    localStorage.setItem("kalak:name", cleanName);
-    localStorage.setItem("kalak:avatar", JSON.stringify(next.avatar));
+    setLocalItem("kalak:name", cleanName);
+    setLocalItem("kalak:avatar", JSON.stringify(next.avatar));
     return { ...next, name: cleanName };
   }
 

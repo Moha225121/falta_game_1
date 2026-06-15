@@ -1,4 +1,5 @@
 import { apiUrl } from "./api.js";
+import { getStoredItem, removeStoredItem, setStoredItem } from "./storage.js";
 
 const roomCodeLength = 5;
 const activeRoomSessionKey = "kalak:activeRoomSession";
@@ -19,7 +20,7 @@ function normalizeRoomCode(value) {
 }
 
 function storageJson(key) {
-  const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+  const raw = getStoredItem(key);
   if (!raw) {
     return null;
   }
@@ -32,19 +33,17 @@ function storageJson(key) {
 }
 
 function writeStorageJson(key, value) {
-  const text = JSON.stringify(value);
-  localStorage.setItem(key, text);
-  sessionStorage.setItem(key, text);
+  setStoredItem(key, JSON.stringify(value));
 }
 
 function clearPendingRoomLeave() {
-  localStorage.removeItem(pendingRoomLeaveKey);
-  sessionStorage.removeItem(pendingRoomLeaveKey);
+  removeStoredItem(pendingRoomLeaveKey);
 }
 
 export function normalizeRoomSession(value = {}) {
-  const code = normalizeRoomCode(value.code);
-  const playerId = String(value.playerId || value.sessionId || "").trim();
+  const source = value || {};
+  const code = normalizeRoomCode(source.code);
+  const playerId = String(source.playerId || source.sessionId || "").trim();
   if (code.length !== roomCodeLength || !playerId) {
     return null;
   }
@@ -54,8 +53,7 @@ export function normalizeRoomSession(value = {}) {
 
 export function clearRoomSessionCache({ keepPendingLeave = false } = {}) {
   for (const key of roomSessionStorageKeys) {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
+    removeStoredItem(key);
   }
 
   if (!keepPendingLeave) {
