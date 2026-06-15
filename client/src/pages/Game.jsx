@@ -437,22 +437,6 @@ export default function Game() {
     const activeCode = room?.code || (state?.mode === "join" ? roomCode : "") || state?.code || "";
     const code = normalizeRoomCodeInput(activeCode);
 
-    if (state?.mode === "create" && !room) {
-      const key = `create:${socket.id}:${sessionId}`;
-      if (lastAutoKey.current === key) {
-        return;
-      }
-      lastAutoKey.current = key;
-      perform(() => ack(socket, "room:create", {
-        name: nextPlayer.name,
-        avatar: nextPlayer.avatar,
-        sessionId
-      }).then((response) => {
-        navigate(`/play/${response.room.code}`, { replace: true });
-      }), "create");
-      return;
-    }
-
     if (!code) {
       return;
     }

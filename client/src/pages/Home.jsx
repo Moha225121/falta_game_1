@@ -102,13 +102,12 @@ export default function Home() {
     return { ...next, name: cleanName };
   }
 
-  function createRoom(event) {
+  function startPlay(event) {
     event?.preventDefault();
     clearRoomSessionCache();
     const player = persistPlayer();
     navigate("/play", {
       state: {
-        mode: "create",
         name: player.name,
         avatar: player.avatar
       }
@@ -166,9 +165,9 @@ export default function Home() {
         </div>
 
         <div className="home-action-grid">
-          <button className="primary-button" type="button" onClick={createRoom}>
+          <button className="primary-button" type="button" onClick={startPlay}>
             <Gamepad2 size={18} />
-            <span>إنشاء غرفة</span>
+            <span>ابدأ اللعب</span>
           </button>
 
           <form className="join-inline" onSubmit={joinRoom}>
