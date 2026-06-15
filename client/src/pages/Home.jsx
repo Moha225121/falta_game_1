@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Gamepad2, LogIn, Users } from "lucide-react";
-import { api } from "../lib/api.js";
+import { api, apiUrl } from "../lib/api.js";
 import { AvatarPicker } from "../components/Avatar.jsx";
 
 const defaultAvatar = {
@@ -14,6 +14,16 @@ const defaultAvatar = {
   mouth: "smile",
   accessory: "headset"
 };
+const activeRoomSessionKey = "kalak:activeRoomSession";
+const pendingRoomLeaveKey = "kalak:pendingRoomLeave";
+const roomSessionStorageKeys = [
+  "kalak:room",
+  "kalak:roomCode",
+  "kalak:sessionId",
+  "kalak:playerId",
+  activeRoomSessionKey,
+  pendingRoomLeaveKey
+];
 
 function savedPlayer() {
   return {
@@ -23,16 +33,22 @@ function savedPlayer() {
 }
 
 function clearRoomSessionCache() {
-  const roomKeys = [
-    "kalak:room",
-    "kalak:roomCode",
-    "kalak:sessionId",
-    "kalak:playerId"
-  ];
-
-  for (const key of roomKeys) {
+  for (const key of roomSessionStorageKeys) {
     localStorage.removeItem(key);
     sessionStorage.removeItem(key);
+  }
+}
+
+function storageJson(key) {
+  const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
 }
 
@@ -43,6 +59,30 @@ function normalizeRoomCode(value) {
     .slice(0, 5);
 }
 
+function normalizeRoomSession(value = {}) {
+  const code = normalizeRoomCode(value.code);
+  const playerId = String(value.playerId || value.sessionId || "").trim();
+  if (code.length !== 5 || !playerId) {
+    return null;
+  }
+
+  return { code, playerId };
+}
+
+function sendPendingRoomLeave() {
+  const pendingLeave = normalizeRoomSession(storageJson(pendingRoomLeaveKey));
+  if (!pendingLeave) {
+    return;
+  }
+
+  fetch(apiUrl("/rooms/leave"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pendingLeave),
+    keepalive: true
+  }).catch(() => {});
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
@@ -50,6 +90,7 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
+    sendPendingRoomLeave();
     clearRoomSessionCache();
     api("/config").then(setConfig).catch(() => {});
   }, []);

@@ -120,6 +120,11 @@ export function createApiRouter({ store, game, config }) {
     res.status(204).end();
   }));
 
+  router.post("/rooms/leave", (req, res) => {
+    game.leavePlayerSession(req.body);
+    res.status(204).end();
+  });
+
   router.get("/rooms/:code", (req, res) => {
     const room = game.getRoom(req.params.code);
     if (!room) {
