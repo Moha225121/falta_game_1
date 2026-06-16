@@ -1216,7 +1216,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
           />
         </div>
         {selectedModes.includes("kalak") ? <div className="settings-categories">
-          <span className="field-label">أنواع الأسئلة</span>
+          <span className="field-label">أنواع الأسئلة الخاصة بطور شن الصح</span>
           <CategoryPicker
             categories={categories}
             selected={room.settings.categories || []}

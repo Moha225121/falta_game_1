@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
-import { Gamepad2, Menu, Share2 } from "lucide-react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Menu, Share2 } from "lucide-react";
 import Home from "./pages/Home.jsx";
 import Game from "./pages/Game.jsx";
 import Admin from "./pages/Admin.jsx";
@@ -54,14 +54,8 @@ export default function App() {
     <div className={`app-shell ${showRoomMenu ? "room-route-shell" : ""}`}>
       <header className="topbar">
         <div className="brand" aria-label="فلتة">
-          <span>فلتة</span>
+          <img className="brand-logo" src="/assets/falta-logo.png" alt="فلتة" />
         </div>
-        <nav>
-          <NavLink to="/play">
-            <Gamepad2 size={17} />
-            <span>اللعب</span>
-          </NavLink>
-        </nav>
         {showRoomMenu ? (
           <div className="topbar-room-controls">
             {showRoomShare ? (
