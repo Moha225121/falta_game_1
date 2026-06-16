@@ -175,7 +175,7 @@ export default function Home() {
                 onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
                 maxLength={160}
                 dir="ltr"
-                placeholder="اكتب كود الغرفة"
+                placeholder="اكتب كود الغرفة هنا"
               />
             </label>
             <button className="secondary-button" type="submit">

@@ -98,7 +98,9 @@ a {
 .brand,
 .topbar nav,
 .topbar nav a,
+.topbar-room-controls,
 .topbar-room-menu,
+.topbar-room-share,
 .hero-kicker,
 .panel-heading,
 .section-title,
@@ -132,7 +134,8 @@ a {
 }
 
 .topbar nav a,
-.topbar-room-menu {
+.topbar-room-menu,
+.topbar-room-share {
   gap: 8px;
   min-height: 40px;
   padding: 0 14px;
@@ -144,16 +147,28 @@ a {
 
 .topbar nav a.active,
 .topbar nav a:hover,
-.topbar-room-menu:hover {
+.topbar-room-menu:hover,
+.topbar-room-share:hover {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--line);
 }
 
-.topbar-room-menu {
+.topbar-room-controls {
   display: none;
+  gap: 8px;
+}
+
+.topbar-room-menu,
+.topbar-room-share {
   cursor: pointer;
   font-weight: 900;
+}
+
+.topbar-room-share {
+  color: #051113;
+  background: linear-gradient(135deg, var(--gold), #ffe79a);
+  border-color: rgba(255, 255, 255, 0.38);
 }
 
 .hero-screen,
@@ -450,6 +465,27 @@ p {
 .home-action-grid > .primary-button,
 .join-inline .secondary-button {
   width: 100%;
+}
+
+.invite-action-grid {
+  grid-template-columns: 1fr;
+}
+
+.invite-join-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.invite-ready-card {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  color: #fff4cf;
+  background: rgba(246, 184, 74, 0.12);
+  border: 1px solid rgba(246, 184, 74, 0.34);
+  border-radius: var(--radius);
+  font-weight: 900;
 }
 
 .panel-heading,
@@ -3009,8 +3045,8 @@ button:disabled {
     display: none;
   }
 
-  .room-route-shell .topbar-room-menu {
-    display: inline-flex;
+  .room-route-shell .topbar-room-controls {
+    display: flex;
   }
 
   .brand {
@@ -3133,7 +3169,7 @@ button:disabled {
 
   .mode-card {
     grid-template-columns: minmax(0, 1fr) 26px;
-    min-height: 108px;
+    min-height: 120px;
     padding: 10px;
   }
 
@@ -3141,20 +3177,15 @@ button:disabled {
     display: none;
   }
 
-  .mode-card small,
-  .mode-points {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-  }
-
   .mode-card small {
-    -webkit-line-clamp: 2;
+    display: block;
+    overflow: visible;
     font-size: 0.78rem;
   }
 
   .mode-points {
-    -webkit-line-clamp: 1;
+    display: block;
+    overflow: visible;
   }
 
   .mode-title-line {
@@ -3312,30 +3343,31 @@ button:disabled {
 
   .match-drawer {
     position: fixed;
-    top: auto;
-    inset-inline: 0;
-    bottom: 0;
+    top: calc(72px + env(safe-area-inset-top, 0px));
+    inset-inline: 10px;
+    bottom: auto;
     z-index: 61;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
     gap: 12px;
     width: auto;
-    max-height: min(82vh, 680px);
+    max-height: min(calc(100dvh - 92px), 680px);
     padding: 14px;
-    transform: translateY(105%);
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
     visibility: hidden;
     pointer-events: none;
     background: var(--panel-strong);
     border: 1px solid var(--line);
     border-left: 1px solid var(--line);
-    border-bottom: 0;
-    border-radius: 8px 8px 0 0;
+    border-radius: var(--radius);
     box-shadow: var(--shadow);
-    transition: transform 220ms ease;
+    transition: opacity 180ms ease, transform 180ms ease;
   }
 
   .match-drawer.open {
-    transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
     visibility: visible;
     pointer-events: auto;
   }
@@ -3394,7 +3426,8 @@ button:disabled {
     display: none;
   }
 
-  .topbar-room-menu span {
+  .topbar-room-menu span,
+  .topbar-room-share span {
     display: none;
   }
 

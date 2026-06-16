@@ -502,12 +502,21 @@ export default function Game() {
 
   const me = useMemo(() => room?.players.find((item) => item.id === room.me?.playerId), [room]);
   const isHost = Boolean(room?.me?.isHost);
-  const roomIsActive = Boolean(room);
-
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent("kalak:room-active", { detail: { active: roomIsActive } }));
-    return () => window.dispatchEvent(new CustomEvent("kalak:room-active", { detail: { active: false } }));
-  }, [roomIsActive]);
+    window.dispatchEvent(new CustomEvent("kalak:room-active", {
+      detail: {
+        active: Boolean(room),
+        code: room?.code || "",
+        phase: room?.phase || ""
+      }
+    }));
+  }, [room?.code, room?.phase]);
+
+  useEffect(() => () => {
+    window.dispatchEvent(new CustomEvent("kalak:room-active", {
+      detail: { active: false, code: "", phase: "" }
+    }));
+  }, []);
 
   async function perform(action, actionName = "action") {
     setBusy(true);
@@ -558,7 +567,7 @@ export default function Game() {
       setError("الاتصال غير جاهز.");
       return;
     }
-    const code = normalizeRoomCodeInput(joinCode);
+    const code = normalizeRoomCodeInput(joinCode || roomCode);
     if (code.length !== roomCodeLength) {
       setJoinCode(code);
       setError("اكتب كود غرفة صحيح من 5 خانات.");
@@ -702,6 +711,19 @@ export default function Game() {
     }
   }
 
+  useEffect(() => {
+    function shareRoomFromTopbar() {
+      if (room?.phase !== "lobby") {
+        return;
+      }
+
+      void copyCode();
+    }
+
+    globalThis.addEventListener?.("kalak:share-room", shareRoomFromTopbar);
+    return () => globalThis.removeEventListener?.("kalak:share-room", shareRoomFromTopbar);
+  }, [room?.code, room?.phase]);
+
   function leaveRoom() {
     const leavingCode = room?.code || "";
     const leavingPlayerId = room?.me?.playerId || "";
@@ -728,6 +750,7 @@ export default function Game() {
   const directInviteCode = !resettingReloadSession && location.state?.mode !== "join"
     ? normalizeRoomCodeInput(roomCode)
     : "";
+  const isInviteEntry = Boolean(directInviteCode);
 
   if (!room) {
     return (
@@ -737,10 +760,10 @@ export default function Game() {
             {connected ? <Check size={18} /> : <Loader2 className="spin" size={18} />}
             <span>{connected ? "متصل" : "جاري الاتصال"}</span>
           </div>
-          <h1>{directInviteCode ? "ادخل الغرفة" : "ادخل اللعب"}</h1>
+          <h1>{isInviteEntry ? "اكتب اسمك" : "ادخل اللعب"}</h1>
           <p>
-            {directInviteCode
-              ? <>اكتب اسمك واضغط دخول للانضمام إلى غرفة <b dir="ltr">{directInviteCode}</b>.</>
+            {isInviteEntry
+              ? "الرابط جاهز، اختار بطاقتك واضغط دخول للغرفة."
               : "اختار بطاقتك مرة واحدة، وبعدها افتح غرفة أو ادخل بكود."}
           </p>
         </section>
@@ -753,28 +776,37 @@ export default function Game() {
 
           <PlayerFields player={player} setPlayer={setPlayer} />
 
-          <div className="home-action-grid">
-            <button className="primary-button" type="button" onClick={createRoom} disabled={!connected || busy}>
-              <ActionIcon loading={pendingAction === "create"} icon={Play} />
-              <span>{pendingAction === "create" ? "جاري الإنشاء" : "إنشاء"}</span>
-            </button>
+          <div className={`home-action-grid ${isInviteEntry ? "invite-action-grid" : ""}`}>
+            {!isInviteEntry ? (
+              <button className="primary-button" type="button" onClick={createRoom} disabled={!connected || busy}>
+                <ActionIcon loading={pendingAction === "create"} icon={Play} />
+                <span>{pendingAction === "create" ? "جاري الإنشاء" : "إنشاء"}</span>
+              </button>
+            ) : null}
 
-            <form className="join-inline" onSubmit={joinRoom}>
-              <label>
-                كود الغرفة
-                <input
-                  className="room-code-input"
-                  value={joinCode}
-                  onChange={(event) => setJoinCode(normalizeRoomCodeInput(event.target.value))}
-                  dir="ltr"
-                  inputMode="text"
-                  autoCapitalize="characters"
-                  autoComplete="one-time-code"
-                  spellCheck={false}
-                  maxLength={160}
-                  placeholder="اكتب كود الغرفة"
-                />
-              </label>
+            <form className={`join-inline ${isInviteEntry ? "invite-join-form" : ""}`} onSubmit={joinRoom}>
+              {isInviteEntry ? (
+                <div className="invite-ready-card">
+                  <Share2 size={18} />
+                  <span>رابط الغرفة جاهز</span>
+                </div>
+              ) : (
+                <label>
+                  كود الغرفة
+                  <input
+                    className="room-code-input"
+                    value={joinCode}
+                    onChange={(event) => setJoinCode(normalizeRoomCodeInput(event.target.value))}
+                    dir="ltr"
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    autoComplete="one-time-code"
+                    spellCheck={false}
+                    maxLength={160}
+                    placeholder="اكتب كود الغرفة هنا"
+                  />
+                </label>
+              )}
               <button className="secondary-button" type="submit" disabled={!connected || busy}>
                 <ActionIcon loading={pendingAction === "join" || pendingAction === "restore"} icon={ArrowLeft} />
                 <span>{pendingAction === "join" || pendingAction === "restore" ? "جاري الدخول" : "دخول"}</span>
