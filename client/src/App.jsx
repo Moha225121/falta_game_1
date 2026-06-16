@@ -9,9 +9,9 @@ export default function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin-panel");
   const isRoomRoute = /^\/play\/[^/]+/.test(location.pathname);
-  const [activeRoom, setActiveRoom] = useState({ active: false, code: "", phase: "" });
+  const [activeRoom, setActiveRoom] = useState({ active: false, code: "", phase: "", mode: "" });
   const showRoomMenu = isRoomRoute && activeRoom.active;
-  const showRoomShare = showRoomMenu && activeRoom.phase === "lobby";
+  const showRoomShare = showRoomMenu && (activeRoom.phase === "lobby" || activeRoom.mode === "science_day");
 
   useEffect(() => {
     function updateRoomMenu(event) {
@@ -19,7 +19,8 @@ export default function App() {
       setActiveRoom({
         active: Boolean(detail.active),
         code: detail.code || "",
-        phase: detail.phase || ""
+        phase: detail.phase || "",
+        mode: detail.mode || ""
       });
     }
 
@@ -29,7 +30,7 @@ export default function App() {
 
   useEffect(() => {
     if (!isRoomRoute) {
-      setActiveRoom({ active: false, code: "", phase: "" });
+      setActiveRoom({ active: false, code: "", phase: "", mode: "" });
     }
   }, [isRoomRoute]);
 

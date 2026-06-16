@@ -39,7 +39,8 @@ const fallbackQuestionTypes = [
   { id: "imposter", name: "الدخيل", kind: "secret_word", category: "الدخيل" },
   { id: "fake_fact", name: "كذبة ذكية", kind: "true_false", category: "كذبة ذكية" },
   { id: "minority_wins", name: "الأقلية تكسب", kind: "choice_poll", category: "الأقلية تكسب" },
-  { id: "judge_pick", name: "الحكم", kind: "judge_prompt", category: "الحكم" }
+  { id: "judge_pick", name: "الحكم", kind: "judge_prompt", category: "الحكم" },
+  { id: "science_day", name: "اليوم العلمي", kind: "direct_choice", category: "اليوم العلمي" }
 ];
 
 const tabs = [
@@ -60,7 +61,8 @@ const modeNameFallback = {
   imposter: "الدخيل",
   fake_fact: "كذبة ذكية",
   minority_wins: "الأقلية تكسب",
-  judge_pick: "الحكم"
+  judge_pick: "الحكم",
+  science_day: "اليوم العلمي"
 };
 
 const phaseNames = {

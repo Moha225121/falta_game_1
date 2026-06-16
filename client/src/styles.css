@@ -1458,6 +1458,179 @@ button:disabled {
   border-top: 1px solid var(--line);
 }
 
+.science-day-invite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid rgba(18, 214, 197, 0.34);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(18, 214, 197, 0.16), rgba(246, 184, 74, 0.12)),
+    rgba(255, 255, 255, 0.06);
+}
+
+.science-day-invite.compact {
+  grid-template-columns: minmax(0, 1fr) 118px;
+  margin: 0 0 14px;
+  padding: 12px;
+}
+
+.science-day-invite.compact .science-day-invite-copy {
+  gap: 7px;
+}
+
+.science-day-invite.compact .science-day-invite-copy p {
+  display: none;
+}
+
+.science-day-invite.compact .science-day-link-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.science-day-invite.compact .science-day-qr {
+  padding: 8px;
+  font-size: 0.78rem;
+}
+
+.science-day-invite.compact .science-day-qr img {
+  width: 92px;
+  height: 92px;
+}
+
+.science-day-invite-copy {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.science-day-invite-copy h3,
+.science-day-top h3 {
+  font-size: 1.2rem;
+}
+
+.science-day-invite-copy p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.science-day-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.science-day-link-row code {
+  min-width: 0;
+  overflow: hidden;
+  padding: 12px;
+  color: #dffffb;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.science-day-qr {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: var(--gold);
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: var(--radius);
+  font-weight: 900;
+}
+
+.science-day-qr img {
+  width: 180px;
+  height: 180px;
+  display: block;
+  border-radius: 6px;
+}
+
+.science-day-rule-grid,
+.science-day-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.science-day-rule-grid {
+  margin-bottom: 16px;
+}
+
+.science-day-rule-grid div,
+.science-day-podium-card {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.science-day-rule-grid strong,
+.science-day-rule-grid span {
+  display: block;
+}
+
+.science-day-rule-grid strong {
+  color: var(--gold);
+  margin-bottom: 5px;
+}
+
+.science-day-rule-grid span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.science-day-top {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid rgba(246, 184, 74, 0.34);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(246, 184, 74, 0.14), rgba(18, 214, 197, 0.10)),
+    rgba(255, 255, 255, 0.055);
+}
+
+.science-day-podium-card {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+}
+
+.science-day-podium-card .rank {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: #061114;
+  background: var(--gold);
+  border-radius: var(--radius);
+  font-weight: 950;
+}
+
+.science-day-podium-card strong,
+.science-day-podium-card b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.science-day-podium-card b {
+  grid-column: 1 / -1;
+  color: var(--gold);
+}
+
 .settings-categories {
   margin-bottom: 16px;
 }
@@ -3183,6 +3356,8 @@ button:disabled {
   .entry-grid,
   .home-action-grid,
   .join-inline,
+  .science-day-invite,
+  .science-day-link-row,
   .side-zone,
   .settings-grid,
   .form-grid,
@@ -3195,6 +3370,16 @@ button:disabled {
 
   .admin-mode-dashboard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .science-day-rule-grid,
+  .science-day-podium {
+    grid-template-columns: 1fr;
+  }
+
+  .science-day-qr img {
+    width: min(220px, 100%);
+    height: auto;
   }
 
   .admin-tabs {

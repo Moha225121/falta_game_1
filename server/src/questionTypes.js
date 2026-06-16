@@ -55,6 +55,13 @@ export const QUESTION_TYPE_DEFINITIONS = [
     kind: "judge_prompt",
     category: "الحكم",
     summary: "سؤال للحكم مع إجابات جاهزة تختلط بإجابات اللاعبين."
+  },
+  {
+    id: "science_day",
+    name: "اليوم العلمي",
+    kind: "direct_choice",
+    category: "اليوم العلمي",
+    summary: "أسئلة اختيار من متعدد للفعاليات العلمية، مناسبة للحضور الكبير واللوحة المباشرة."
   }
 ];
 
