@@ -55,10 +55,29 @@ a {
 .app-shell {
   min-height: 100dvh;
   position: relative;
+  overflow-x: hidden;
   background:
     linear-gradient(180deg, rgba(7, 17, 21, 0.40), rgba(7, 17, 21, 0.94)),
     linear-gradient(90deg, rgba(7, 17, 21, 0.72), rgba(7, 17, 21, 0.20), rgba(7, 17, 21, 0.78)),
     url("/assets/kalak-arena.png") center top / cover fixed;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background:
+    linear-gradient(125deg, rgba(18, 214, 197, 0.16), transparent 34%),
+    linear-gradient(235deg, rgba(246, 184, 74, 0.14), transparent 38%);
+  animation: appLightShift 18s ease-in-out infinite;
+}
+
+.app-shell > * {
+  position: relative;
+  z-index: 1;
 }
 
 .topbar {
@@ -133,6 +152,12 @@ a {
   width: min(1440px, 100%);
   margin: 0 auto;
   padding: 34px;
+}
+
+.game-screen,
+.admin-screen,
+.setup-screen {
+  animation: pageEnter 420ms ease both;
 }
 
 .hero-screen {
@@ -357,6 +382,7 @@ p {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+  animation: surfaceEnter 360ms ease both;
 }
 
 .entry-panel,
@@ -551,6 +577,26 @@ button:disabled {
 .icon-button:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: var(--line-strong);
+}
+
+.primary-button:active:not(:disabled),
+.secondary-button:active:not(:disabled),
+.ghost-button:active:not(:disabled),
+.icon-text-button:active:not(:disabled),
+.icon-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.ghost-button:focus-visible,
+.icon-text-button:focus-visible,
+.icon-button:focus-visible,
+.mode-card:focus-visible,
+.category-card:focus-visible,
+.answer-option:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(18, 214, 197, 0.22), 0 12px 34px rgba(0, 0, 0, 0.22);
 }
 
 .wide-button {
@@ -1223,6 +1269,7 @@ button:disabled {
   overflow: hidden;
   padding: 24px;
   min-height: 520px;
+  animation: surfaceEnter 380ms ease both;
 }
 
 .stage-panel::before {
@@ -1233,6 +1280,8 @@ button:disabled {
   background:
     linear-gradient(120deg, transparent 0 48%, rgba(255, 255, 255, 0.04) 49%, transparent 54%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 28px);
+  background-size: 220% 100%, auto;
+  animation: quietPanelSweep 16s linear infinite;
 }
 
 .stage-panel > * {
@@ -1369,72 +1418,177 @@ button:disabled {
 
 .mode-picker {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
+  gap: 12px;
 }
 
 .mode-card {
+  position: relative;
   min-width: 0;
-  min-height: 88px;
+  min-height: 148px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 26px;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
+  grid-template-columns: 44px minmax(0, 1fr) 32px;
+  align-items: start;
+  gap: 12px;
+  overflow: hidden;
+  padding: 16px;
   text-align: start;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 68%),
+    rgba(255, 255, 255, 0.055);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   cursor: pointer;
+  transition: transform 170ms ease, border-color 170ms ease, background 170ms ease, box-shadow 170ms ease;
+  animation: modeCardEnter 360ms ease both;
+}
+
+.mode-card:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.mode-card:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.mode-card:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+.mode-card:nth-child(5) {
+  animation-delay: 140ms;
+}
+
+.mode-card::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: rgba(18, 214, 197, 0.48);
+  opacity: 0.75;
+}
+
+.mode-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.26);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 68%),
+    rgba(255, 255, 255, 0.075);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+.mode-card:active:not(:disabled) {
+  transform: translateY(0) scale(0.992);
 }
 
 .mode-card strong,
 .mode-card small,
-.mode-card em {
+.mode-points {
   display: block;
 }
 
+.mode-copy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mode-title-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
 .mode-card strong {
-  margin-bottom: 4px;
+  min-width: 0;
+  font-size: 1.04rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .mode-card small {
   color: var(--muted);
-  line-height: 1.35;
+  line-height: 1.55;
 }
 
-.mode-card em {
-  margin-top: 7px;
-  color: #ffe7a6;
+.mode-points {
+  margin-top: 2px;
+  color: rgba(255, 231, 166, 0.82);
   font-size: 0.78rem;
-  font-style: normal;
-  font-weight: 900;
-  line-height: 1.35;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.mode-selected-label {
+  flex: 0 0 auto;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 8px;
+  color: #061114;
+  background: var(--green);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 950;
 }
 
 .mode-card.active {
-  border-color: rgba(246, 184, 74, 0.68);
-  background: rgba(246, 184, 74, 0.14);
+  border-color: rgba(246, 184, 74, 0.58);
+  background:
+    linear-gradient(180deg, rgba(246, 184, 74, 0.13), transparent 68%),
+    rgba(246, 184, 74, 0.075);
+  box-shadow: inset 0 0 0 1px rgba(246, 184, 74, 0.12), 0 18px 46px rgba(0, 0, 0, 0.18);
 }
 
-.mode-icon,
+.mode-card.active::before {
+  background: var(--gold);
+  opacity: 1;
+}
+
+.mode-number,
 .mode-check {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   border-radius: var(--radius);
 }
 
-.mode-icon {
-  color: var(--teal);
-  background: rgba(18, 214, 197, 0.12);
+.mode-number {
+  color: rgba(223, 255, 251, 0.92);
+  background: rgba(18, 214, 197, 0.11);
+  border: 1px solid rgba(18, 214, 197, 0.20);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.mode-card-minority_wins::before {
+  background: rgba(98, 223, 108, 0.62);
+}
+
+.mode-card-judge_pick::before {
+  background: rgba(246, 184, 74, 0.68);
+}
+
+.mode-card-imposter::before {
+  background: rgba(255, 93, 105, 0.60);
+}
+
+.mode-card-fake_fact::before {
+  background: rgba(255, 63, 152, 0.58);
 }
 
 .mode-card.active .mode-check {
   color: #061114;
   background: var(--green);
+}
+
+.mode-card:disabled {
+  cursor: not-allowed;
 }
 
 .category-card {
@@ -1451,6 +1605,13 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.category-card:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(18, 214, 197, 0.34);
+  background: rgba(255, 255, 255, 0.085);
 }
 
 .category-card strong {
@@ -1463,7 +1624,7 @@ button:disabled {
 .category-card.active {
   border-color: rgba(18, 214, 197, 0.62);
   background: rgba(18, 214, 197, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(18, 214, 197, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(18, 214, 197, 0.18), 0 12px 30px rgba(0, 0, 0, 0.16);
 }
 
 .category-card:disabled {
@@ -1640,6 +1801,24 @@ button:disabled {
   background: rgba(255, 255, 255, 0.075);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  animation: optionEnter 300ms ease both;
+}
+
+.answer-option:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.answer-option:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.answer-option:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+.answer-option:nth-child(5) {
+  animation-delay: 140ms;
 }
 
 .option-body {
@@ -1655,8 +1834,10 @@ button:disabled {
 
 .answer-option:not(:disabled):hover,
 .answer-option.selected {
+  transform: translateY(-1px);
   border-color: var(--teal);
   background: rgba(18, 214, 197, 0.13);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
 }
 
 .option-index,
@@ -1690,7 +1871,7 @@ button:disabled {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--teal), var(--green));
-  transition: width 220ms ease;
+  transition: width 360ms ease;
 }
 
 .mini-player-list {
@@ -1817,6 +1998,7 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   backdrop-filter: blur(18px);
+  animation: surfaceEnter 360ms ease both;
 }
 
 .scoreboard.compact .score-list {
@@ -2571,6 +2753,75 @@ button:disabled {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes appLightShift {
+  0%,
+  100% {
+    transform: translateX(-2%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(2%) translateY(-1%);
+  }
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes surfaceEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes quietPanelSweep {
+  from {
+    background-position: -80% 0, 0 0;
+  }
+
+  to {
+    background-position: 120% 0, 0 0;
+  }
+}
+
+@keyframes modeCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes optionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
