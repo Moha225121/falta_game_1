@@ -1603,6 +1603,13 @@ button:disabled {
   background: var(--green);
 }
 
+.mode-info-anchor {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+}
+
 .mode-info-button {
   width: 32px;
   height: 32px;
@@ -1622,24 +1629,48 @@ button:disabled {
   border-color: rgba(255, 255, 255, 0.42);
 }
 
-.mode-info-panel {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 6px;
-  padding: 10px 12px;
-  color: #e9ded0;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius);
-  font-size: 0.82rem;
-  line-height: 1.55;
+.mode-card.info-open {
+  z-index: 8;
 }
 
-.mode-info-panel p {
+.mode-info-popover {
+  position: absolute;
+  top: calc(100% + 11px);
+  inset-inline-end: 0;
+  z-index: 20;
+  width: min(268px, calc(100vw - 44px));
+  display: grid;
+  gap: 6px;
+  padding: 11px 13px;
+  color: #e9ded0;
+  background: rgba(9, 23, 28, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  pointer-events: none;
+  animation: popoverIn 130ms ease both;
+}
+
+.mode-info-popover::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  inset-inline-end: 10px;
+  width: 13px;
+  height: 13px;
+  background: rgba(9, 23, 28, 0.98);
+  border-block-start: 1px solid rgba(255, 255, 255, 0.18);
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.18);
+  transform: rotate(45deg);
+}
+
+.mode-info-popover p {
   margin: 0;
 }
 
-.mode-info-panel span {
+.mode-info-popover span {
   color: rgba(255, 231, 166, 0.86);
   font-weight: 850;
 }
@@ -2866,6 +2897,18 @@ button:disabled {
   }
 }
 
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes optionEnter {
   from {
     opacity: 0;
@@ -3196,7 +3239,8 @@ button:disabled {
     height: 30px;
   }
 
-  .mode-info-panel {
+  .mode-info-popover {
+    width: min(238px, calc(100vw - 32px));
     font-size: 0.78rem;
     line-height: 1.55;
   }

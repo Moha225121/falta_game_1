@@ -37,21 +37,24 @@ export function GameModePicker({ modes = [], selected = ["kalak"], onChange, dis
               <strong>{mode.name}</strong>
               <span className="mode-check">{active ? <Check size={17} /> : null}</span>
             </button>
-            <button
-              className="mode-info-button"
-              type="button"
-              aria-label={`معلومات عن ${mode.name}`}
-              aria-expanded={infoOpen}
-              onClick={() => setOpenInfo((current) => current === mode.id ? "" : mode.id)}
-            >
-              <Info size={16} />
-            </button>
-            {infoOpen ? (
-              <div className="mode-info-panel">
-                <p>{mode.description}</p>
-                {mode.points ? <span>{mode.points}</span> : null}
-              </div>
-            ) : null}
+            <span className="mode-info-anchor">
+              <button
+                className="mode-info-button"
+                type="button"
+                aria-label={`معلومات عن ${mode.name}`}
+                aria-expanded={infoOpen}
+                aria-describedby={infoOpen ? `mode-info-${mode.id}` : undefined}
+                onClick={() => setOpenInfo((current) => current === mode.id ? "" : mode.id)}
+              >
+                <Info size={16} />
+              </button>
+              {infoOpen ? (
+                <span className="mode-info-popover" id={`mode-info-${mode.id}`} role="tooltip">
+                  <p>{mode.description}</p>
+                  {mode.points ? <span>{mode.points}</span> : null}
+                </span>
+              ) : null}
+            </span>
           </div>
         );
       })}
