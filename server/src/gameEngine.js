@@ -40,6 +40,8 @@ const SCIENCE_DAY_MODE = "science_day";
 const SCIENCE_DAY_TOTAL_ROUNDS = 3;
 const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
 const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_ROUNDS * SCIENCE_DAY_QUESTIONS_PER_ROUND;
+const SCIENCE_DAY_CORRECT_POINTS = 100;
+const SCIENCE_DAY_SPEED_BONUS = 50;
 const AVATAR_DEFAULT = {
   persona: "a1",
   skin: "#c9865a",
@@ -302,15 +304,21 @@ function scienceDayQuestionNumber(round) {
 
 function topScienceDayPlayers(room) {
   return [...room.players.values()]
-    .filter((player) => !player.isBot)
-    .sort((a, b) => b.score - a.score || a.joinedAt - b.joinedAt)
+    .filter((player) => !player.isBot && player.id !== room.hostId)
+    .sort((a, b) => (
+      b.score - a.score
+      || (a.scienceDayTotalMs || 0) - (b.scienceDayTotalMs || 0)
+      || a.joinedAt - b.joinedAt
+    ))
     .slice(0, 3)
     .map((player, index) => ({
       rank: index + 1,
       id: player.id,
       name: player.name,
       avatar: player.avatar,
-      score: player.score
+      score: player.score,
+      correctCount: player.scienceDayCorrectCount || 0,
+      timeSeconds: Number(((player.scienceDayTotalMs || 0) / 1000).toFixed(1))
     }));
 }
 
@@ -340,6 +348,8 @@ function createPlayer(socket, payload = {}) {
     name: playerName(payload.name),
     avatar: cleanAvatar(payload.avatar),
     score: 0,
+    scienceDayCorrectCount: 0,
+    scienceDayTotalMs: 0,
     connected: true,
     disconnectedAt: null,
     reconnectTimer: null,
@@ -358,6 +368,8 @@ function createBot(room) {
     name,
     avatar: cleanAvatar(BOT_AVATARS[botCount % BOT_AVATARS.length]),
     score: 0,
+    scienceDayCorrectCount: 0,
+    scienceDayTotalMs: 0,
     isBot: true,
     joinedAt: Date.now()
   };
@@ -1005,6 +1017,8 @@ export class KalakGameEngine {
     this.cumulative.gamesStarted += 1;
     for (const player of room.players.values()) {
       player.score = 0;
+      player.scienceDayCorrectCount = 0;
+      player.scienceDayTotalMs = 0;
     }
 
     await this.startRound(room);
@@ -1184,6 +1198,8 @@ export class KalakGameEngine {
     if (this.currentMode(room) === SCIENCE_DAY_MODE && room.results?.scienceDay?.nextRoundWillReset) {
       for (const player of room.players.values()) {
         player.score = 0;
+        player.scienceDayCorrectCount = 0;
+        player.scienceDayTotalMs = 0;
       }
       this.addSystemMessage(room, `بدأت الجولة العلمية ${scienceDayRoundNumber(room.round + 1)}. تم تصفير النقاط.`);
     }
@@ -1707,6 +1723,7 @@ export class KalakGameEngine {
 
     const eventRound = scienceDayRoundNumber(room.round);
     const questionInRound = scienceDayQuestionNumber(room.round);
+    const startedAt = Date.now();
 
     room.phase = "voting";
     room.modeData = {
@@ -1715,6 +1732,7 @@ export class KalakGameEngine {
       questionInRound,
       questionsPerRound: SCIENCE_DAY_QUESTIONS_PER_ROUND,
       totalEventRounds: SCIENCE_DAY_TOTAL_ROUNDS,
+      startedAt,
       explanation: content.explanation || ""
     };
     room.question = {
@@ -1730,7 +1748,7 @@ export class KalakGameEngine {
       isCorrect: text === correct,
       ownerIds: []
     })));
-    room.phaseEndsAt = Date.now() + room.settings.voteSeconds * 1000;
+    room.phaseEndsAt = startedAt + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
   }
@@ -2907,14 +2925,37 @@ export class KalakGameEngine {
     const awards = this.baseAwards(room);
     const votes = this.publicVotes(room);
     const correctOption = room.options.find((option) => option.isCorrect);
+    const scoringPlayerIds = new Set([...room.players.values()]
+      .filter((player) => !player.isBot && player.id !== room.hostId)
+      .map((player) => player.id));
+    const durationMs = Math.max(1, Number(room.settings.voteSeconds || 0) * 1000);
+    const startedAt = Number(room.modeData?.startedAt) || Math.max(0, Number(room.phaseEndsAt || Date.now()) - durationMs);
 
     for (const vote of room.votes.values()) {
       const option = room.options.find((item) => item.id === vote.optionId);
       if (option?.isCorrect) {
         const award = awards.get(vote.playerId);
         if (award) {
-          award.correctVote += 100;
-          award.total += 100;
+          const responseMs = Math.max(0, Math.min(durationMs, Number(vote.votedAt || startedAt) - startedAt));
+          const speedBonus = Math.ceil(((durationMs - responseMs) / durationMs) * SCIENCE_DAY_SPEED_BONUS);
+          const total = SCIENCE_DAY_CORRECT_POINTS + speedBonus;
+          const player = room.players.get(vote.playerId);
+
+          award.correctVote += SCIENCE_DAY_CORRECT_POINTS;
+          award.fakeVotes += speedBonus;
+          award.total += total;
+          award.scienceDay = {
+            basePoints: SCIENCE_DAY_CORRECT_POINTS,
+            speedBonus,
+            responseMs,
+            responseSeconds: Number((responseMs / 1000).toFixed(1)),
+            total
+          };
+
+          if (player) {
+            player.scienceDayCorrectCount = (player.scienceDayCorrectCount || 0) + 1;
+            player.scienceDayTotalMs = (player.scienceDayTotalMs || 0) + responseMs;
+          }
         }
       }
     }
@@ -2929,10 +2970,15 @@ export class KalakGameEngine {
 
     room.results = {
       correctAnswer: correctOption?.text || "",
-      summary: room.modeData?.explanation || "كل إجابة صحيحة تضيف 100 نقطة في هذه الجولة العلمية.",
+      summary: room.modeData?.explanation || "الإجابة الصحيحة تعطي 100 نقطة، والسرعة تضيف حتى 50 نقطة إضافية.",
       isFinal,
       votes,
-      awards: [...awards.values()].sort((a, b) => b.total - a.total),
+      awards: [...awards.values()]
+        .filter((award) => scoringPlayerIds.has(award.playerId) && (award.total > 0 || room.votes.has(award.playerId)))
+        .sort((a, b) => (
+          b.total - a.total
+          || (a.scienceDay?.responseMs ?? Number.MAX_SAFE_INTEGER) - (b.scienceDay?.responseMs ?? Number.MAX_SAFE_INTEGER)
+        )),
       scienceDay: {
         eventRound,
         questionInRound,
@@ -3275,6 +3321,9 @@ export class KalakGameEngine {
     if (this.currentMode(room) === "judge_pick") {
       return this.activePlayers(room).filter((player) => player.id === room.modeData?.judgeId);
     }
+    if (this.currentMode(room) === SCIENCE_DAY_MODE) {
+      return this.activePlayers(room).filter((player) => player.id !== room.hostId && !player.isBot);
+    }
     return this.activePlayers(room);
   }
 
@@ -3388,6 +3437,8 @@ export class KalakGameEngine {
           name: player.name,
           avatar: player.avatar,
           score: player.score,
+          scienceDayCorrectCount: player.scienceDayCorrectCount || 0,
+          scienceDayTimeSeconds: Number(((player.scienceDayTotalMs || 0) / 1000).toFixed(1)),
           isBot: Boolean(player.isBot),
           connected: player.connected !== false,
           eliminated: room.eliminatedPlayerIds.has(player.id),

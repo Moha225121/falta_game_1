@@ -1589,6 +1589,19 @@ button:disabled {
   line-height: 1.5;
 }
 
+.science-day-monitor-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  color: #dffffb;
+  background: rgba(18, 214, 197, 0.12);
+  border: 1px solid rgba(18, 214, 197, 0.30);
+  border-radius: var(--radius);
+  font-weight: 850;
+}
+
 .science-day-top {
   display: grid;
   gap: 14px;
@@ -1629,6 +1642,12 @@ button:disabled {
 .science-day-podium-card b {
   grid-column: 1 / -1;
   color: var(--gold);
+}
+
+.science-day-podium-card small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .settings-categories {

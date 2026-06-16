@@ -65,6 +65,10 @@ function isScienceDayRoom(room) {
   return getActiveMode(room) === SCIENCE_DAY_MODE;
 }
 
+function scienceDayContestants(room) {
+  return (room?.players || []).filter((player) => !player.isHost && !player.isBot);
+}
+
 function scienceDayMeta(room) {
   const resultMeta = room?.results?.scienceDay;
   if (resultMeta) {
@@ -910,7 +914,7 @@ export default function Game() {
       {scienceDay && inMatch && isHost ? (
         <ScienceDayInviteCard
           code={room.code}
-          playerCount={room.players.filter((player) => player.connected !== false && !player.isBot).length}
+          playerCount={scienceDayContestants(room).filter((player) => player.connected !== false).length}
           onShare={copyCode}
           compact
         />
@@ -1019,9 +1023,11 @@ function ActionIcon({ loading, icon: Icon, size = 18 }) {
 }
 
 function MatchExtras({ room, busy, connected, pendingAction, chatBusy, onKickVote, onSendChat }) {
+  const scoreboardPlayers = isScienceDayRoom(room) ? scienceDayContestants(room) : room.players;
+
   return (
     <>
-      <Scoreboard players={room.players} compact />
+      <Scoreboard players={scoreboardPlayers} compact />
       <PlayersPanel room={room} busy={busy} connected={connected} pendingAction={pendingAction} onKickVote={onKickVote} />
       <Chat messages={room.messages} onSend={onSendChat} connected={connected} sending={chatBusy} />
     </>
@@ -1080,7 +1086,7 @@ function MatchDrawer({
         </div>
 
         <div className="drawer-body">
-          {panel === "score" ? <Scoreboard players={room.players} compact /> : null}
+          {panel === "score" ? <Scoreboard players={isScienceDayRoom(room) ? scienceDayContestants(room) : room.players} compact /> : null}
           {panel === "players" ? (
             <PlayersPanel room={room} busy={busy} connected={connected} pendingAction={pendingAction} onKickVote={onKickVote} />
           ) : null}
@@ -1235,7 +1241,9 @@ function ScienceDayInviteCard({ code, playerCount, onShare, compact = false }) {
 function Lobby({ room, categories, gameModes, config, isHost, busy, connected, pendingAction, onUpdate, onAddBot, onShare, onStart }) {
   const connectedPlayers = room.players.filter((player) => player.connected !== false);
   const scienceDay = isScienceDayRoom(room);
-  const canStart = connectedPlayers.length >= (scienceDay ? 1 : config.minPlayers);
+  const sciencePlayers = scienceDayContestants(room);
+  const connectedSciencePlayers = sciencePlayers.filter((player) => player.connected !== false);
+  const canStart = scienceDay || connectedPlayers.length >= config.minPlayers;
   const canAddBot = !scienceDay && isHost && room.players.length < config.maxPlayers;
   const selectedModes = selectedModeIds(room.settings.modes ?? room.settings.mode);
   const limits = roundLimits(selectedModes.length);
@@ -1270,12 +1278,12 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
         </div>
         <span className="counter-chip">
           <Users size={16} />
-          {scienceDay ? `${room.players.length} مشارك` : `${room.players.length}/${config.maxPlayers}`}
+          {scienceDay ? `${connectedSciencePlayers.length} مشارك` : `${room.players.length}/${config.maxPlayers}`}
         </span>
       </div>
 
       {scienceDay ? (
-        <ScienceDayInviteCard code={room.code} playerCount={connectedPlayers.length} onShare={onShare} />
+        <ScienceDayInviteCard code={room.code} playerCount={connectedSciencePlayers.length} onShare={onShare} />
       ) : null}
 
       {isHost && !scienceDay ? (
@@ -1304,6 +1312,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
                 </span>
               ) : null}
               {player.connected === false ? <span className="mini-chip offline-chip">غير متصل</span> : null}
+              {player.isHost && scienceDay ? <span className="mini-chip">مراقب</span> : null}
               {player.isHost ? <Crown size={16} /> : null}
             </div>
           </div>
@@ -1335,8 +1344,8 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
               <span>ذكاء اصطناعي، IT، وهندسة.</span>
             </div>
             <div>
-              <strong>أفضل 3</strong>
-              <span>تظهر اللوحة بعد كل جولة ثم تصفر النقاط.</span>
+              <strong>نقاط وسرعة</strong>
+              <span>الصحيح +100، والسرعة تضيف حتى +50.</span>
             </div>
           </div>
         ) : null}
@@ -1378,7 +1387,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
       {isHost ? (
         <button className="primary-button wide-button" type="button" onClick={onStart} disabled={!connected || !canStart || busy}>
           <ActionIcon loading={pendingAction === "start"} icon={Play} />
-          <span>{pendingAction === "start" ? "جاري البدء" : canStart ? (scienceDay ? "بدء اليوم العلمي" : "بدء اللعبة") : `تحتاج ${scienceDay ? 1 : config.minPlayers} لاعبين متصلين`}</span>
+          <span>{pendingAction === "start" ? "جاري البدء" : canStart ? (scienceDay ? "بدء اليوم العلمي" : "بدء اللعبة") : `تحتاج ${config.minPlayers} لاعبين متصلين`}</span>
         </button>
       ) : (
         <div className="waiting-strip">
@@ -1464,6 +1473,7 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
 function Voting({ room, me, selectedOption, onVote, busy, connected, pendingAction }) {
   const scienceDay = isScienceDayRoom(room);
   const meta = scienceDayMeta(room);
+  const monitorOnly = scienceDay && me?.canVote === false;
   return (
     <section className={`panel stage-panel ${scienceDay ? "science-day-stage" : ""}`}>
       <div className="stage-heading">
@@ -1481,6 +1491,13 @@ function Voting({ room, me, selectedOption, onVote, busy, connected, pendingActi
           durationSeconds={room.settings.voteSeconds}
         />
       </div>
+
+      {monitorOnly ? (
+        <div className="science-day-monitor-note">
+          <Crown size={18} />
+          <span>أنت مراقب اليوم العلمي. تابع الإجابات والوقت، وبعد النتائج انقلهم للسؤال التالي.</span>
+        </div>
+      ) : null}
 
       <div className="options-grid">
         {room.options.map((option, index) => (
@@ -1619,9 +1636,15 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
           <div className="award-card" key={award.playerId}>
             <strong>{award.name}</strong>
             <span>+{award.total}</span>
-            <small>
-              صحيح {award.correctVote} · خداع {award.fakeVotes} · إجابة صحيحة {award.correctSubmission}
-            </small>
+            {scienceDay ? (
+              <small>
+                صحيح {award.scienceDay?.basePoints || 0} · سرعة {award.scienceDay?.speedBonus || 0} · الوقت {award.scienceDay?.responseSeconds ?? "-"} ث
+              </small>
+            ) : (
+              <small>
+                صحيح {award.correctVote} · خداع {award.fakeVotes} · إجابة صحيحة {award.correctSubmission}
+              </small>
+            )}
           </div>
         ))}
       </div>
@@ -1650,6 +1673,7 @@ function ScienceDayTopThree({ players = [], final = false }) {
             <Avatar avatar={player.avatar} name={player.name} />
             <strong>{player.name}</strong>
             <b>{player.score} نقطة</b>
+            <small>{player.correctCount || 0} صحيحة · {player.timeSeconds || 0} ث</small>
           </div>
         )) : (
           <div className="science-day-podium-card">
@@ -1665,9 +1689,11 @@ function ScienceDayTopThree({ players = [], final = false }) {
 function Finished({ room, onHome }) {
   const winner = room.players[0];
   const scienceDay = isScienceDayRoom(room);
-  const finalTop = room.results?.scienceDay?.topPlayers || room.players.slice(0, 3).map((player, index) => ({
+  const finalTop = room.results?.scienceDay?.topPlayers || scienceDayContestants(room).slice(0, 3).map((player, index) => ({
     ...player,
-    rank: index + 1
+    rank: index + 1,
+    correctCount: player.scienceDayCorrectCount || 0,
+    timeSeconds: player.scienceDayTimeSeconds || 0
   }));
 
   return (
