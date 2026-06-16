@@ -60,6 +60,7 @@ const joinRetryDelays = [350, 800, 1400, 2200];
 const SCIENCE_DAY_MODE = "science_day";
 const SCIENCE_DAY_TOTAL_QUESTIONS = 15;
 const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
+const SCIENCE_DAY_QUESTION_SECONDS = 20;
 
 function isScienceDayRoom(room) {
   return getActiveMode(room) === SCIENCE_DAY_MODE;
@@ -960,8 +961,10 @@ export default function Game() {
             <Voting
               room={room}
               me={me}
+              isHost={isHost}
               selectedOption={selectedOption}
               onVote={vote}
+              onNext={() => perform(() => ack(socket, "round:next"), "next")}
               busy={busy}
               connected={connected}
               pendingAction={pendingAction}
@@ -1341,7 +1344,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
             </div>
             <div>
               <strong>15 سؤال</strong>
-              <span>ذكاء اصطناعي، IT، وهندسة.</span>
+              <span>{SCIENCE_DAY_QUESTION_SECONDS} ثانية لكل سؤال عن الذكاء الاصطناعي، IT، والهندسة.</span>
             </div>
             <div>
               <strong>نقاط وسرعة</strong>
@@ -1470,7 +1473,7 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
   );
 }
 
-function Voting({ room, me, selectedOption, onVote, busy, connected, pendingAction }) {
+function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connected, pendingAction }) {
   const scienceDay = isScienceDayRoom(room);
   const meta = scienceDayMeta(room);
   const monitorOnly = scienceDay && me?.canVote === false;
@@ -1497,6 +1500,13 @@ function Voting({ room, me, selectedOption, onVote, busy, connected, pendingActi
           <Crown size={18} />
           <span>أنت مراقب اليوم العلمي. تابع الإجابات والوقت، وبعد النتائج انقلهم للسؤال التالي.</span>
         </div>
+      ) : null}
+
+      {scienceDay && isHost ? (
+        <button className="secondary-button science-day-next-button" type="button" onClick={onNext} disabled={!connected || busy}>
+          <ActionIcon loading={pendingAction === "next"} icon={Sparkles} />
+          <span>{pendingAction === "next" ? "جاري عرض النتائج" : "إنهاء السؤال وعرض النتائج"}</span>
+        </button>
       ) : null}
 
       <div className="options-grid">

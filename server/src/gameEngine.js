@@ -42,6 +42,7 @@ const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
 const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_ROUNDS * SCIENCE_DAY_QUESTIONS_PER_ROUND;
 const SCIENCE_DAY_CORRECT_POINTS = 100;
 const SCIENCE_DAY_SPEED_BONUS = 50;
+const SCIENCE_DAY_QUESTION_SECONDS = 20;
 const AVATAR_DEFAULT = {
   persona: "a1",
   skin: "#c9865a",
@@ -1184,6 +1185,11 @@ export class KalakGameEngine {
     const playerId = this.playerId(socket);
     this.requireHost(room, socket);
 
+    if (this.currentMode(room) === SCIENCE_DAY_MODE && room.phase === "voting") {
+      this.finishScienceDayVoting(room);
+      return { room: this.publicRoom(room, playerId) };
+    }
+
     if (room.phase !== "results") {
       throw new Error("الجولة الحالية لم تنته بعد.");
     }
@@ -1724,6 +1730,7 @@ export class KalakGameEngine {
     const eventRound = scienceDayRoundNumber(room.round);
     const questionInRound = scienceDayQuestionNumber(room.round);
     const startedAt = Date.now();
+    room.settings.voteSeconds = SCIENCE_DAY_QUESTION_SECONDS;
 
     room.phase = "voting";
     room.modeData = {
@@ -3251,7 +3258,7 @@ export class KalakGameEngine {
         categories: [],
         rounds: SCIENCE_DAY_TOTAL_QUESTIONS,
         answerSeconds: this.config.answerSeconds,
-        voteSeconds: this.config.voteSeconds
+        voteSeconds: SCIENCE_DAY_QUESTION_SECONDS
       };
     }
 
