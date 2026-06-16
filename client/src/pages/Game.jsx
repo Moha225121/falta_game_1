@@ -5,7 +5,6 @@ import {
   Bot,
   Check,
   CircleAlert,
-  Clipboard,
   Crown,
   Loader2,
   LogOut,
@@ -16,6 +15,7 @@ import {
   Play,
   Send,
   Settings,
+  Share2,
   Sparkles,
   Square,
   Trophy,
@@ -62,10 +62,29 @@ function getActiveMode(room) {
 }
 
 function normalizeRoomCodeInput(value) {
-  return String(value || "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, roomCodeLength);
+  const raw = String(value || "").trim().toUpperCase();
+  const playMatch = raw.match(/(?:^|\/)PLAY\/([A-Z0-9]{1,5})(?=$|[/?#\s])/);
+  const tailMatch = raw.match(/([A-Z0-9]{5})(?=$|[/?#\s])/);
+
+  if (playMatch) {
+    return playMatch[1].slice(0, roomCodeLength);
+  }
+
+  if (tailMatch && raw.length > roomCodeLength) {
+    return tailMatch[1];
+  }
+
+  return raw.replace(/[^A-Z0-9]/g, "").slice(0, roomCodeLength);
+}
+
+function roomInviteUrl(code) {
+  const cleanCode = normalizeRoomCodeInput(code);
+  if (!cleanCode) {
+    return "";
+  }
+
+  const origin = globalThis.location?.origin || "";
+  return origin ? `${origin}/play/${cleanCode}` : `/play/${cleanCode}`;
 }
 
 function gameModeName(gameModes, modeId) {
@@ -274,6 +293,20 @@ export default function Game() {
   }, [resettingReloadSession, roomCode]);
 
   useEffect(() => {
+    function openRoomMenu() {
+      if (!room) {
+        return;
+      }
+
+      setDrawerPanel("actions");
+      setDrawerOpen(true);
+    }
+
+    globalThis.addEventListener?.("kalak:open-room-menu", openRoomMenu);
+    return () => globalThis.removeEventListener?.("kalak:open-room-menu", openRoomMenu);
+  }, [room]);
+
+  useEffect(() => {
     window.addEventListener("pagehide", clearRoomSessionCache);
     return () => window.removeEventListener("pagehide", clearRoomSessionCache);
   }, []);
@@ -406,12 +439,12 @@ export default function Game() {
     }
 
     const state = location.state;
-    const nextPlayer = persistPlayer(loadPlayer(state));
-    setPlayer(nextPlayer);
     const activeCode = room?.code || (state?.mode === "join" ? roomCode : "") || state?.code || "";
     const code = normalizeRoomCodeInput(activeCode);
 
     if (state?.mode === "create" && !room) {
+      const nextPlayer = persistPlayer(loadPlayer(state));
+      setPlayer(nextPlayer);
       const key = `create:${socket.id}:${sessionId}`;
       if (lastAutoKey.current === key) {
         return;
@@ -431,6 +464,13 @@ export default function Game() {
       return;
     }
 
+    const shouldAutoJoin = Boolean(room || state?.mode === "join" || state?.code);
+    if (!shouldAutoJoin) {
+      return;
+    }
+
+    const nextPlayer = persistPlayer(loadPlayer(state));
+    setPlayer(nextPlayer);
     const shouldRestore = Boolean(room?.code === code);
     const event = shouldRestore ? "room:restore" : "room:join";
     const key = `${event}:${socket.id}:${code}:${sessionId}`;
@@ -449,8 +489,25 @@ export default function Game() {
     }), shouldRestore ? "restore" : "join");
   }, [connected, location.state, navigate, resettingReloadSession, room?.code, roomCode, sessionId, socket]);
 
+  useEffect(() => {
+    if (room || resettingReloadSession || location.state?.mode === "join") {
+      return;
+    }
+
+    const code = normalizeRoomCodeInput(roomCode);
+    if (code && joinCode !== code) {
+      setJoinCode(code);
+    }
+  }, [joinCode, location.state, resettingReloadSession, room, roomCode]);
+
   const me = useMemo(() => room?.players.find((item) => item.id === room.me?.playerId), [room]);
   const isHost = Boolean(room?.me?.isHost);
+  const roomIsActive = Boolean(room);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("kalak:room-active", { detail: { active: roomIsActive } }));
+    return () => window.dispatchEvent(new CustomEvent("kalak:room-active", { detail: { active: false } }));
+  }, [roomIsActive]);
 
   async function perform(action, actionName = "action") {
     setBusy(true);
@@ -610,9 +667,39 @@ export default function Game() {
     }
   }
 
-  function copyCode() {
-    navigator.clipboard?.writeText(room.code).catch(() => {});
-    setNotice("تم نسخ كود الغرفة.");
+  async function copyCode() {
+    const inviteUrl = roomInviteUrl(room?.code);
+    if (!inviteUrl) {
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "فلتة",
+          text: `ادخل غرفة فلتة ${room.code}`,
+          url: inviteUrl
+        });
+        setNotice("تم فتح مشاركة رابط الغرفة.");
+        return;
+      } catch (caught) {
+        if (caught?.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    if (!navigator.clipboard?.writeText) {
+      setNotice(`رابط الغرفة: ${inviteUrl}`);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setNotice("تم نسخ رابط الغرفة. أرسله في واتساب أو أي مكان.");
+    } catch {
+      setNotice(`رابط الغرفة: ${inviteUrl}`);
+    }
   }
 
   function leaveRoom() {
@@ -638,6 +725,10 @@ export default function Game() {
       });
   }
 
+  const directInviteCode = !resettingReloadSession && location.state?.mode !== "join"
+    ? normalizeRoomCodeInput(roomCode)
+    : "";
+
   if (!room) {
     return (
       <main className="game-screen setup-screen">
@@ -646,8 +737,12 @@ export default function Game() {
             {connected ? <Check size={18} /> : <Loader2 className="spin" size={18} />}
             <span>{connected ? "متصل" : "جاري الاتصال"}</span>
           </div>
-          <h1>ادخل اللعب</h1>
-          <p>اختار بطاقتك مرة واحدة، وبعدها افتح غرفة أو ادخل بكود.</p>
+          <h1>{directInviteCode ? "ادخل الغرفة" : "ادخل اللعب"}</h1>
+          <p>
+            {directInviteCode
+              ? <>اكتب اسمك واضغط دخول للانضمام إلى غرفة <b dir="ltr">{directInviteCode}</b>.</>
+              : "اختار بطاقتك مرة واحدة، وبعدها افتح غرفة أو ادخل بكود."}
+          </p>
         </section>
 
         <section className="panel home-entry-card setup-entry-card">
@@ -671,12 +766,12 @@ export default function Game() {
                   className="room-code-input"
                   value={joinCode}
                   onChange={(event) => setJoinCode(normalizeRoomCodeInput(event.target.value))}
-                  maxLength={12}
                   dir="ltr"
                   inputMode="text"
                   autoCapitalize="characters"
                   autoComplete="one-time-code"
                   spellCheck={false}
+                  maxLength={160}
                   placeholder="اكتب كود الغرفة"
                 />
               </label>
@@ -720,8 +815,8 @@ export default function Game() {
             ) : null}
             {room.phase === "lobby" ? (
               <button className="icon-text-button" type="button" onClick={copyCode}>
-                <Clipboard size={17} />
-                <span>نسخ الكود</span>
+                <Share2 size={17} />
+                <span>مشاركة الرابط</span>
               </button>
             ) : null}
             <button className="icon-text-button danger-action" type="button" onClick={leaveRoom} disabled={pendingAction === "leave"}>
@@ -926,8 +1021,8 @@ function MatchDrawer({
             <div className="drawer-action-list">
               {room.phase === "lobby" ? (
                 <button className="icon-text-button" type="button" onClick={onCopyCode}>
-                  <Clipboard size={17} />
-                  <span>نسخ الكود</span>
+                  <Share2 size={17} />
+                  <span>مشاركة الرابط</span>
                 </button>
               ) : null}
               {isHost && room.phase !== "lobby" ? (

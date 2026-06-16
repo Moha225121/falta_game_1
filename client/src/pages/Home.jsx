@@ -37,10 +37,19 @@ function clearRoomSessionCache() {
 }
 
 function normalizeRoomCode(value) {
-  return String(value || "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 5);
+  const raw = String(value || "").trim().toUpperCase();
+  const playMatch = raw.match(/(?:^|\/)PLAY\/([A-Z0-9]{1,5})(?=$|[/?#\s])/);
+  const tailMatch = raw.match(/([A-Z0-9]{5})(?=$|[/?#\s])/);
+
+  if (playMatch) {
+    return playMatch[1].slice(0, 5);
+  }
+
+  if (tailMatch && raw.length > 5) {
+    return tailMatch[1];
+  }
+
+  return raw.replace(/[^A-Z0-9]/g, "").slice(0, 5);
 }
 
 export default function Home() {
@@ -164,7 +173,7 @@ export default function Home() {
                 className="room-code-input"
                 value={joinCode}
                 onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
-                maxLength={5}
+                maxLength={160}
                 dir="ltr"
                 placeholder="اكتب كود الغرفة"
               />
