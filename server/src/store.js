@@ -1,5 +1,6 @@
-import { readFile, writeFile, mkdir, rename } from "node:fs/promises";
-import { dirname } from "node:path";
+import Database from "better-sqlite3";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { nanoid } from "nanoid";
 import {
@@ -11,46 +12,35 @@ import {
   QUESTION_MODE_IDS
 } from "./questionTypes.js";
 
-const dataFile = fileURLToPath(new URL("../data/questions.json", import.meta.url));
-const categoryFile = fileURLToPath(new URL("../data/categories.json", import.meta.url));
+const seedQuestionFile = fileURLToPath(new URL("../data/questions.json", import.meta.url));
+const seedCategoryFile = fileURLToPath(new URL("../data/categories.json", import.meta.url));
+const defaultDatabaseFile = fileURLToPath(new URL("../data/questions.sqlite", import.meta.url));
 
-async function readAll() {
-  const raw = await readFile(dataFile, "utf8");
-  const parsed = JSON.parse(raw);
-  const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
-
-  return questions.map((question) => ({
-    ...question,
-    ...normalizeStoredQuestion(question)
-  }));
+function databasePath() {
+  const configured = process.env.QUESTION_DB_PATH || process.env.QUESTIONS_DB_PATH;
+  return configured ? resolve(process.cwd(), configured) : defaultDatabaseFile;
 }
 
-async function writeAll(questions) {
-  await mkdir(dirname(dataFile), { recursive: true });
-  const tmpFile = `${dataFile}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(tmpFile, `${JSON.stringify(questions, null, 2)}\n`, "utf8");
-  await rename(tmpFile, dataFile);
-}
+function parseJson(value, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
 
-async function readCategoryRows() {
   try {
-    const raw = await readFile(categoryFile, "utf8");
-    const parsed = JSON.parse(raw);
-    const rows = Array.isArray(parsed) ? parsed : parsed.categories || [];
-    return rows.map(normalizeCategoryRecord).filter(Boolean);
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      return [];
-    }
-    throw error;
+    return JSON.parse(value);
+  } catch {
+    return fallback;
   }
 }
 
-async function writeCategoryRows(rows) {
-  await mkdir(dirname(categoryFile), { recursive: true });
-  const tmpFile = `${categoryFile}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(tmpFile, `${JSON.stringify(rows, null, 2)}\n`, "utf8");
-  await rename(tmpFile, categoryFile);
+function readSeedRows(file) {
+  if (!existsSync(file)) {
+    return [];
+  }
+
+  const raw = readFileSync(file, "utf8");
+  const parsed = JSON.parse(raw);
+  return Array.isArray(parsed) ? parsed : parsed.questions || parsed.categories || [];
 }
 
 function filterQuestions(questions, filters = {}) {
@@ -171,10 +161,182 @@ function createQuestion(input, now = new Date().toISOString()) {
   };
 }
 
+function rowFromQuestion(question) {
+  return {
+    id: question.id,
+    mode: question.mode || "kalak",
+    category: question.category || "عام",
+    prompt: question.prompt || "",
+    correctAnswer: question.correctAnswer || "",
+    difficulty: question.difficulty || "medium",
+    source: question.source || "",
+    tags: JSON.stringify(question.tags || []),
+    active: question.active === false ? 0 : 1,
+    content: JSON.stringify(question.content || {}),
+    createdAt: question.createdAt || new Date().toISOString(),
+    updatedAt: question.updatedAt || question.createdAt || new Date().toISOString()
+  };
+}
+
+function questionFromRow(row) {
+  const question = {
+    id: row.id,
+    mode: row.mode,
+    category: row.category,
+    prompt: row.prompt,
+    correctAnswer: row.correct_answer,
+    difficulty: row.difficulty,
+    source: row.source,
+    tags: parseJson(row.tags, []),
+    active: Boolean(row.active),
+    content: parseJson(row.content, {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+
+  return {
+    ...question,
+    ...normalizeStoredQuestion(question)
+  };
+}
+
+function categoryFromRow(row) {
+  return {
+    id: row.id,
+    mode: row.mode,
+    name: row.name,
+    active: Boolean(row.active),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 export class QuestionStore {
+  constructor({ dbPath = databasePath() } = {}) {
+    this.dbPath = dbPath;
+    mkdirSync(dirname(this.dbPath), { recursive: true });
+    this.db = new Database(this.dbPath);
+    this.db.pragma("journal_mode = WAL");
+    this.db.pragma("foreign_keys = ON");
+    this.db.pragma("busy_timeout = 5000");
+    this.prepareSchema();
+    this.prepareStatements();
+    this.seedFromJsonIfNeeded();
+  }
+
+  prepareSchema() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS questions (
+        id TEXT PRIMARY KEY,
+        mode TEXT NOT NULL,
+        category TEXT NOT NULL,
+        prompt TEXT NOT NULL DEFAULT '',
+        correct_answer TEXT NOT NULL DEFAULT '',
+        difficulty TEXT NOT NULL DEFAULT 'medium',
+        source TEXT NOT NULL DEFAULT '',
+        tags TEXT NOT NULL DEFAULT '[]',
+        active INTEGER NOT NULL DEFAULT 1,
+        content TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_questions_mode_active ON questions(mode, active);
+      CREATE INDEX IF NOT EXISTS idx_questions_category ON questions(category);
+      CREATE INDEX IF NOT EXISTS idx_questions_updated_at ON questions(updated_at);
+
+      CREATE TABLE IF NOT EXISTS categories (
+        id TEXT PRIMARY KEY,
+        mode TEXT NOT NULL,
+        name TEXT NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_mode_name ON categories(mode, name COLLATE NOCASE);
+    `);
+  }
+
+  prepareStatements() {
+    this.selectQuestions = this.db.prepare("SELECT * FROM questions");
+    this.selectQuestionById = this.db.prepare("SELECT * FROM questions WHERE id = ?");
+    this.countQuestions = this.db.prepare("SELECT COUNT(*) AS count FROM questions");
+    this.insertQuestion = this.db.prepare(`
+      INSERT INTO questions (
+        id, mode, category, prompt, correct_answer, difficulty, source, tags, active, content, created_at, updated_at
+      ) VALUES (
+        @id, @mode, @category, @prompt, @correctAnswer, @difficulty, @source, @tags, @active, @content, @createdAt, @updatedAt
+      )
+    `);
+    this.updateQuestion = this.db.prepare(`
+      UPDATE questions SET
+        mode = @mode,
+        category = @category,
+        prompt = @prompt,
+        correct_answer = @correctAnswer,
+        difficulty = @difficulty,
+        source = @source,
+        tags = @tags,
+        active = @active,
+        content = @content,
+        updated_at = @updatedAt
+      WHERE id = @id
+    `);
+    this.deleteQuestion = this.db.prepare("DELETE FROM questions WHERE id = ?");
+
+    this.selectCategories = this.db.prepare("SELECT * FROM categories");
+    this.countCategories = this.db.prepare("SELECT COUNT(*) AS count FROM categories");
+    this.findCategory = this.db.prepare("SELECT * FROM categories WHERE mode = ? AND lower(name) = lower(?)");
+    this.insertCategory = this.db.prepare(`
+      INSERT INTO categories (id, mode, name, active, created_at, updated_at)
+      VALUES (@id, @mode, @name, @active, @createdAt, @updatedAt)
+    `);
+    this.updateCategory = this.db.prepare(`
+      UPDATE categories SET active = @active, updated_at = @updatedAt WHERE id = @id
+    `);
+
+    this.insertQuestionsTransaction = this.db.transaction((questions) => {
+      for (const question of questions) {
+        this.insertQuestion.run(rowFromQuestion(question));
+      }
+    });
+  }
+
+  seedFromJsonIfNeeded() {
+    if (this.countQuestions.get().count === 0) {
+      const questions = readSeedRows(seedQuestionFile)
+        .map((question) => ({
+          ...question,
+          ...normalizeStoredQuestion(question)
+        }));
+      this.insertQuestionsTransaction(questions);
+    }
+
+    if (this.countCategories.get().count === 0) {
+      const categories = readSeedRows(seedCategoryFile).map(normalizeCategoryRecord).filter(Boolean);
+      const insert = this.db.transaction((rows) => {
+        for (const category of rows) {
+          this.insertCategory.run({
+            ...category,
+            active: category.active ? 1 : 0
+          });
+        }
+      });
+      insert(categories);
+    }
+  }
+
+  allQuestions() {
+    return this.selectQuestions.all().map(questionFromRow);
+  }
+
+  allCategoryRows() {
+    return this.selectCategories.all().map(categoryFromRow);
+  }
+
   async list(filters = {}) {
-    const questions = await readAll();
-    return filterQuestions(questions, filters);
+    return filterQuestions(this.allQuestions(), filters);
   }
 
   async categories(filters = {}) {
@@ -185,7 +347,8 @@ export class QuestionStore {
   }
 
   async categoryRecords(filters = {}) {
-    const [questions, storedCategories] = await Promise.all([readAll(), readCategoryRows()]);
+    const questions = this.allQuestions();
+    const storedCategories = this.allCategoryRows();
     const rows = new Map();
 
     const ensureRow = (mode, category, metadata = {}) => {
@@ -255,20 +418,24 @@ export class QuestionStore {
   async createCategory(input = {}) {
     const mode = cleanCategoryMode(input.mode);
     const name = cleanCategoryName(input.name ?? input.category);
-    const rows = await readCategoryRows();
-    const existing = rows.find((row) => row.mode === mode && row.name.toLowerCase() === name.toLowerCase());
+    const existing = this.findCategory.get(mode, name);
 
     if (existing) {
-      if (existing.active === false) {
-        existing.active = true;
-        existing.updatedAt = new Date().toISOString();
-        await writeCategoryRows(rows);
+      const category = categoryFromRow(existing);
+      if (category.active === false) {
+        category.active = true;
+        category.updatedAt = new Date().toISOString();
+        this.updateCategory.run({
+          id: category.id,
+          active: 1,
+          updatedAt: category.updatedAt
+        });
       }
       return {
-        ...existing,
-        category: existing.name,
+        ...category,
+        category: category.name,
         stored: true,
-        enabled: existing.active,
+        enabled: category.active,
         total: 0,
         active: 0,
         hidden: 0
@@ -284,7 +451,10 @@ export class QuestionStore {
       createdAt: now,
       updatedAt: now
     };
-    await writeCategoryRows([...rows, category]);
+    this.insertCategory.run({
+      ...category,
+      active: category.active ? 1 : 0
+    });
 
     return {
       ...category,
@@ -298,7 +468,7 @@ export class QuestionStore {
   }
 
   async stats() {
-    const questions = await readAll();
+    const questions = this.allQuestions();
     const byCategory = questions.reduce((acc, question) => {
       acc[question.category] = (acc[question.category] || 0) + 1;
       return acc;
@@ -319,15 +489,13 @@ export class QuestionStore {
   }
 
   async get(id) {
-    const questions = await readAll();
-    return questions.find((question) => question.id === id) || null;
+    const row = this.selectQuestionById.get(id);
+    return row ? questionFromRow(row) : null;
   }
 
   async create(input) {
     const question = createQuestion(input);
-    const questions = await readAll();
-    questions.push(question);
-    await writeAll(questions);
+    this.insertQuestion.run(rowFromQuestion(question));
     return question;
   }
 
@@ -341,20 +509,17 @@ export class QuestionStore {
 
     const now = new Date().toISOString();
     const created = rows.map((row) => createQuestion(row, now));
-    const questions = await readAll();
-    await writeAll([...questions, ...created]);
+    this.insertQuestionsTransaction(created);
     return created;
   }
 
   async update(id, input) {
-    const questions = await readAll();
-    const index = questions.findIndex((question) => question.id === id);
+    const existing = await this.get(id);
 
-    if (index === -1) {
+    if (!existing) {
       return null;
     }
 
-    const existing = questions[index];
     const parsed = normalizeQuestionInput(
       {
         ...input,
@@ -362,27 +527,19 @@ export class QuestionStore {
       },
       existing
     );
-
-    questions[index] = {
+    const question = {
       ...existing,
       ...parsed,
       updatedAt: new Date().toISOString()
     };
 
-    await writeAll(questions);
-    return questions[index];
+    this.updateQuestion.run(rowFromQuestion(question));
+    return question;
   }
 
   async delete(id) {
-    const questions = await readAll();
-    const next = questions.filter((question) => question.id !== id);
-
-    if (next.length === questions.length) {
-      return false;
-    }
-
-    await writeAll(next);
-    return true;
+    const result = this.deleteQuestion.run(id);
+    return result.changes > 0;
   }
 
   async random({ mode = "kalak", category = "all", categories = [], excludeIds = [] } = {}) {
@@ -398,5 +555,9 @@ export class QuestionStore {
     }
 
     return questions[Math.floor(Math.random() * questions.length)];
+  }
+
+  close() {
+    this.db.close();
   }
 }

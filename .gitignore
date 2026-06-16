@@ -19,6 +19,14 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Local database files
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+server/data/*.db
+server/data/*.db-*
+
 # OS/editor files
 .DS_Store
 Thumbs.db
