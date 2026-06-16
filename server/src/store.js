@@ -304,13 +304,15 @@ export class QuestionStore {
   }
 
   seedFromJsonIfNeeded() {
-    if (this.countQuestions.get().count === 0) {
-      const questions = readSeedRows(seedQuestionFile)
-        .map((question) => ({
-          ...question,
-          ...normalizeStoredQuestion(question)
-        }));
-      this.insertQuestionsTransaction(questions);
+    const questions = readSeedRows(seedQuestionFile)
+      .map((question) => ({
+        ...question,
+        ...normalizeStoredQuestion(question)
+      }));
+    const missingQuestions = questions.filter((question) => !this.selectQuestionById.get(question.id));
+
+    if (missingQuestions.length > 0) {
+      this.insertQuestionsTransaction(missingQuestions);
     }
 
     if (this.countCategories.get().count === 0) {

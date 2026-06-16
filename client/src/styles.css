@@ -1635,12 +1635,14 @@ button:disabled {
 
 .mode-info-popover {
   position: fixed;
-  top: 92px;
-  left: 50%;
+  top: var(--popover-top, 92px);
+  left: var(--popover-left, 50%);
   z-index: 91;
-  width: min(320px, calc(100vw - 32px));
+  width: min(var(--popover-width, 320px), calc(100vw - 32px));
+  max-height: min(260px, calc(100dvh - 28px));
   display: grid;
   gap: 7px;
+  overflow: auto;
   padding: 13px 15px;
   color: #e9ded0;
   background: rgba(9, 23, 28, 0.98);
@@ -1650,21 +1652,27 @@ button:disabled {
   font-size: 0.82rem;
   line-height: 1.55;
   pointer-events: auto;
-  transform: translateX(-50%);
-  animation: popoverIn 130ms ease both;
+  transform: translateX(-50%) translateY(var(--popover-y, 0px));
+  animation: anchoredPopoverIn 130ms ease both;
 }
 
 .mode-info-popover::before {
   content: "";
   position: absolute;
   top: -8px;
-  left: 50%;
+  left: var(--popover-tail-left, 50%);
   width: 13px;
   height: 13px;
   background: rgba(9, 23, 28, 0.98);
   border-block-start: 1px solid rgba(255, 255, 255, 0.18);
   border-inline-start: 1px solid rgba(255, 255, 255, 0.18);
   transform: translateX(-50%) rotate(45deg);
+}
+
+.mode-info-popover[data-placement="top"]::before {
+  top: auto;
+  bottom: -8px;
+  transform: translateX(-50%) rotate(225deg);
 }
 
 .mode-info-popover strong {
@@ -2903,15 +2911,15 @@ button:disabled {
   }
 }
 
-@keyframes popoverIn {
+@keyframes anchoredPopoverIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-4px) scale(0.98);
+    transform: translateX(-50%) translateY(var(--popover-y, 0px)) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateX(-50%) translateY(var(--popover-y, 0px)) scale(1);
   }
 }
 
@@ -3246,8 +3254,6 @@ button:disabled {
   }
 
   .mode-info-popover {
-    top: 82px;
-    width: min(280px, calc(100vw - 28px));
     font-size: 0.78rem;
     line-height: 1.55;
   }

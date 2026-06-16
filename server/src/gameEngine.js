@@ -175,6 +175,39 @@ function answersMatch(value, expected) {
   return maxDistance > 0 && levenshteinDistanceWithin(normalizedValue, normalizedExpected, maxDistance) <= maxDistance;
 }
 
+function isNumericAnswer(value) {
+  const answer = String(value || "").trim();
+  return /[0-9٠-٩۰-۹]/.test(answer);
+}
+
+function isEnglishAnswer(value) {
+  const answer = String(value || "").trim();
+  return /[a-z]/i.test(answer) && !/[\u0600-\u06FF]/.test(answer);
+}
+
+function answerFormatNote(question) {
+  const answer = question?.correctAnswer || "";
+  if (isNumericAnswer(answer)) {
+    return "ملاحظة: الإجابة رقم.";
+  }
+
+  if (isEnglishAnswer(answer)) {
+    return "ملاحظة: الإجابة بالإنجليزي.";
+  }
+
+  return "";
+}
+
+function promptWithAnswerFormatNote(question, mode) {
+  const prompt = question?.prompt || "";
+  if (mode !== "kalak" || !prompt || /ملاحظة:\s*الإجابة/.test(prompt)) {
+    return prompt;
+  }
+
+  const note = answerFormatNote(question);
+  return note ? `${prompt}\n${note}` : prompt;
+}
+
 function parseNumericAnswer(value) {
   const normalizedDigits = String(value || "")
     .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
@@ -3222,7 +3255,7 @@ export class KalakGameEngine {
     const question = {
       id: room.question.id,
       category: room.question.category,
-      prompt: room.question.prompt,
+      prompt: promptWithAnswerFormatNote(room.question, this.currentMode(room)),
       difficulty: room.question.difficulty,
       correctAnswer: ["results", "finished"].includes(room.phase) ? room.question.correctAnswer : undefined
     };

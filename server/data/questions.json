@@ -1462,5 +1462,275 @@
     "active": true,
     "createdAt": "2026-06-15T00:00:00.000Z",
     "updatedAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "q_ucl_001",
+    "category": "دوري أبطال أوروبا",
+    "prompt": "ما الاسم السابق للبطولة قبل أن تصبح دوري أبطال أوروبا؟",
+    "correctAnswer": "كأس أوروبا",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "UEFA",
+      "Champions League"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_ucl_002",
+    "category": "دوري أبطال أوروبا",
+    "prompt": "في أي موسم بدأ اسم دوري أبطال أوروبا بدل كأس أوروبا؟",
+    "correctAnswer": "1992-1993",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "UEFA",
+      "تاريخ"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_ucl_003",
+    "category": "دوري أبطال أوروبا",
+    "prompt": "أي نادٍ فاز بنهائي دوري أبطال أوروبا 2005 المعروف بليلة إسطنبول؟",
+    "correctAnswer": "Liverpool",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "UEFA",
+      "نهائي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_ucl_004",
+    "category": "دوري أبطال أوروبا",
+    "prompt": "ما المدينة التي استضافت نهائي 1999 بين مانشستر يونايتد وبايرن ميونخ؟",
+    "correctAnswer": "برشلونة",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "UEFA",
+      "نهائي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_ucl_005",
+    "category": "دوري أبطال أوروبا",
+    "prompt": "من سجل هدف ريال مدريد في نهائي دوري أبطال أوروبا 2002 بتسديدة طائرة مشهورة؟",
+    "correctAnswer": "Zinedine Zidane",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "UEFA",
+      "ريال مدريد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_ucl_006",
+    "category": "دوري أبطال أوروبا",
+    "prompt": "كم فريقًا يشارك في مرحلة الدوري الجديدة بدوري أبطال أوروبا بداية من موسم 2024-2025؟",
+    "correctAnswer": "36",
+    "difficulty": "hard",
+    "source": "Seed: Football",
+    "tags": [
+      "UEFA",
+      "نظام البطولة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_wc_001",
+    "category": "كأس العالم",
+    "prompt": "في أي دولة أقيمت أول نسخة من كأس العالم عام 1930؟",
+    "correctAnswer": "أوروغواي",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "World Cup",
+      "تاريخ"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_wc_002",
+    "category": "كأس العالم",
+    "prompt": "من فاز بكأس العالم 1986؟",
+    "correctAnswer": "الأرجنتين",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "World Cup",
+      "أبطال"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_wc_003",
+    "category": "كأس العالم",
+    "prompt": "كم مرة فازت البرازيل بكأس العالم حتى نهاية نسخة 2022؟",
+    "correctAnswer": "5",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "World Cup",
+      "البرازيل"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_wc_004",
+    "category": "كأس العالم",
+    "prompt": "من سجل هدف اليد الشهيرة باسم يد الله في كأس العالم 1986؟",
+    "correctAnswer": "دييغو مارادونا",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "World Cup",
+      "مارادونا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_wc_005",
+    "category": "كأس العالم",
+    "prompt": "أي دولة استضافت كأس العالم 2022؟",
+    "correctAnswer": "قطر",
+    "difficulty": "easy",
+    "source": "Seed: Football",
+    "tags": [
+      "World Cup",
+      "استضافة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_wc_006",
+    "category": "كأس العالم",
+    "prompt": "في أي قارة أقيمت كأس العالم 2010؟",
+    "correctAnswer": "أفريقيا",
+    "difficulty": "easy",
+    "source": "Seed: Football",
+    "tags": [
+      "World Cup",
+      "جنوب أفريقيا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_bayern_001",
+    "category": "بايرن ميونخ",
+    "prompt": "في أي مدينة ألمانية يلعب نادي بايرن ميونخ؟",
+    "correctAnswer": "ميونخ",
+    "difficulty": "easy",
+    "source": "Seed: Football",
+    "tags": [
+      "Bayern",
+      "ألمانيا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_bayern_002",
+    "category": "بايرن ميونخ",
+    "prompt": "ما اسم ملعب بايرن ميونخ الحالي؟",
+    "correctAnswer": "Allianz Arena",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "Bayern",
+      "ملعب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_bayern_003",
+    "category": "بايرن ميونخ",
+    "prompt": "في أي سنة تأسس نادي بايرن ميونخ؟",
+    "correctAnswer": "1900",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "Bayern",
+      "تاريخ"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_bayern_004",
+    "category": "بايرن ميونخ",
+    "prompt": "ما لقب بايرن ميونخ الشائع بالألمانية ويعني الحُمر؟",
+    "correctAnswer": "Die Roten",
+    "difficulty": "medium",
+    "source": "Seed: Football",
+    "tags": [
+      "Bayern",
+      "لقب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_bayern_005",
+    "category": "بايرن ميونخ",
+    "prompt": "ما اسم الحارس الألماني الشهير نوير المرتبط ببايرن ميونخ؟",
+    "correctAnswer": "Manuel Neuer",
+    "difficulty": "easy",
+    "source": "Seed: Football",
+    "tags": [
+      "Bayern",
+      "لاعبون"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
+  },
+  {
+    "id": "q_bayern_006",
+    "category": "بايرن ميونخ",
+    "prompt": "ما لون القميص الأساسي الأشهر لبايرن ميونخ؟",
+    "correctAnswer": "الأحمر",
+    "difficulty": "easy",
+    "source": "Seed: Football",
+    "tags": [
+      "Bayern",
+      "ألوان"
+    ],
+    "active": true,
+    "createdAt": "2026-06-16T00:00:00.000Z",
+    "updatedAt": "2026-06-16T00:00:00.000Z"
   }
 ]
