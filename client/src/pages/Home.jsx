@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Gamepad2, LogIn, Users } from "lucide-react";
+import { Coffee, Gamepad2, LogIn, MessageCircle, Sparkles, Users } from "lucide-react";
 import { api } from "../lib/api.js";
 import { AvatarPicker } from "../components/Avatar.jsx";
 
@@ -92,14 +92,41 @@ export default function Home() {
   }
 
   return (
-    <main className="hero-screen">
-      <section className="hero-copy">
-        <div className="hero-kicker">
-          <Users size={18} />
-          <span>{config.minPlayers}-{config.maxPlayers} لاعبين</span>
+    <main className="hero-screen home-screen">
+      <section className="hero-copy home-hero-copy">
+        <div className="hero-kicker home-kicker">
+          <Coffee size={18} />
+          <span>جلسة مريحة لــ {config.minPlayers}-{config.maxPlayers} لاعبين</span>
         </div>
         <h1>فلتة</h1>
-        <p>خمن، اخدع، واكشف الصح قبل أصحابك.</p>
+        <p>افتح غرفة بهدوء، اختار شكلك، وخلي أول سؤال يبدأ الضحك بدون لخبطة.</p>
+
+        <div className="home-comfort-list" aria-label="جو اللعبة">
+          <span>
+            <MessageCircle size={16} />
+            كلام خفيف
+          </span>
+          <span>
+            <Sparkles size={16} />
+            خدع ذكية
+          </span>
+          <span>
+            <Users size={16} />
+            لعب جماعي
+          </span>
+        </div>
+
+        <div className="home-table-scene" aria-hidden="true">
+          <div className="home-table-core">
+            <span className="home-card-chip home-card-chip-a">شن الصح؟</span>
+            <span className="home-card-chip home-card-chip-b">خدعة مقنعة</span>
+            <span className="home-card-chip home-card-chip-c">تصويت هادي</span>
+          </div>
+          <span className="home-player-token home-player-token-a" />
+          <span className="home-player-token home-player-token-b" />
+          <span className="home-player-token home-player-token-c" />
+          <span className="home-player-token home-player-token-d" />
+        </div>
       </section>
 
       <section className="panel home-entry-card">

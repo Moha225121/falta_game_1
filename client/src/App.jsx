@@ -1,5 +1,5 @@
 import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
-import { Gamepad2, Sparkles } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import Home from "./pages/Home.jsx";
 import Game from "./pages/Game.jsx";
 import Admin from "./pages/Admin.jsx";
@@ -21,9 +21,6 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand" aria-label="فلتة">
-          <span className="brand-mark">
-            <Sparkles size={20} />
-          </span>
           <span>فلتة</span>
         </div>
         <nav>
