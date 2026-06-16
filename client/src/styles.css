@@ -1603,13 +1603,6 @@ button:disabled {
   background: var(--green);
 }
 
-.mode-info-anchor {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-}
-
 .mode-info-button {
   width: 32px;
   height: 32px;
@@ -1633,15 +1626,22 @@ button:disabled {
   z-index: 8;
 }
 
+.mode-info-cloud-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: auto;
+}
+
 .mode-info-popover {
-  position: absolute;
-  top: calc(100% + 11px);
-  inset-inline-end: 0;
-  z-index: 20;
-  width: min(268px, calc(100vw - 44px));
+  position: fixed;
+  top: 92px;
+  left: 50%;
+  z-index: 91;
+  width: min(320px, calc(100vw - 32px));
   display: grid;
-  gap: 6px;
-  padding: 11px 13px;
+  gap: 7px;
+  padding: 13px 15px;
   color: #e9ded0;
   background: rgba(9, 23, 28, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1649,21 +1649,27 @@ button:disabled {
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
   font-size: 0.82rem;
   line-height: 1.55;
-  pointer-events: none;
+  pointer-events: auto;
+  transform: translateX(-50%);
   animation: popoverIn 130ms ease both;
 }
 
 .mode-info-popover::before {
   content: "";
   position: absolute;
-  top: -7px;
-  inset-inline-end: 10px;
+  top: -8px;
+  left: 50%;
   width: 13px;
   height: 13px;
   background: rgba(9, 23, 28, 0.98);
   border-block-start: 1px solid rgba(255, 255, 255, 0.18);
   border-inline-start: 1px solid rgba(255, 255, 255, 0.18);
-  transform: rotate(45deg);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.mode-info-popover strong {
+  color: var(--gold);
+  font-size: 0.92rem;
 }
 
 .mode-info-popover p {
@@ -2900,12 +2906,12 @@ button:disabled {
 @keyframes popoverIn {
   from {
     opacity: 0;
-    transform: translateY(-4px) scale(0.98);
+    transform: translateX(-50%) translateY(-4px) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 
@@ -3240,7 +3246,8 @@ button:disabled {
   }
 
   .mode-info-popover {
-    width: min(238px, calc(100vw - 32px));
+    top: 82px;
+    width: min(280px, calc(100vw - 28px));
     font-size: 0.78rem;
     line-height: 1.55;
   }
