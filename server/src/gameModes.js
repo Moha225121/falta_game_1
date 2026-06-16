@@ -540,3 +540,22 @@ export const REVERSE_TRAP_ROUNDS = [
     explanation: "الفخ كان 3."
   }
 ];
+
+export const BUILT_IN_MODE_COUNTS = {
+  imposter: IMPOSTER_WORDS.length,
+  fake_fact: FAKE_FACTS.length,
+  last_survivor: LAST_SURVIVOR_CHALLENGES.length,
+  emoji_decode: DIRECT_CHOICE_ROUNDS.emoji_decode.length,
+  map_hunt: DIRECT_CHOICE_ROUNDS.map_hunt.length,
+  quote_hunt: DIRECT_CHOICE_ROUNDS.quote_hunt.length,
+  odd_one: DIRECT_CHOICE_ROUNDS.odd_one.length,
+  order_it: DIRECT_CHOICE_ROUNDS.order_it.length,
+  mind_match: MIND_MATCH_ROUNDS.length,
+  closest_number: CLOSEST_NUMBER_ROUNDS.length,
+  hot_take: HOT_TAKE_PROMPTS.length,
+  target_guess: TARGET_GUESS_ROUNDS.length,
+  split_steal: SPLIT_STEAL_SCENARIOS.length,
+  minority_wins: MINORITY_WINS_ROUNDS.length,
+  reverse_trap: REVERSE_TRAP_ROUNDS.length,
+  judge_pick: JUDGE_PICK_PROMPTS.length
+};

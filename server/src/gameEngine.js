@@ -87,6 +87,24 @@ const BOT_CORRECT_ANSWER_RATE = 0.18;
 const BOT_CORRECT_VOTE_RATE = 0.42;
 const RECONNECT_GRACE_MS = 45_000;
 const LIVE_GAME_PHASES = new Set(["answering", "voting", "results"]);
+const CUMULATIVE_DEFAULTS = {
+  roomsCreated: 0,
+  roomsClosed: 0,
+  humanPlayersJoined: 0,
+  botsAdded: 0,
+  gamesStarted: 0,
+  gamesFinished: 0,
+  gamesEndedByHost: 0,
+  answerSubmissions: 0,
+  botAnswerSubmissions: 0,
+  voteSubmissions: 0,
+  botVoteSubmissions: 0,
+  chatMessages: 0,
+  disconnections: 0,
+  reconnections: 0,
+  playersLeft: 0,
+  kickRemovals: 0
+};
 const PHASE_ORDER = ["lobby", "answering", "voting", "results", "finished"];
 
 function percent(part, total) {
@@ -424,24 +442,16 @@ export class KalakGameEngine {
     this.rooms = new Map();
     this.usedRoomCodes = new Set();
     this.startedAt = Date.now();
-    this.cumulative = {
-      roomsCreated: 0,
-      roomsClosed: 0,
-      humanPlayersJoined: 0,
-      botsAdded: 0,
-      gamesStarted: 0,
-      gamesFinished: 0,
-      gamesEndedByHost: 0,
-      answerSubmissions: 0,
-      botAnswerSubmissions: 0,
-      voteSubmissions: 0,
-      botVoteSubmissions: 0,
-      chatMessages: 0,
-      disconnections: 0,
-      reconnections: 0,
-      playersLeft: 0,
-      kickRemovals: 0
-    };
+    this.cumulative = this.store?.getGameCounters?.(CUMULATIVE_DEFAULTS) || { ...CUMULATIVE_DEFAULTS };
+  }
+
+  incrementCounter(key, amount = 1) {
+    this.cumulative[key] = (this.cumulative[key] || 0) + amount;
+    this.store?.incrementGameCounter?.(key, amount);
+  }
+
+  recordRoomEvent(type, room) {
+    this.store?.recordRoomEvent?.(type, room);
   }
 
   bindSocket(socket) {
@@ -550,6 +560,12 @@ export class KalakGameEngine {
 
     const totalAnswerSubmissions = this.cumulative.answerSubmissions + this.cumulative.botAnswerSubmissions;
     const totalVoteSubmissions = this.cumulative.voteSubmissions + this.cumulative.botVoteSubmissions;
+    const historical = this.store?.roomEventStats?.() || {
+      createdTotal: this.cumulative.roomsCreated,
+      closedTotal: this.cumulative.roomsClosed,
+      timeline: [],
+      recent: []
+    };
 
     return {
       startedAt: new Date(this.startedAt).toISOString(),
@@ -565,6 +581,7 @@ export class KalakGameEngine {
         finalResultRooms: roomRows.filter((room) => room.results?.isFinal).length
       },
       cumulative: { ...this.cumulative },
+      historical,
       activity: {
         humanAnswerSubmissions: this.cumulative.answerSubmissions,
         botAnswerSubmissions: this.cumulative.botAnswerSubmissions,
@@ -699,8 +716,9 @@ export class KalakGameEngine {
     room.settings = this.cleanSettings(settingsInput);
     room.activeMode = room.settings.mode;
     this.rooms.set(code, room);
-    this.cumulative.roomsCreated += 1;
-    this.cumulative.humanPlayersJoined += 1;
+    this.incrementCounter("roomsCreated");
+    this.incrementCounter("humanPlayersJoined");
+    this.recordRoomEvent("created", room);
     this.bindPlayerSocket(socket, room, player, payload, { announceReturn: false });
 
     this.addSystemMessage(room, `${player.name} فتح الغرفة.`);
@@ -746,7 +764,7 @@ export class KalakGameEngine {
     const player = createPlayer(socket, payload);
     room.players.set(player.id, player);
     this.assignHostIfNeeded(room, player.id);
-    this.cumulative.humanPlayersJoined += 1;
+    this.incrementCounter("humanPlayersJoined");
     this.bindPlayerSocket(socket, room, player, payload, { announceReturn: false });
 
     this.addSystemMessage(room, `${player.name} انضم للغرفة.`);
@@ -852,7 +870,7 @@ export class KalakGameEngine {
     const wasDisconnected = player.connected === false;
     this.bindPlayerSocket(socket, room, player, payload, { announceReturn: wasDisconnected });
     if (wasDisconnected) {
-      this.cumulative.reconnections += 1;
+      this.incrementCounter("reconnections");
     }
     this.assignHostIfNeeded(room, player.id);
     this.emitRoom(room);
@@ -932,7 +950,7 @@ export class KalakGameEngine {
 
     const bot = createBot(room);
     room.players.set(bot.id, bot);
-    this.cumulative.botsAdded += 1;
+    this.incrementCounter("botsAdded");
     this.addSystemMessage(room, `${bot.name} انضم كلاعب آلي للتجربة.`);
     this.emitRoom(room);
     return { room: this.publicRoom(room, this.playerId(socket)) };
@@ -1015,7 +1033,7 @@ export class KalakGameEngine {
     room.gameStartedAt = Date.now();
     room.finishedAt = null;
     room.statsFinalRecorded = false;
-    this.cumulative.gamesStarted += 1;
+    this.incrementCounter("gamesStarted");
     for (const player of room.players.values()) {
       player.score = 0;
       player.scienceDayCorrectCount = 0;
@@ -1034,7 +1052,7 @@ export class KalakGameEngine {
       return { room: this.publicRoom(room, this.playerId(socket)) };
     }
 
-    this.cumulative.gamesEndedByHost += 1;
+    this.incrementCounter("gamesEndedByHost");
     this.clearTimer(room);
     room.phase = "lobby";
     room.round = 0;
@@ -1111,7 +1129,7 @@ export class KalakGameEngine {
       throw new Error("اكتب إجابة أولًا.");
     }
 
-    this.cumulative.answerSubmissions += 1;
+    this.incrementCounter("answerSubmissions");
 
     if (this.currentMode(room) === "kalak" && answersMatch(text, room.question.correctAnswer)) {
       if (!room.correctWriterIds.includes(playerId)) {
@@ -1169,7 +1187,7 @@ export class KalakGameEngine {
       optionId: option.id,
       votedAt: Date.now()
     });
-    this.cumulative.voteSubmissions += 1;
+    this.incrementCounter("voteSubmissions");
 
     this.emitRoom(room);
 
@@ -1232,7 +1250,7 @@ export class KalakGameEngine {
       message,
       createdAt: Date.now()
     });
-    this.cumulative.chatMessages += 1;
+    this.incrementCounter("chatMessages");
     room.messages = room.messages.slice(-60);
     this.emitRoom(room);
     return { room: this.publicRoom(room, playerId) };
@@ -1875,7 +1893,7 @@ export class KalakGameEngine {
           text: this.botAnswerText(liveRoom, bot),
           submittedAt: Date.now()
         });
-        this.cumulative.botAnswerSubmissions += 1;
+        this.incrementCounter("botAnswerSubmissions");
 
         this.emitRoom(liveRoom);
 
@@ -1914,7 +1932,7 @@ export class KalakGameEngine {
           optionId: choice.id,
           votedAt: Date.now()
         });
-        this.cumulative.botVoteSubmissions += 1;
+        this.incrementCounter("botVoteSubmissions");
 
         this.emitRoom(liveRoom);
 
@@ -2212,7 +2230,7 @@ export class KalakGameEngine {
         submittedAt: draft.updatedAt || Date.now(),
         autoSubmitted: true
       });
-      this.cumulative.answerSubmissions += 1;
+      this.incrementCounter("answerSubmissions");
     }
 
     room.answerDrafts = new Map();
@@ -3112,7 +3130,8 @@ export class KalakGameEngine {
     }
 
     this.rooms.delete(room.code);
-    this.cumulative.roomsClosed += 1;
+    this.incrementCounter("roomsClosed");
+    this.recordRoomEvent("closed", room);
   }
 
   removePlayer(socket) {
@@ -3132,7 +3151,7 @@ export class KalakGameEngine {
     player.connected = false;
     player.disconnectedAt = Date.now();
     player.socketId = null;
-    this.cumulative.disconnections += 1;
+    this.incrementCounter("disconnections");
 
     if (room.phase === "lobby") {
       this.assignHostIfNeeded(room);
@@ -3178,10 +3197,10 @@ export class KalakGameEngine {
       player.reconnectTimer = null;
     }
     if (!player.isBot) {
-      this.cumulative.playersLeft += 1;
+      this.incrementCounter("playersLeft");
     }
     if (notify) {
-      this.cumulative.kickRemovals += 1;
+      this.incrementCounter("kickRemovals");
     }
 
     const playerSocket = player.socketId ? this.io.sockets?.sockets?.get(player.socketId) : null;
@@ -3212,7 +3231,8 @@ export class KalakGameEngine {
 
       this.clearTimer(room);
       this.rooms.delete(room.code);
-      this.cumulative.roomsClosed += 1;
+      this.incrementCounter("roomsClosed");
+      this.recordRoomEvent("closed", room);
       return player;
     }
 
@@ -3405,7 +3425,7 @@ export class KalakGameEngine {
     if ((room.phase === "finished" || room.results?.isFinal) && room.gameStartedAt && !room.statsFinalRecorded) {
       room.statsFinalRecorded = true;
       room.finishedAt = room.lastActivityAt;
-      this.cumulative.gamesFinished += 1;
+      this.incrementCounter("gamesFinished");
     }
   }
 

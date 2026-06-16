@@ -15,6 +15,7 @@ import {
   Gamepad2,
   LayoutDashboard,
   ListFilter,
+  Loader2,
   MessageCircle,
   MousePointerClick,
   Plus,
@@ -40,6 +41,18 @@ const fallbackQuestionTypes = [
   { id: "fake_fact", name: "كذبة ذكية", kind: "true_false", category: "كذبة ذكية" },
   { id: "minority_wins", name: "الأقلية تكسب", kind: "choice_poll", category: "الأقلية تكسب" },
   { id: "judge_pick", name: "الحكم", kind: "judge_prompt", category: "الحكم" },
+  { id: "last_survivor", name: "آخر واحد", kind: "prompt_only", category: "آخر واحد" },
+  { id: "target_guess", name: "خمن الهدف", kind: "choice_poll", category: "خمن الهدف" },
+  { id: "split_steal", name: "قسمة أو سرقة", kind: "prompt_only", category: "قسمة أو سرقة" },
+  { id: "mind_match", name: "تطابق العقول", kind: "choice_poll", category: "تطابق العقول" },
+  { id: "closest_number", name: "أقرب رقم", kind: "number", category: "أقرب رقم" },
+  { id: "hot_take", name: "رد سريع", kind: "prompt_only", category: "رد سريع" },
+  { id: "reverse_trap", name: "الفخ العكسي", kind: "trap_choice", category: "الفخ العكسي" },
+  { id: "emoji_decode", name: "فك الإيموجي", kind: "direct_choice", category: "فك الإيموجي" },
+  { id: "map_hunt", name: "خريطة السر", kind: "direct_choice", category: "خريطة السر" },
+  { id: "quote_hunt", name: "من قالها؟", kind: "direct_choice", category: "من قالها؟" },
+  { id: "odd_one", name: "المختلف", kind: "direct_choice", category: "المختلف" },
+  { id: "order_it", name: "رتبها", kind: "direct_choice", category: "رتبها" },
   { id: "science_day", name: "اليوم العلمي", kind: "direct_choice", category: "اليوم العلمي" }
 ];
 
@@ -62,6 +75,18 @@ const modeNameFallback = {
   fake_fact: "كذبة ذكية",
   minority_wins: "الأقلية تكسب",
   judge_pick: "الحكم",
+  last_survivor: "آخر واحد",
+  target_guess: "خمن الهدف",
+  split_steal: "قسمة أو سرقة",
+  mind_match: "تطابق العقول",
+  closest_number: "أقرب رقم",
+  hot_take: "رد سريع",
+  reverse_trap: "الفخ العكسي",
+  emoji_decode: "فك الإيموجي",
+  map_hunt: "خريطة السر",
+  quote_hunt: "من قالها؟",
+  odd_one: "المختلف",
+  order_it: "رتبها",
   science_day: "اليوم العلمي"
 };
 
@@ -241,6 +266,7 @@ export default function Admin() {
   const [categoryRows, setCategoryRows] = useState([]);
   const [questionTypes, setQuestionTypes] = useState(fallbackQuestionTypes);
   const [stats, setStats] = useState(null);
+  const [statsBusy, setStatsBusy] = useState(false);
   const [config, setConfig] = useState({ adminAuthRequired: true, adminConfigured: null });
   const [token, setToken] = useState(localStorage.getItem("kalak:adminToken") || "");
   const [search, setSearch] = useState("");
@@ -345,19 +371,24 @@ export default function Admin() {
   }, [category, categoryStats, modeFilter]);
 
   const modeStats = useMemo(() => {
+    const detailedStats = new Map((questionStats?.byModeDetailed || []).map((item) => [item.mode, item]));
+
     return questionTypes.map((type) => {
       const rows = allQuestions.filter((question) => (question.mode || "kalak") === type.id);
+      const detailed = detailedStats.get(type.id);
       return {
         ...type,
-        total: rows.length,
-        active: rows.filter((question) => question.active !== false).length,
-        hidden: rows.filter((question) => question.active === false).length,
+        total: detailed?.total ?? rows.length,
+        active: detailed?.active ?? rows.filter((question) => question.active !== false).length,
+        hidden: detailed?.inactive ?? rows.filter((question) => question.active === false).length,
+        database: detailed?.database ?? rows.length,
+        builtIn: detailed?.builtIn ?? 0,
         categories: uniqueSorted(categoryStats
           .filter((row) => row.mode === type.id)
           .map((row) => row.category)).length
       };
     });
-  }, [allQuestions, categoryStats, questionTypes]);
+  }, [allQuestions, categoryStats, questionStats, questionTypes]);
 
   function difficultyLabel(value) {
     return difficultyNames[value] || value;
@@ -415,11 +446,14 @@ export default function Admin() {
   }
 
   async function loadStatsOnly() {
+    setStatsBusy(true);
     try {
       const statsPayload = await api("/stats", { headers: adminHeaders(token) });
       setStats(statsPayload);
     } catch {
       // The full loader shows auth/network errors; the silent poll should stay quiet.
+    } finally {
+      setStatsBusy(false);
     }
   }
 
@@ -823,6 +857,8 @@ export default function Admin() {
     const players = live.players || {};
     const cumulative = live.cumulative || {};
     const activity = live.activity || {};
+    const historical = live.historical || {};
+    const roomTimeline = historical.timeline || [];
     const phases = live.phases || [];
     const modes = live.modes || [];
     const recentRooms = live.recentRooms || [];
@@ -830,7 +866,7 @@ export default function Admin() {
     if (!liveStats) {
       return (
         <section className="panel dashboard-empty">
-          <Activity size={24} />
+          <Loader2 className="spin" size={24} />
           <strong>جاري تحميل الإحصائيات</strong>
         </section>
       );
@@ -843,9 +879,9 @@ export default function Admin() {
             <Activity size={20} />
             <h2>الإحصائيات المباشرة</h2>
           </div>
-          <button className="secondary-button" type="button" onClick={loadStatsOnly}>
-            <RefreshCw size={18} />
-            <span>تحديث</span>
+          <button className="secondary-button" type="button" onClick={loadStatsOnly} disabled={statsBusy}>
+            {statsBusy ? <Loader2 className="spin" size={18} /> : <RefreshCw size={18} />}
+            <span>{statsBusy ? "جاري التحديث" : "تحديث"}</span>
           </button>
         </div>
 
@@ -879,6 +915,24 @@ export default function Admin() {
 
           <article className="panel dashboard-panel">
             <div className="panel-heading">
+              <DoorOpen size={20} />
+              <h2>الغرف عبر الوقت</h2>
+            </div>
+            <div className="dashboard-bars">
+              {roomTimeline.length ? roomTimeline.map((item) => (
+                <DashboardBar
+                  key={item.hour}
+                  label={new Date(item.hour).toLocaleTimeString("ar-LY", { hour: "2-digit", minute: "2-digit" })}
+                  value={item.created}
+                  max={Math.max(1, ...roomTimeline.map((row) => row.created))}
+                  detail={`${formatNumber(item.closed)} مغلقة`}
+                />
+              )) : <span className="dashboard-muted">لا توجد بيانات تاريخية للغرف بعد</span>}
+            </div>
+          </article>
+
+          <article className="panel dashboard-panel">
+            <div className="panel-heading">
               <Gamepad2 size={20} />
               <h2>الأطوار المباشرة</h2>
             </div>
@@ -896,6 +950,8 @@ export default function Admin() {
             </div>
             <div className="dashboard-metric-list">
               <DashboardMetric label="اللاعبون الآليون المضافون" value={cumulative.botsAdded} />
+              <DashboardMetric label="إجمالي الغرف المحفوظ" value={historical.createdTotal ?? cumulative.roomsCreated} />
+              <DashboardMetric label="الغرف المغلقة المحفوظة" value={historical.closedTotal ?? cumulative.roomsClosed} />
               <DashboardMetric label="إنهاء المضيف للعبة" value={cumulative.gamesEndedByHost} />
               <DashboardMetric label="انقطاعات الاتصال" value={cumulative.disconnections} />
               <DashboardMetric label="الرجوع بعد الانقطاع" value={cumulative.reconnections} />
@@ -1011,7 +1067,10 @@ export default function Admin() {
               <article className="mode-stat-tile" key={mode.id}>
                 <strong>{modeName(mode.id)}</strong>
                 <span>{mode.total} عنصر</span>
-                <small>{mode.categories} تصنيف / {mode.active} مفعل / {mode.hidden} مخفي</small>
+                <small>
+                  {mode.categories} تصنيف / {mode.active} متاح / {mode.hidden} مخفي
+                  {mode.builtIn ? ` / ${mode.builtIn} مدمج` : ""}
+                </small>
               </article>
             ))}
           </section>

@@ -26,6 +26,7 @@ pnpm-debug.log*
 *.db-*
 server/data/*.db
 server/data/*.db-*
+server/data/questions.user.json
 
 # OS/editor files
 .DS_Store

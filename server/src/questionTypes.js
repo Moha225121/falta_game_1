@@ -57,6 +57,90 @@ export const QUESTION_TYPE_DEFINITIONS = [
     summary: "سؤال للحكم مع إجابات جاهزة تختلط بإجابات اللاعبين."
   },
   {
+    id: "last_survivor",
+    name: "آخر واحد",
+    kind: "prompt_only",
+    category: "آخر واحد",
+    summary: "تحدي مفتوح يطلب من اللاعبين كتابة إجابة لا تتكرر."
+  },
+  {
+    id: "target_guess",
+    name: "خمن الهدف",
+    kind: "choice_poll",
+    category: "خمن الهدف",
+    summary: "لاعب هدف يختار خيارًا، والباقون يحاولون توقع اختياره."
+  },
+  {
+    id: "split_steal",
+    name: "قسمة أو سرقة",
+    kind: "prompt_only",
+    category: "قسمة أو سرقة",
+    summary: "سيناريو قرار سريع بين التعاون أو أخذ النقاط."
+  },
+  {
+    id: "mind_match",
+    name: "تطابق العقول",
+    kind: "choice_poll",
+    category: "تطابق العقول",
+    summary: "اختيار جماعي يفوز فيه اللاعبون الذين يطابقون الأغلبية."
+  },
+  {
+    id: "closest_number",
+    name: "أقرب رقم",
+    kind: "number",
+    category: "أقرب رقم",
+    summary: "سؤال رقمي يفوز فيه الأقرب للإجابة."
+  },
+  {
+    id: "hot_take",
+    name: "رد سريع",
+    kind: "prompt_only",
+    category: "رد سريع",
+    summary: "طلب كتابة سريع للإجابات الطريفة أو المقنعة."
+  },
+  {
+    id: "reverse_trap",
+    name: "الفخ العكسي",
+    kind: "trap_choice",
+    category: "الفخ العكسي",
+    summary: "اختيارات فيها فخ، والمطلوب تجنب الإجابة الصحيحة."
+  },
+  {
+    id: "emoji_decode",
+    name: "فك الإيموجي",
+    kind: "direct_choice",
+    category: "فك الإيموجي",
+    summary: "سؤال اختيار من متعدد يعتمد على تفسير رموز الإيموجي."
+  },
+  {
+    id: "map_hunt",
+    name: "خريطة السر",
+    kind: "direct_choice",
+    category: "خريطة السر",
+    summary: "سؤال اختيار من متعدد عن أماكن ومدن ومعالم."
+  },
+  {
+    id: "quote_hunt",
+    name: "من قالها؟",
+    kind: "direct_choice",
+    category: "من قالها؟",
+    summary: "سؤال اختيار من متعدد لمعرفة صاحب المقولة."
+  },
+  {
+    id: "odd_one",
+    name: "المختلف",
+    kind: "direct_choice",
+    category: "المختلف",
+    summary: "سؤال اختيار من متعدد لاكتشاف العنصر المختلف."
+  },
+  {
+    id: "order_it",
+    name: "رتبها",
+    kind: "direct_choice",
+    category: "رتبها",
+    summary: "سؤال اختيار من متعدد عن الترتيب الصحيح."
+  },
+  {
     id: "science_day",
     name: "اليوم العلمي",
     kind: "direct_choice",

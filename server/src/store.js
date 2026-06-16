@@ -1,8 +1,9 @@
 import Database from "better-sqlite3";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { nanoid } from "nanoid";
+import { BUILT_IN_MODE_COUNTS } from "./gameModes.js";
 import {
   modeAnswerLabel,
   normalizeQuestionInput,
@@ -15,10 +16,35 @@ import {
 const seedQuestionFile = fileURLToPath(new URL("../data/questions.json", import.meta.url));
 const seedCategoryFile = fileURLToPath(new URL("../data/categories.json", import.meta.url));
 const defaultDatabaseFile = fileURLToPath(new URL("../data/questions.sqlite", import.meta.url));
+const defaultUserBackupFile = fileURLToPath(new URL("../data/questions.user.json", import.meta.url));
+const retiredSeedQuestionIds = new Set([
+  "q_limu_001",
+  "q_limu_002",
+  "q_limu_003",
+  "q_limu_004",
+  "q_limu_005",
+  "q_limu_006",
+  "q_limu_007",
+  "q_limu_008",
+  "q_limu_009",
+  "q_limu_010",
+  "q_limu_011",
+  "q_limu_012",
+  "q_limu_013",
+  "q_limu_014",
+  "q_limu_015",
+  "q_limu_016",
+  "q_limu_017"
+]);
 
 function databasePath() {
   const configured = process.env.QUESTION_DB_PATH || process.env.QUESTIONS_DB_PATH;
   return configured ? resolve(process.cwd(), configured) : defaultDatabaseFile;
+}
+
+function userBackupPath() {
+  const configured = process.env.QUESTION_BACKUP_PATH || process.env.QUESTIONS_BACKUP_PATH;
+  return configured ? resolve(process.cwd(), configured) : defaultUserBackupFile;
 }
 
 function parseJson(value, fallback) {
@@ -212,8 +238,9 @@ function categoryFromRow(row) {
 }
 
 export class QuestionStore {
-  constructor({ dbPath = databasePath() } = {}) {
+  constructor({ dbPath = databasePath(), backupPath = userBackupPath() } = {}) {
     this.dbPath = dbPath;
+    this.backupPath = backupPath;
     mkdirSync(dirname(this.dbPath), { recursive: true });
     this.db = new Database(this.dbPath);
     this.db.pragma("journal_mode = WAL");
@@ -255,6 +282,24 @@ export class QuestionStore {
       );
 
       CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_mode_name ON categories(mode, name COLLATE NOCASE);
+
+      CREATE TABLE IF NOT EXISTS game_counters (
+        key TEXT PRIMARY KEY,
+        value INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS room_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        room_code TEXT NOT NULL DEFAULT '',
+        mode TEXT NOT NULL DEFAULT '',
+        player_count INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_room_events_created_at ON room_events(created_at);
+      CREATE INDEX IF NOT EXISTS idx_room_events_type ON room_events(type);
     `);
   }
 
@@ -301,19 +346,53 @@ export class QuestionStore {
         this.insertQuestion.run(rowFromQuestion(question));
       }
     });
+    this.upsertQuestionsTransaction = this.db.transaction((questions) => {
+      for (const question of questions) {
+        const row = rowFromQuestion(question);
+        const existing = this.selectQuestionById.get(question.id);
+        if (!existing) {
+          this.insertQuestion.run(row);
+          continue;
+        }
+
+        const incomingTime = Date.parse(question.updatedAt || question.createdAt || "");
+        const existingTime = Date.parse(existing.updated_at || existing.created_at || "");
+        if (Number.isFinite(incomingTime) && (!Number.isFinite(existingTime) || incomingTime > existingTime)) {
+          this.updateQuestion.run(row);
+        }
+      }
+    });
+    this.deleteRetiredQuestion = this.db.prepare("DELETE FROM questions WHERE id = ?");
+    this.selectCounters = this.db.prepare("SELECT key, value FROM game_counters");
+    this.upsertCounter = this.db.prepare(`
+      INSERT INTO game_counters (key, value, updated_at)
+      VALUES (@key, @value, @updatedAt)
+      ON CONFLICT(key) DO UPDATE SET
+        value = value + excluded.value,
+        updated_at = excluded.updated_at
+    `);
+    this.insertRoomEvent = this.db.prepare(`
+      INSERT INTO room_events (type, room_code, mode, player_count, created_at)
+      VALUES (@type, @roomCode, @mode, @playerCount, @createdAt)
+    `);
+    this.selectRoomEvents = this.db.prepare("SELECT type, room_code, mode, player_count, created_at FROM room_events ORDER BY created_at DESC");
   }
 
   seedFromJsonIfNeeded() {
-    const questions = readSeedRows(seedQuestionFile)
+    const seedQuestions = readSeedRows(seedQuestionFile)
       .map((question) => ({
         ...question,
         ...normalizeStoredQuestion(question)
-      }));
-    const missingQuestions = questions.filter((question) => !this.selectQuestionById.get(question.id));
+      }))
+      .filter((question) => !retiredSeedQuestionIds.has(question.id));
+    const missingQuestions = seedQuestions.filter((question) => !this.selectQuestionById.get(question.id));
 
     if (missingQuestions.length > 0) {
       this.insertQuestionsTransaction(missingQuestions);
     }
+
+    this.removeRetiredSeedQuestions();
+    this.restoreUserBackup();
 
     if (this.countCategories.get().count === 0) {
       const categories = readSeedRows(seedCategoryFile).map(normalizeCategoryRecord).filter(Boolean);
@@ -327,6 +406,45 @@ export class QuestionStore {
       });
       insert(categories);
     }
+
+    this.writeUserBackup();
+  }
+
+  removeRetiredSeedQuestions() {
+    for (const id of retiredSeedQuestionIds) {
+      const row = this.selectQuestionById.get(id);
+      if (!row) {
+        continue;
+      }
+
+      const category = String(row.category || "");
+      const source = String(row.source || "");
+      if (category === "الجامعة الليبية الدولية" || source.toLowerCase().includes("limu")) {
+        this.deleteRetiredQuestion.run(id);
+      }
+    }
+  }
+
+  restoreUserBackup() {
+    const backupQuestions = readSeedRows(this.backupPath)
+      .filter((question) => !retiredSeedQuestionIds.has(question.id))
+      .map((question) => ({
+        ...question,
+        ...normalizeStoredQuestion(question)
+      }));
+
+    if (backupQuestions.length > 0) {
+      this.upsertQuestionsTransaction(backupQuestions);
+    }
+  }
+
+  writeUserBackup() {
+    const questions = this.allQuestions()
+      .filter((question) => !retiredSeedQuestionIds.has(question.id))
+      .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+
+    mkdirSync(dirname(this.backupPath), { recursive: true });
+    writeFileSync(this.backupPath, `${JSON.stringify(questions, null, 2)}\n`, "utf8");
   }
 
   allQuestions() {
@@ -480,13 +598,111 @@ export class QuestionStore {
       acc[mode] = (acc[mode] || 0) + 1;
       return acc;
     }, {});
+    const activeByMode = questions.reduce((acc, question) => {
+      const mode = question.mode || "kalak";
+      acc[mode] = (acc[mode] || 0) + (question.active === false ? 0 : 1);
+      return acc;
+    }, {});
+    const inactiveByMode = questions.reduce((acc, question) => {
+      const mode = question.mode || "kalak";
+      acc[mode] = (acc[mode] || 0) + (question.active === false ? 1 : 0);
+      return acc;
+    }, {});
+    const byModeDetailed = QUESTION_TYPE_DEFINITIONS.map((type) => {
+      const databaseTotal = byMode[type.id] || 0;
+      const databaseActive = activeByMode[type.id] || 0;
+      const builtIn = BUILT_IN_MODE_COUNTS[type.id] || 0;
+
+      return {
+        mode: type.id,
+        total: databaseTotal + builtIn,
+        active: databaseActive + builtIn,
+        inactive: inactiveByMode[type.id] || 0,
+        database: databaseTotal,
+        builtIn
+      };
+    });
 
     return {
       total: questions.length,
       active: questions.filter((question) => question.active).length,
       inactive: questions.filter((question) => !question.active).length,
       byCategory,
-      byMode
+      byMode,
+      byModeDetailed
+    };
+  }
+
+  getGameCounters(defaults = {}) {
+    const values = { ...defaults };
+    for (const row of this.selectCounters.all()) {
+      values[row.key] = Number(row.value || 0);
+    }
+    return values;
+  }
+
+  incrementGameCounter(key, amount = 1) {
+    const cleanKey = String(key || "").trim();
+    const value = Number(amount || 0);
+    if (!cleanKey || !Number.isFinite(value) || value === 0) {
+      return;
+    }
+
+    this.upsertCounter.run({
+      key: cleanKey,
+      value,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  recordRoomEvent(type, room = {}) {
+    this.insertRoomEvent.run({
+      type: String(type || "event").trim() || "event",
+      roomCode: String(room.code || ""),
+      mode: String(room.activeMode || room.settings?.mode || ""),
+      playerCount: Number(room.players?.size || room.playerCount || 0),
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  roomEventStats() {
+    const events = this.selectRoomEvents.all();
+    const buckets = new Map();
+
+    for (const event of events) {
+      const date = new Date(event.created_at);
+      if (Number.isNaN(date.getTime())) {
+        continue;
+      }
+      date.setMinutes(0, 0, 0);
+      const key = date.toISOString();
+      const current = buckets.get(key) || { hour: key, created: 0, closed: 0 };
+      if (event.type === "created") {
+        current.created += 1;
+      }
+      if (event.type === "closed") {
+        current.closed += 1;
+      }
+      buckets.set(key, current);
+    }
+
+    const timeline = [...buckets.values()]
+      .sort((a, b) => a.hour.localeCompare(b.hour))
+      .slice(-24);
+    const createdTotal = events.filter((event) => event.type === "created").length;
+    const closedTotal = events.filter((event) => event.type === "closed").length;
+
+    return {
+      createdTotal,
+      closedTotal,
+      timeline,
+      recent: events.slice(0, 10).map((event) => ({
+        type: event.type,
+        roomCode: event.room_code,
+        mode: event.mode,
+        playerCount: event.player_count,
+        createdAt: event.created_at
+      }))
     };
   }
 
@@ -498,6 +714,7 @@ export class QuestionStore {
   async create(input) {
     const question = createQuestion(input);
     this.insertQuestion.run(rowFromQuestion(question));
+    this.writeUserBackup();
     return question;
   }
 
@@ -512,6 +729,7 @@ export class QuestionStore {
     const now = new Date().toISOString();
     const created = rows.map((row) => createQuestion(row, now));
     this.insertQuestionsTransaction(created);
+    this.writeUserBackup();
     return created;
   }
 
@@ -536,11 +754,15 @@ export class QuestionStore {
     };
 
     this.updateQuestion.run(rowFromQuestion(question));
+    this.writeUserBackup();
     return question;
   }
 
   async delete(id) {
     const result = this.deleteQuestion.run(id);
+    if (result.changes > 0) {
+      this.writeUserBackup();
+    }
     return result.changes > 0;
   }
 
