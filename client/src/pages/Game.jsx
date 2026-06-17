@@ -1256,6 +1256,14 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
   function updateModes(nextModes) {
     const modes = selectedModeIds(nextModes);
     if (modes.includes(SCIENCE_DAY_MODE)) {
+      const nonScienceModes = modes.filter((mode) => mode !== SCIENCE_DAY_MODE);
+      const scienceWasExclusive = selectedModes.length === 1 && selectedModes[0] === SCIENCE_DAY_MODE;
+      if (scienceWasExclusive && nonScienceModes.length > 0) {
+        const nextRounds = normalizeRoundCount(nonScienceModes.length, nonScienceModes.length);
+        onUpdate({ modes: nonScienceModes, rounds: nextRounds });
+        return;
+      }
+
       onUpdate({ modes: [SCIENCE_DAY_MODE], rounds: SCIENCE_DAY_TOTAL_QUESTIONS, categories: [] });
       return;
     }
