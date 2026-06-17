@@ -66,14 +66,31 @@ function facts(category, rows, tag = "") {
   return rows.map(([prompt, answer, difficulty = "medium"]) => row(category, prompt, answer, difficulty, tag ? [tag] : []));
 }
 
-function expandedFacts(category, rows, tag = "", label = category) {
-  return facts(category, rows, tag).flatMap((item) => [
+function promptBody(prompt) {
+  return String(prompt)
+    .replace(/\s*\(اكتب الرقم فقط\)\s*/g, "")
+    .replace(/[؟?]\s*$/g, "")
+    .replace(/^كم عدد\s+/u, "عدد ")
+    .replace(/^ما\s+/u, "")
+    .replace(/^من أي بلد\s+/u, "البلد الذي ")
+    .replace(/^من\s+/u, "اسم ")
+    .replace(/^كم\s+/u, "عدد ")
+    .replace(/^في أي\s+/u, "");
+}
+
+function meaningfulFactVariants(item) {
+  const body = promptBody(item.prompt);
+  return [
     item,
-    row(category, `سؤال ${label}: ${item.prompt}`, item.correctAnswer, item.difficulty, item.tags),
-    row(category, `اختبر نفسك في ${label}: ${item.prompt}`, item.correctAnswer, item.difficulty, item.tags),
-    row(category, `جاوب بسرعة: ${item.prompt}`, item.correctAnswer, item.difficulty, item.tags),
-    row(category, `ما الإجابة الصحيحة: ${item.prompt}`, item.correctAnswer, item.difficulty, item.tags)
-  ]);
+    row(item.category, `اذكر ${body}.`, item.correctAnswer, item.difficulty, item.tags),
+    row(item.category, `حدد ${body}.`, item.correctAnswer, item.difficulty, item.tags),
+    row(item.category, `اكتب ${body}.`, item.correctAnswer, item.difficulty, item.tags),
+    row(item.category, `ما ${body}؟`, item.correctAnswer, item.difficulty, item.tags)
+  ];
+}
+
+function expandedFacts(category, rows, tag = "", label = category) {
+  return facts(category, rows, tag).flatMap(meaningfulFactVariants);
 }
 
 function capitalRows(category, pairs) {
@@ -86,22 +103,113 @@ function capitalRows(category, pairs) {
 function eventRows(category, pairs) {
   return pairs.flatMap(([event, year]) => [
     row(category, `في أي سنة حدث: ${event}؟`, year, "medium", ["سنوات"]),
-    row(category, `أي حدث تاريخي مرتبط بسنة ${year}: ${event} أم ${event === "اكتشاف البنسلين" ? "فتح القسطنطينية" : "اكتشاف البنسلين"}؟`, event, "medium", ["أحداث"])
+    row(category, `ما السنة المرتبطة بحدث ${event}؟`, year, "medium", ["سنوات"])
   ]);
 }
 
-function titleRows(category, titles, answer, tag) {
-  return titles.flatMap((title) => [
-    row(category, `هل "${title}" في الأصل فيلم أم مسلسل؟`, answer, "easy", [tag]),
-    row(category, `صنف العمل "${title}" بكلمة واحدة: فيلم أم مسلسل؟`, answer, "easy", [tag])
-  ]);
+function screenRows(category) {
+  const movieCharacters = [
+    ["Titanic", "Jack Dawson"], ["Avatar", "Jake Sully"], ["The Godfather", "Vito Corleone"],
+    ["The Dark Knight", "Joker"], ["Inception", "Dom Cobb"], ["Interstellar", "Cooper"],
+    ["Gladiator", "Maximus"], ["Forrest Gump", "Forrest Gump"], ["Home Alone", "Kevin McCallister"],
+    ["The Matrix", "Neo"], ["Jurassic Park", "Alan Grant"], ["Toy Story", "Woody"],
+    ["Finding Nemo", "Nemo"], ["The Lion King", "Simba"], ["Frozen", "Elsa"],
+    ["Shrek", "Shrek"], ["Harry Potter", "Harry Potter"], ["The Lord of the Rings", "Frodo"],
+    ["Star Wars", "Darth Vader"], ["Rocky", "Rocky Balboa"], ["Coco", "Miguel"],
+    ["Black Panther", "T'Challa"], ["The Avengers", "Iron Man"], ["The Social Network", "Mark Zuckerberg"],
+    ["La La Land", "Sebastian"], ["Parasite", "Kim Ki-taek"], ["Up", "Carl Fredricksen"],
+    ["The Shawshank Redemption", "Andy Dufresne"], ["The Silence of the Lambs", "Hannibal Lecter"],
+    ["Braveheart", "William Wallace"], ["Cast Away", "Chuck Noland"], ["The Truman Show", "Truman Burbank"],
+    ["Mad Max: Fury Road", "Max Rockatansky"], ["Dune", "Paul Atreides"], ["Oppenheimer", "J. Robert Oppenheimer"],
+    ["Barbie", "Barbie"], ["Inside Out", "Joy"], ["Ratatouille", "Remy"],
+    ["Aladdin", "Aladdin"], ["Mulan", "Mulan"], ["Moana", "Moana"],
+    ["Cars", "Lightning McQueen"], ["Wall-E", "WALL-E"], ["The Prestige", "Robert Angier"],
+    ["Memento", "Leonard Shelby"], ["Goodfellas", "Henry Hill"], ["Scarface", "Tony Montana"],
+    ["The Green Mile", "John Coffey"], ["The Pianist", "Wladyslaw Szpilman"], ["Whiplash", "Andrew Neiman"]
+  ];
+  const seriesCharacters = [
+    ["Breaking Bad", "Walter White"], ["Game of Thrones", "Jon Snow"], ["Friends", "Rachel Green"],
+    ["The Office", "Michael Scott"], ["Stranger Things", "Eleven"], ["The Crown", "Queen Elizabeth II"],
+    ["Sherlock", "Sherlock Holmes"], ["Lost", "Jack Shephard"], ["Prison Break", "Michael Scofield"],
+    ["House", "Gregory House"], ["The Walking Dead", "Rick Grimes"], ["Better Call Saul", "Saul Goodman"],
+    ["Peaky Blinders", "Tommy Shelby"], ["Dark", "Jonas Kahnwald"], ["Narcos", "Pablo Escobar"],
+    ["The Mandalorian", "Din Djarin"], ["Wednesday", "Wednesday Addams"], ["The Last of Us", "Joel"],
+    ["The Simpsons", "Homer Simpson"], ["SpongeBob SquarePants", "SpongeBob"], ["How I Met Your Mother", "Ted Mosby"],
+    ["The Big Bang Theory", "Sheldon Cooper"], ["Money Heist", "The Professor"], ["Squid Game", "Seong Gi-hun"],
+    ["Vikings", "Ragnar Lothbrok"], ["The Witcher", "Geralt"], ["Westworld", "Dolores"],
+    ["True Detective", "Rust Cohle"], ["Fargo", "Lester Nygaard"], ["The Boys", "Homelander"]
+  ];
+  const movieDirectors = [
+    ["Titanic", "James Cameron"], ["Avatar", "James Cameron"], ["The Godfather", "Francis Ford Coppola"],
+    ["The Dark Knight", "Christopher Nolan"], ["Inception", "Christopher Nolan"], ["Interstellar", "Christopher Nolan"],
+    ["Gladiator", "Ridley Scott"], ["Forrest Gump", "Robert Zemeckis"], ["Jurassic Park", "Steven Spielberg"],
+    ["The Matrix", "The Wachowskis"], ["Rocky", "John G. Avildsen"], ["Parasite", "Bong Joon-ho"],
+    ["The Shawshank Redemption", "Frank Darabont"], ["The Truman Show", "Peter Weir"], ["Dune", "Denis Villeneuve"],
+    ["Oppenheimer", "Christopher Nolan"], ["Barbie", "Greta Gerwig"], ["Whiplash", "Damien Chazelle"],
+    ["The Social Network", "David Fincher"], ["Joker", "Todd Phillips"]
+  ];
+
+  return [
+    ...movieCharacters.flatMap(([title, character]) => [
+      row(category, `في أي فيلم تظهر شخصية ${character}؟`, title, "medium", ["شخصيات"]),
+      row(category, `ما اسم الشخصية البارزة في فيلم ${title}؟`, character, "medium", ["شخصيات"])
+    ]),
+    ...seriesCharacters.flatMap(([title, character]) => [
+      row(category, `في أي مسلسل تظهر شخصية ${character}؟`, title, "medium", ["شخصيات"]),
+      row(category, `ما اسم الشخصية البارزة في مسلسل ${title}؟`, character, "medium", ["شخصيات"])
+    ]),
+    ...movieDirectors.map(([title, director]) => row(category, `من أخرج فيلم ${title}؟`, director, "hard", ["مخرجون"]))
+  ];
 }
 
-function typeRows(category, titles, answer, tag) {
-  return titles.flatMap((title) => [
-    row(category, `ما نوع العمل "${title}"؟`, answer, "easy", [tag]),
-    row(category, `هل "${title}" ${answer} أم شيء آخر؟`, answer, "easy", [tag]),
-    row(category, `صنف "${title}" بكلمة واحدة.`, answer, "easy", [tag])
+function gameExtraRows(category) {
+  return facts(category, [
+    ["أي لعبة تشتهر ببناء عوالم من مكعبات؟", "Minecraft"], ["أي لعبة باتل رويال اشتهرت بالبناء السريع؟", "Fortnite"],
+    ["أي منصة ألعاب تسمح للمستخدمين بصناعة عوالمهم الخاصة؟", "Roblox"], ["أي لعبة باتل رويال يختصر اسمها غالبًا PUBG؟", "PUBG"],
+    ["أي لعبة تصويب تكتيكية من Riot تعتمد على الوكلاء والقدرات؟", "Valorant"], ["أي لعبة جماعية من Blizzard تعتمد على أبطال بقدرات مختلفة؟", "Overwatch"],
+    ["أي لعبة MOBA من Valve تشتهر باسم Dota؟", "Dota 2"], ["أي لعبة MOBA من Riot تشتهر ببطولات عالمية ضخمة؟", "League of Legends"],
+    ["في أي لعبة تظهر منطقة The Lands Between؟", "Elden Ring"], ["أي سلسلة ألعاب تشتهر بنظام Bonfire وصعوبتها العالية؟", "Dark Souls"],
+    ["أي لعبة تقمص أدوار يظهر فيها لقب Dragonborn؟", "Skyrim"], ["في أي لعبة تقع مدينة Night City؟", "Cyberpunk 2077"],
+    ["أي لعبة اجتماعية يبحث فيها اللاعبون عن الدخيل Impostor؟", "Among Us"], ["أي لعبة مسابقات مليئة بالحواجز الملونة؟", "Fall Guys"],
+    ["أي لعبة تمزج السيارات بكرة القدم؟", "Rocket League"], ["أي سلسلة سباقات واقعية مرتبطة بجهاز PlayStation؟", "Gran Turismo"],
+    ["أي سلسلة سباقات اشتهرت بالمطاردات والسباقات الليلية؟", "Need for Speed"], ["أي سلسلة سباقات من Xbox لها جزء Horizon؟", "Forza Horizon"],
+    ["أي لعبة من Nintendo تدور حول حياة جزيرة وقرية هادئة؟", "Animal Crossing"], ["أي سلسلة ألعاب تعتمد على جمع كائنات وتدريبها للقتال؟", "Pokemon"],
+    ["أي لعبة ألغاز من Valve تعتمد على فتح بوابات؟", "Portal"], ["أي لعبة ألغاز كلاسيكية تعتمد على قطع ساقطة؟", "Tetris"],
+    ["أي لعبة محاكاة حياة شهيرة من Electronic Arts؟", "The Sims"], ["أي لعبة مستقلة تشتهر بالمزرعة والقرية؟", "Stardew Valley"],
+    ["أي سلسلة عالم مفتوح تشتهر بمدينة Los Santos؟", "Grand Theft Auto"], ["أي سلسلة من Ubisoft تدور حول الأساسنز والفرسان؟", "Assassin's Creed"],
+    ["أي سلسلة رعب بقاء من Capcom اشتهرت بالزومبي؟", "Resident Evil"], ["أي سلسلة ألعاب كرة قدم كانت تعرف باسم FIFA؟", "EA Sports FC"],
+    ["أي سلسلة تصويب حربية تشتهر باسم COD؟", "Call of Duty"], ["أي سلسلة مغامرات من Nintendo تدور كثيرًا في Hyrule؟", "The Legend of Zelda"]
+  ], "ألعاب");
+}
+
+function animeExtraRows(category) {
+  const entries = [
+    ["Naruto", "ناروتو أوزوماكي", "Masashi Kishimoto", "قرية كونوها"],
+    ["One Piece", "مونكي دي لوفي", "Eiichiro Oda", "طاقم قبعة القش"],
+    ["Dragon Ball", "غوكو", "Akira Toriyama", "كرات التنين"],
+    ["Attack on Titan", "إيرين ييغر", "Hajime Isayama", "العمالقة"],
+    ["Death Note", "لايت ياغامي", "Tsugumi Ohba", "مذكرة الموت"],
+    ["Demon Slayer", "تانجيرو كامادو", "Koyoharu Gotouge", "قاتلو الشياطين"],
+    ["Jujutsu Kaisen", "يوجي إيتادوري", "Gege Akutami", "الطاقة الملعونة"],
+    ["Fullmetal Alchemist", "إدوارد إلريك", "Hiromu Arakawa", "الخيمياء"],
+    ["Hunter x Hunter", "غون فريكس", "Yoshihiro Togashi", "النين"],
+    ["Bleach", "إيتشيغو كوروساكي", "Tite Kubo", "الشينيغامي"],
+    ["My Hero Academia", "إيزوكو ميدوريا", "Kohei Horikoshi", "الأبطال الخارقون"],
+    ["Sailor Moon", "أوساغي تسوكينو", "Naoko Takeuchi", "محاربات القمر"],
+    ["Pokemon", "آش كيتشوم", "Satoshi Tajiri", "البوكيمون"],
+    ["Detective Conan", "كونان إيدوغاوا", "Gosho Aoyama", "التحقيق في القضايا"],
+    ["Tokyo Ghoul", "كين كانيكي", "Sui Ishida", "الغول"],
+    ["Cowboy Bebop", "سبايك شبيغل", "Hajime Yatate", "صيادو الجوائز"],
+    ["Chainsaw Man", "دينجي", "Tatsuki Fujimoto", "شيطان المنشار"],
+    ["Spy x Family", "أنيا فورجر", "Tatsuya Endo", "عائلة فورجر"],
+    ["Haikyuu", "شويو هيناتا", "Haruichi Furudate", "الكرة الطائرة"],
+    ["Blue Lock", "يويتشي إيساغي", "Muneyuki Kaneshiro", "تدريب المهاجمين"]
+  ];
+
+  return entries.flatMap(([title, hero, author, theme]) => [
+    row(category, `من بطل ${title}؟`, hero, "easy", ["شخصيات"]),
+    row(category, `من مؤلف مانجا ${title}؟`, author, "hard", ["مؤلفون"]),
+    row(category, `أي عمل أنمي أو مانجا يرتبط بموضوع ${theme}؟`, title, "medium", ["عوالم"])
   ]);
 }
 
@@ -281,7 +389,15 @@ const banks = {
     ["ما اسم الاتحاد الدولي لكرة القدم اختصارًا؟", "فيفا", "easy"], ["ما الرياضة التي يشتهر بها مايكل جوردن؟", "كرة السلة", "easy"],
     ["ما الرياضة التي يشتهر بها روجر فيدرر؟", "التنس", "easy"], ["ما الرياضة التي يشتهر بها محمد علي كلاي؟", "الملاكمة", "easy"],
     ["ما الرياضة التي يشتهر بها يوسين بولت؟", "ألعاب القوى", "easy"], ["ما المنتخب الذي يلقب بالسامبا في كرة القدم؟", "البرازيل", "easy"],
-    ["ما المنتخب الذي يلقب بالمانشافت؟", "ألمانيا", "medium"], ["ما المنتخب الذي يلقب بالتانغو؟", "الأرجنتين", "medium"]
+    ["ما المنتخب الذي يلقب بالمانشافت؟", "ألمانيا", "medium"], ["ما المنتخب الذي يلقب بالتانغو؟", "الأرجنتين", "medium"],
+    ["ما الرياضة التي تلعب بكرة بيضاوية في كأس العالم للرجبي؟", "الرجبي", "medium"],
+    ["ما الرياضة التي يستخدم فيها اللاعب قفازًا ومضربًا وقواعد؟", "البيسبول", "medium"],
+    ["ما الرياضة التي تقام فيها سباقات الفورمولا 1؟", "سباق السيارات", "easy"],
+    ["ما الرياضة التي يستخدم فيها اللاعبون سيوف الفلوريه أو الإيبيه؟", "المبارزة", "medium"],
+    ["ما الرياضة المرتبطة بكلمة دوجو وحزام أسود؟", "الكاراتيه", "medium"],
+    ["ما الرياضة التي تشتهر بحركات الحلق والمتوازي والعقلة؟", "الجمباز", "medium"],
+    ["ما اسم الكأس الأشهر في بطولة التنس في إنجلترا؟", "ويمبلدون", "medium"],
+    ["ما الرياضة التي تضم سباقات 100 متر و200 متر؟", "ألعاب القوى", "easy"]
   ], "رياضة", "رياضة"),
 
   "ثقافة عامة": () => expandedFacts("ثقافة عامة", [
@@ -294,27 +410,22 @@ const banks = {
     ["ما الدولة التي تشتهر بتمثال الحرية؟", "الولايات المتحدة"], ["ما الحيوان المعروف بسفينة الصحراء؟", "الجمل"],
     ["ما أكبر عضو في جسم الإنسان؟", "الجلد"], ["ما لون حجر الزمرد غالبًا؟", "أخضر"],
     ["ما المعدن السائل في درجة حرارة الغرفة؟", "الزئبق"], ["ما اسم بيت النحل؟", "خلية"],
-    ["ما اسم صغير الأسد؟", "شبل"], ["ما اسم صغير الحصان؟", "مهر"]
+    ["ما اسم صغير الأسد؟", "شبل"], ["ما اسم صغير الحصان؟", "مهر"],
+    ["ما الآلة الموسيقية التي تحتوي عادة على مفاتيح بيضاء وسوداء؟", "البيانو"],
+    ["ما اسم الفن الياباني المعروف بطي الورق؟", "الأوريغامي"],
+    ["ما القارة التي يقع فيها سور الصين العظيم؟", "آسيا"],
+    ["ما اسم أكبر ساعة مشهورة في لندن؟", "بيغ بن"],
+    ["ما المدينة الإيطالية المشهورة بالقنوات المائية؟", "البندقية"],
+    ["ما الحيوان الذي يعرف بملك الغابة؟", "الأسد"],
+    ["ما اسم صغير الكلب؟", "جرو"],
+    ["ما اسم صغير القطة؟", "هرير"],
+    ["ما العنصر الأساسي في قلم الرصاص؟", "الغرافيت"],
+    ["ما اسم الكتاب الذي يضم خرائط العالم؟", "الأطلس"],
+    ["ما لون الياقوت غالبًا؟", "أحمر"],
+    ["ما اسم أعلى جائزة سينمائية في هوليوود؟", "الأوسكار"]
   ], "معرفة", "ثقافة عامة"),
 
-  "أفلام ومسلسلات": () => [
-    ...titleRows("أفلام ومسلسلات", [
-      "Titanic", "Avatar", "The Godfather", "The Dark Knight", "Inception", "Interstellar", "Gladiator", "Forrest Gump",
-      "Home Alone", "The Matrix", "Jurassic Park", "Toy Story", "Finding Nemo", "The Lion King", "Frozen", "Shrek",
-      "Harry Potter and the Philosopher's Stone", "The Lord of the Rings", "Star Wars", "Jaws", "Rocky", "Coco",
-      "Black Panther", "The Avengers", "Iron Man", "Spider-Man", "The Social Network", "La La Land", "Parasite", "Up",
-      "The Shawshank Redemption", "The Silence of the Lambs", "Braveheart", "Cast Away", "The Truman Show", "Mad Max: Fury Road",
-      "Dune", "Oppenheimer", "Barbie", "Inside Out", "Ratatouille", "Aladdin", "Mulan", "Moana", "Cars", "Wall-E",
-      "The Prestige", "Memento", "Se7en", "The Departed", "Goodfellas", "Scarface", "The Green Mile", "The Pianist",
-      "Life of Pi", "Slumdog Millionaire", "The Revenant", "The Imitation Game", "Whiplash", "Joker"
-    ], "فيلم", "أفلام"),
-    ...titleRows("أفلام ومسلسلات", [
-      "Breaking Bad", "Game of Thrones", "Friends", "The Office", "Stranger Things", "The Crown", "Sherlock", "Lost",
-      "Prison Break", "House", "The Walking Dead", "Better Call Saul", "Peaky Blinders", "Dark", "Narcos", "The Mandalorian",
-      "Wednesday", "The Last of Us", "The Simpsons", "SpongeBob SquarePants", "How I Met Your Mother", "The Big Bang Theory",
-      "Money Heist", "Squid Game", "Vikings", "The Witcher", "Westworld", "Black Mirror", "True Detective", "Fargo"
-    ], "مسلسل", "مسلسلات")
-  ],
+  "أفلام ومسلسلات": () => screenRows("أفلام ومسلسلات"),
 
   "ألعاب فيديو": () => {
     const heroes = [
@@ -339,11 +450,7 @@ const banks = {
         row("ألعاب فيديو", `أي شركة ترتبط بـ ${brand}؟`, company, "medium", ["شركات"]),
         row("ألعاب فيديو", `${brand} ترتبط بأي شركة؟`, company, "medium", ["شركات"])
       ]),
-      ...typeRows("ألعاب فيديو", [
-        "Minecraft", "Fortnite", "Roblox", "PUBG", "Valorant", "Overwatch", "Dota 2", "League of Legends",
-        "Elden Ring", "Dark Souls", "Skyrim", "Cyberpunk 2077", "Among Us", "Fall Guys", "Rocket League", "Gran Turismo",
-        "Need for Speed", "Forza Horizon", "Animal Crossing", "Pokemon"
-      ], "لعبة فيديو", "تصنيف")
+      ...gameExtraRows("ألعاب فيديو")
     ];
   },
 
@@ -476,7 +583,17 @@ const banks = {
     ["من النبي الذي ابتلعه الحوت؟", "يونس"], ["من النبي الذي فلق الله له البحر؟", "موسى"], ["من النبي المعروف بخليل الله؟", "إبراهيم"],
     ["من النبي الذي بنى السفينة؟", "نوح"], ["ما اسم الغار الذي نزل فيه الوحي أول مرة؟", "غار حراء"],
     ["ما المدينة التي هاجر إليها النبي محمد صلى الله عليه وسلم؟", "المدينة المنورة"], ["ما اسم المؤذن الأول في الإسلام؟", "بلال بن رباح"],
-    ["كم عدد الصلوات المفروضة في اليوم؟", 5], ["ما اسم العيد بعد رمضان؟", "عيد الفطر"]
+    ["كم عدد الصلوات المفروضة في اليوم؟", 5], ["ما اسم العيد بعد رمضان؟", "عيد الفطر"],
+    ["ما اسم العيد المرتبط بالحج؟", "عيد الأضحى"],
+    ["ما الشهر الذي يأتي بعد رمضان؟", "شوال"],
+    ["ما الشهر الذي يأتي قبل رمضان؟", "شعبان"],
+    ["ما آخر شهر في التقويم الهجري؟", "ذو الحجة"],
+    ["ما السورة التي تسمى قلب القرآن في الثقافة الإسلامية الشائعة؟", "يس"],
+    ["ما السورة التي تسمى عروس القرآن في الثقافة الإسلامية الشائعة؟", "الرحمن"],
+    ["ما اسم والد النبي يوسف عليه السلام؟", "يعقوب"],
+    ["ما اسم النبي الذي عُرف بالصبر؟", "أيوب"],
+    ["ما اسم النبي الذي آتاه الله صوتًا حسنًا وكتاب الزبور؟", "داود"],
+    ["ما اسم النبي الذي عُرف بتأويل الأحلام؟", "يوسف"]
   ], "معرفة", "الإسلاميات"),
 
   "أدب": () => expandedFacts("أدب", [
@@ -489,7 +606,10 @@ const banks = {
     ["من مؤلف حي بن يقظان؟", "ابن طفيل"], ["من الشاعر صاحب معلقة قفا نبك؟", "امرؤ القيس"],
     ["من الشاعر العباسي المعروف بالحكمة؟", "المتنبي"], ["ما نوع النص الذي يكتب للحوار والتمثيل؟", "مسرحية"],
     ["ما اسم الفن الأدبي القصير ذو حدث واحد غالبًا؟", "قصة قصيرة"], ["ما اسم الشعر غير الملتزم بوزن تقليدي؟", "شعر حر"],
-    ["ما اللغة الأصلية لرواية دون كيشوت؟", "الإسبانية"], ["من مؤلف دون كيشوت؟", "ميغيل دي ثيربانتس"]
+    ["ما اللغة الأصلية لرواية دون كيشوت؟", "الإسبانية"], ["من مؤلف دون كيشوت؟", "ميغيل دي ثيربانتس"],
+    ["من مؤلف رواية العجوز والبحر؟", "إرنست همنغواي"],
+    ["من مؤلف رواية 1984؟", "جورج أورويل"],
+    ["من مؤلف رواية مزرعة الحيوان؟", "جورج أورويل"]
   ], "أدب", "الأدب"),
 
   "اقتصاد وأعمال": () => expandedFacts("اقتصاد وأعمال", [
@@ -502,7 +622,15 @@ const banks = {
     ["ما المصطلح الذي يعني توزيع المال على أصول مختلفة؟", "تنويع"], ["ما اسم الضريبة على القيمة المضافة اختصارًا؟", "VAT"],
     ["ما المصطلح الذي يعني شراء وبيع العملات؟", "تداول العملات"], ["ما اسم المال الذي يدفعه المقترض مقابل القرض؟", "فائدة"],
     ["ما اسم الخطة التي توضح الإيرادات والمصروفات؟", "ميزانية"], ["ما اسم العلامة التي تميز منتجًا أو شركة؟", "علامة تجارية"],
-    ["ما اسم الشركة الناشئة بالإنجليزية؟", "Startup"], ["ما المصطلح الذي يعني امتلاك جزء من شركة؟", "سهم"]
+    ["ما اسم الشركة الناشئة بالإنجليزية؟", "Startup"], ["ما المصطلح الذي يعني امتلاك جزء من شركة؟", "سهم"],
+    ["ما المصطلح الذي يعني بيع المنتجات عبر الإنترنت؟", "التجارة الإلكترونية"],
+    ["ما المصطلح الذي يعني دراسة السوق والعملاء قبل إطلاق منتج؟", "أبحاث السوق"],
+    ["ما اسم الخطة التي تشرح فكرة المشروع وطريقة ربحه؟", "خطة عمل"],
+    ["ما المصطلح الذي يعني الأموال التي تدخل إلى الشركة؟", "الإيرادات"],
+    ["ما المصطلح الذي يعني الأموال التي تخرج لدفع التكاليف؟", "المصروفات"],
+    ["ما اسم الفرق بين سعر البيع وتكلفة المنتج؟", "هامش الربح"],
+    ["ما المصطلح الذي يعني قدرة الشركة على دفع التزاماتها القصيرة؟", "السيولة"],
+    ["ما اسم الشخص أو الجهة التي تشتري المنتج أو الخدمة؟", "العميل"]
   ], "اقتصاد", "الاقتصاد والأعمال"),
 
   "طب وصحة": () => expandedFacts("طب وصحة", [
@@ -515,7 +643,12 @@ const banks = {
     ["ما اسم السائل الذي ينقل الغذاء والأكسجين في الجسم؟", "الدم"], ["ما الجهاز المسؤول عن هضم الطعام؟", "الجهاز الهضمي"],
     ["ما الجهاز المسؤول عن الحركة مع العضلات؟", "الجهاز العظمي"], ["ما اسم العظم الذي يحمي الدماغ؟", "الجمجمة"],
     ["ما اسم العضلة الأساسية في التنفس أسفل الرئتين؟", "الحجاب الحاجز"], ["ما اسم الوعاء الذي ينقل الدم من القلب؟", "الشريان"],
-    ["ما اسم الوعاء الذي يعيد الدم إلى القلب؟", "الوريد"], ["ما اسم قياس نبضات القلب في الدقيقة؟", "معدل النبض"]
+    ["ما اسم الوعاء الذي يعيد الدم إلى القلب؟", "الوريد"], ["ما اسم قياس نبضات القلب في الدقيقة؟", "معدل النبض"],
+    ["ما العضو المسؤول عن إنتاج العصارة الصفراوية؟", "الكبد"], ["ما العضو الذي يخزن العصارة الصفراوية؟", "المرارة"],
+    ["ما العضو الذي يفرز الإنسولين؟", "البنكرياس"], ["ما الهرمون المرتبط بتنظيم سكر الدم؟", "الإنسولين"],
+    ["ما الفيتامين المرتبط بتجلط الدم؟", "فيتامين ك"], ["ما الفيتامين المعروف بدوره في صحة النظر؟", "فيتامين أ"],
+    ["ما المعدن المهم لصحة الغدة الدرقية؟", "اليود"], ["ما اسم العظام التي تحمي القلب والرئتين؟", "القفص الصدري"],
+    ["ما اسم المفصل الذي يربط الذراع بالكتف؟", "مفصل الكتف"], ["ما اسم السائل الذي يحمي الدماغ والحبل الشوكي؟", "السائل الدماغي الشوكي"]
   ], "صحة", "الطب والصحة"),
 
   "سيارات": () => {
@@ -537,7 +670,15 @@ const banks = {
         ["ما الجزء المسؤول عن إشعال خليط الوقود في محركات البنزين؟", "شمعة الاحتراق"], ["ما نوع الوقود الشائع لمحركات الديزل؟", "ديزل"],
         ["ما الجزء الذي ينقل الحركة إلى العجلات؟", "ناقل الحركة"], ["ما اسم نظام منع انغلاق المكابح؟", "ABS"],
         ["ما اسم نظام الوسائد الهوائية بالإنجليزية؟", "Airbag"], ["ما الجزء المطاطي الملامس للطريق؟", "الإطار"],
-        ["ما اسم عجلة القيادة في السيارة؟", "المقود"], ["ما الجزء الذي يخزن الوقود؟", "خزان الوقود"]
+        ["ما اسم عجلة القيادة في السيارة؟", "المقود"], ["ما الجزء الذي يخزن الوقود؟", "خزان الوقود"],
+        ["ما الجزء الذي يخفف اهتزاز السيارة على الطريق؟", "المساعدات"],
+        ["ما الجزء المسؤول عن إيقاف السيارة أو إبطائها؟", "المكابح"],
+        ["ما السائل المستخدم لتبريد محرك السيارة؟", "سائل التبريد"],
+        ["ما السائل المستخدم لتزييت أجزاء المحرك؟", "زيت المحرك"],
+        ["ما الجزء الذي يطرد غازات الاحتراق خارج السيارة؟", "العادم"],
+        ["ما اسم الزجاج الأمامي للسيارة؟", "الزجاج الأمامي"],
+        ["ما الجزء الذي ينظف الزجاج الأمامي أثناء المطر؟", "المساحات"],
+        ["ما المصباح المستخدم لتنبيه السيارات خلفك عند التوقف؟", "ضوء الفرامل"]
       ], "أجزاء", "السيارات")
     ];
   },
@@ -552,7 +693,15 @@ const banks = {
     ["أي جبن يستخدم غالبًا في البيتزا؟", "الموزاريلا"], ["ما المشروب الإيطالي المصنوع من القهوة والحليب المبخر؟", "كابتشينو"],
     ["ما الحلوى الإيطالية التي تعني ارفعني؟", "تيراميسو"], ["ما نوع الأرز المستخدم غالبًا في السوشي؟", "أرز قصير الحبة"],
     ["ما الصلصة اليابانية المالحة المصنوعة من الصويا؟", "صلصة الصويا"], ["ما الطبق الهندي الشهير بالأرز والبهارات واللحم أو الدجاج؟", "برياني"],
-    ["ما الطبق الإسباني الشهير بالأرز والزعفران؟", "باييلا"], ["ما الطبق المغربي الشهير بالسميد؟", "كسكس"]
+    ["ما الطبق الإسباني الشهير بالأرز والزعفران؟", "باييلا"], ["ما الطبق المغربي الشهير بالسميد؟", "كسكس"],
+    ["ما الطبق الإيطالي المصنوع غالبًا من الأرز والمرق؟", "ريزوتو"],
+    ["ما الطبق الياباني الذي يتكون من حساء ونودلز غالبًا؟", "رامن"],
+    ["ما الطبق المكسيكي الملفوف بخبز التورتيلا؟", "بوريتو"],
+    ["ما الطبق الشامي المصنوع من ورق العنب المحشي؟", "دولمة"],
+    ["ما الحلوى الفرنسية الرقيقة المصنوعة من طبقات عجين؟", "كرواسون"],
+    ["ما الحلوى الأمريكية الشهيرة المصنوعة من التفاح والعجين؟", "فطيرة التفاح"],
+    ["ما المشروب العربي التقليدي المحضر من حبوب البن؟", "القهوة"],
+    ["ما البهار الأصفر الغالي المستخدم في الباييلا؟", "الزعفران"]
   ], "طعام", "الأكلات العالمية"),
 
   "أنمي ومانجا": () => {
@@ -569,11 +718,7 @@ const banks = {
         row("أنمي ومانجا", `من الشخصية الرئيسية في ${title}؟`, hero, "easy", ["شخصيات"]),
         row("أنمي ومانجا", `${hero} يرتبط بأي أنمي أو مانجا؟`, title, "easy", ["شخصيات"])
       ]),
-      ...typeRows("أنمي ومانجا", [
-        "Naruto", "One Piece", "Dragon Ball", "Attack on Titan", "Death Note", "Demon Slayer", "Jujutsu Kaisen",
-        "Fullmetal Alchemist", "Hunter x Hunter", "Bleach", "My Hero Academia", "Sailor Moon", "Pokemon",
-        "Detective Conan", "Tokyo Ghoul", "Cowboy Bebop", "Chainsaw Man", "Spy x Family", "Haikyuu", "Blue Lock"
-      ], "أنمي", "تصنيف")
+      ...animeExtraRows("أنمي ومانجا")
     ];
   }
 };
@@ -581,12 +726,43 @@ const banks = {
 const existingRows = JSON.parse(readFileSync(QUESTION_FILE, "utf8"));
 const baseRows = existingRows.filter((question) => question.source !== SOURCE && !String(question.id || "").startsWith("q_bulk_"));
 const additions = [];
+const blockedPromptStarts = [
+  "سؤال ",
+  "اختبر نفسك",
+  "جاوب بسرعة",
+  "ما الإجابة الصحيحة",
+  "في التكنولوجيا:",
+  "اختبار تقني:",
+  "سؤال هندسي:",
+  "في الهندسة:",
+  "في الأدب:",
+  "اختبر معلوماتك",
+  "في الاقتصاد:",
+  "سؤال أعمال:",
+  "سؤال صحة:",
+  "في جسم الإنسان:",
+  "في الطعام:",
+  "سؤال أكلات:",
+  "في الرياضة:"
+];
+const blockedPromptParts = [
+  "فيلم أم مسلسل",
+  "أم شيء آخر",
+  "بكلمة واحدة"
+];
+
+function isQualityPrompt(prompt) {
+  const text = String(prompt || "").trim();
+  return !blockedPromptStarts.some((start) => text.startsWith(start))
+    && !blockedPromptParts.some((part) => text.includes(part));
+}
 
 for (const category of targetCategories) {
   const baseCount = baseRows.filter((question) => (question.mode || "kalak") === "kalak" && question.category === category).length;
   const needed = Math.max(0, TARGET_PER_CATEGORY - baseCount);
   const candidates = uniqueRows(banks[category]()).filter(
-    (candidate) => !baseRows.some((question) => question.category === category && question.prompt === candidate.prompt)
+    (candidate) => isQualityPrompt(candidate.prompt)
+      && !baseRows.some((question) => question.category === category && question.prompt === candidate.prompt)
   );
 
   if (candidates.length < needed) {
@@ -604,6 +780,10 @@ for (const category of targetCategories) {
 }
 
 const output = [...baseRows, ...additions];
+const blockedQuestion = output.find((question) => !isQualityPrompt(question.prompt));
+if (blockedQuestion) {
+  throw new Error(`Blocked low-quality prompt: ${blockedQuestion.id || "no-id"} ${blockedQuestion.prompt}`);
+}
 writeFileSync(QUESTION_FILE, `${JSON.stringify(output, null, 2)}\n`, "utf8");
 
 const counts = output.reduce((acc, question) => {
