@@ -912,6 +912,14 @@ export default function Game() {
         </div>
       </section>
 
+      {room.phase === "lobby" || scienceDay ? (
+        <button className="mobile-room-share-card" type="button" onClick={copyCode}>
+          <Share2 size={16} />
+          <span>كود الغرفة</span>
+          <strong dir="ltr">{room.code}</strong>
+        </button>
+      ) : null}
+
       {!connected ? (
         <div className="connection-banner">
           <Loader2 className="spin" size={18} />

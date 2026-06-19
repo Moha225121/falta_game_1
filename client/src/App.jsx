@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Menu, Share2 } from "lucide-react";
+import { Menu } from "lucide-react";
 import Home from "./pages/Home.jsx";
 import Game from "./pages/Game.jsx";
 import Admin from "./pages/Admin.jsx";
@@ -11,7 +11,6 @@ export default function App() {
   const isRoomRoute = /^\/play\/[^/]+/.test(location.pathname);
   const [activeRoom, setActiveRoom] = useState({ active: false, code: "", phase: "", mode: "" });
   const showRoomMenu = isRoomRoute && activeRoom.active;
-  const showRoomShare = showRoomMenu && (activeRoom.phase === "lobby" || activeRoom.mode === "science_day");
 
   useEffect(() => {
     function updateRoomMenu(event) {
@@ -38,10 +37,6 @@ export default function App() {
     window.dispatchEvent(new CustomEvent("kalak:open-room-menu"));
   }
 
-  function shareRoomLink() {
-    window.dispatchEvent(new CustomEvent("kalak:share-room"));
-  }
-
   if (isAdminRoute) {
     return (
       <Routes>
@@ -59,12 +54,6 @@ export default function App() {
         </div>
         {showRoomMenu ? (
           <div className="topbar-room-controls">
-            {showRoomShare ? (
-              <button className="topbar-room-share" type="button" onClick={shareRoomLink} aria-label={`مشاركة رابط الغرفة ${activeRoom.code}`}>
-                <Share2 size={18} />
-                <span>كود {activeRoom.code}</span>
-              </button>
-            ) : null}
             <button className="topbar-room-menu" type="button" onClick={openRoomMenu} aria-label="فتح قائمة الغرفة">
               <Menu size={18} />
               <span>القائمة</span>
