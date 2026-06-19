@@ -43,6 +43,10 @@ const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_ROUNDS * SCIENCE_DAY_QUEST
 const SCIENCE_DAY_CORRECT_POINTS = 100;
 const SCIENCE_DAY_SPEED_BONUS = 50;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
+const IMPOSTER_CLUE_SECONDS = 30;
+const IMPOSTER_CLUE_PASSES = 2;
+const IMPOSTER_MAX_CLUE_WORDS = 2;
+const IMPOSTER_EMPTY_CLUE = "بدون وصف";
 const AVATAR_DEFAULT = {
   persona: "a1",
   skin: "#c9865a",
@@ -282,6 +286,14 @@ function cleanMessage(message) {
 
 function cleanAnswerText(text) {
   return String(text || "").trim().replace(/\s+/g, " ").slice(0, 160);
+}
+
+function imposterClueWords(text) {
+  return String(text || "").trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
+}
+
+function cleanImposterClueText(text, maxWords = IMPOSTER_MAX_CLUE_WORDS) {
+  return imposterClueWords(cleanAnswerText(text)).slice(0, maxWords).join(" ");
 }
 
 function cleanAvatarValue(value, choices, fallback) {
@@ -1091,11 +1103,11 @@ export class KalakGameEngine {
 
     room.answerDrafts = room.answerDrafts || new Map();
 
-    if (room.submissions.has(playerId)) {
+    if (this.currentMode(room) !== "imposter" && room.submissions.has(playerId)) {
       return;
     }
 
-    if (!this.eligibleAnswerers(room).some((player) => player.id === playerId && !player.isBot)) {
+    if (!this.canSubmitAnswer(room, playerId) || room.players.get(playerId)?.isBot) {
       return;
     }
 
@@ -1118,6 +1130,10 @@ export class KalakGameEngine {
 
     if (room.phase !== "answering") {
       throw new Error("انتهى الوقت.");
+    }
+
+    if (this.currentMode(room) === "imposter") {
+      return this.submitImposterClue(room, playerId, payload.text);
     }
 
     if (!this.eligibleAnswerers(room).some((player) => player.id === playerId)) {
@@ -1157,6 +1173,27 @@ export class KalakGameEngine {
       setTimeout(() => this.finishAnswering(room.code), 550);
     }
 
+    return { room: this.publicRoom(room, playerId) };
+  }
+
+  submitImposterClue(room, playerId, value) {
+    const turn = this.currentImposterTurn(room);
+    if (!turn || turn.playerId !== playerId) {
+      throw new Error("ليس دورك الآن.");
+    }
+
+    const text = cleanAnswerText(value);
+    const words = imposterClueWords(text);
+    if (words.length < 1) {
+      throw new Error("اكتب وصفًا أولًا.");
+    }
+
+    if (words.length > turn.maxClueWords) {
+      throw new Error("الوصف لازم يكون كلمة أو كلمتين فقط.");
+    }
+
+    this.incrementCounter("answerSubmissions");
+    this.completeImposterTurn(room, cleanImposterClueText(text, turn.maxClueWords));
     return { room: this.publicRoom(room, playerId) };
   }
 
@@ -1405,20 +1442,28 @@ export class KalakGameEngine {
   }
 
   startImposterRound(room, question = null) {
-    const activePlayers = this.activePlayers(room);
+    const activePlayers = this.activePlayers(room).sort((a, b) => a.joinedAt - b.joinedAt);
     const imposter = activePlayers[Math.floor(Math.random() * activePlayers.length)];
     const content = contentPayload(question);
     const word = content.secretWord || question?.correctAnswer || IMPOSTER_WORDS[Math.floor(Math.random() * IMPOSTER_WORDS.length)];
+    const turnOrder = activePlayers.map((player) => player.id);
 
     room.phase = "answering";
     room.modeData = {
       imposterId: imposter.id,
-      secretWord: word
+      secretWord: word,
+      turnOrder,
+      turnIndex: 0,
+      passesPerPlayer: IMPOSTER_CLUE_PASSES,
+      clueSeconds: IMPOSTER_CLUE_SECONDS,
+      maxClueWords: IMPOSTER_MAX_CLUE_WORDS,
+      totalTurns: turnOrder.length * IMPOSTER_CLUE_PASSES,
+      clues: {}
     };
     room.question = {
       id: `imposter_${room.round}`,
       category: "الدخيل",
-      prompt: "اكتب وصفًا من كلمة واحدة للكلمة السرية.",
+      prompt: "صف الكلمة في كلمة أو كلمتين. كل لاعب عنده 30 ثانية، والدور يلف مرتين.",
       difficulty: "medium"
     };
     if (question && room.question.id.startsWith("imposter_")) {
@@ -1430,10 +1475,119 @@ export class KalakGameEngine {
         difficulty: contentDifficulty(question)
       };
     }
-    room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
-    room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
+    this.startImposterTurn(room);
+  }
+
+  startImposterTurn(room) {
+    this.clearTimer(room);
+
+    if (!this.skipInactiveImposterSpeakers(room)) {
+      this.finishAnswering(room.code);
+      return;
+    }
+
+    const turn = this.currentImposterTurn(room);
+    if (!turn) {
+      this.finishAnswering(room.code);
+      return;
+    }
+
+    room.phaseEndsAt = Date.now() + turn.clueSeconds * 1000;
+    room.timer = setTimeout(() => this.advanceImposterTurn(room.code), turn.clueSeconds * 1000);
     this.emitRoom(room);
-    this.scheduleBotAnswers(room);
+    this.scheduleCurrentImposterBot(room);
+  }
+
+  skipInactiveImposterSpeakers(room) {
+    const data = room.modeData || {};
+    const turnOrder = Array.isArray(data.turnOrder) ? data.turnOrder : [];
+    const totalTurns = Number(data.totalTurns) || turnOrder.length * (Number(data.passesPerPlayer) || IMPOSTER_CLUE_PASSES);
+    const activeIds = new Set(this.activePlayers(room).map((player) => player.id));
+
+    while (turnOrder.length && Number(data.turnIndex || 0) < totalTurns) {
+      const playerId = turnOrder[(Number(data.turnIndex) || 0) % turnOrder.length];
+      if (activeIds.has(playerId)) {
+        return true;
+      }
+      data.turnIndex = (Number(data.turnIndex) || 0) + 1;
+    }
+
+    return false;
+  }
+
+  recordImposterClue(room, playerId, text) {
+    const turn = this.currentImposterTurn(room);
+    const data = room.modeData || {};
+    const turnOrder = Array.isArray(data.turnOrder) ? data.turnOrder : [];
+    const passIndex = turnOrder.length ? Math.floor((Number(data.turnIndex) || 0) / turnOrder.length) : 0;
+    const clue = cleanImposterClueText(text, turn?.maxClueWords || IMPOSTER_MAX_CLUE_WORDS) || IMPOSTER_EMPTY_CLUE;
+    const clues = data.clues && typeof data.clues === "object" ? data.clues : {};
+    const playerClues = Array.isArray(clues[playerId]) ? [...clues[playerId]] : [];
+
+    playerClues[passIndex] = clue;
+    clues[playerId] = playerClues.slice(0, Number(data.passesPerPlayer) || IMPOSTER_CLUE_PASSES);
+    data.clues = clues;
+    room.modeData = data;
+    room.submissions.set(playerId, {
+      playerId,
+      text: this.combinedImposterClue(room, playerId),
+      clues: this.imposterCluesFor(room, playerId),
+      submittedAt: Date.now()
+    });
+    room.answerDrafts.delete(playerId);
+  }
+
+  completeImposterTurn(room, text = "") {
+    const turn = this.currentImposterTurn(room);
+    if (!turn) {
+      this.finishAnswering(room.code);
+      return;
+    }
+
+    this.recordImposterClue(room, turn.playerId, text);
+    room.modeData.turnIndex = turn.turnIndex + 1;
+
+    if (room.modeData.turnIndex >= turn.totalTurns) {
+      this.finishAnswering(room.code);
+      return;
+    }
+
+    this.startImposterTurn(room);
+  }
+
+  advanceImposterTurn(code) {
+    const room = this.rooms.get(code);
+    if (!room || room.phase !== "answering" || this.currentMode(room) !== "imposter") {
+      return;
+    }
+
+    const turn = this.currentImposterTurn(room);
+    if (!turn) {
+      this.finishAnswering(code);
+      return;
+    }
+
+    const draft = room.answerDrafts.get(turn.playerId)?.text || "";
+    this.completeImposterTurn(room, draft);
+  }
+
+  scheduleCurrentImposterBot(room) {
+    const turn = this.currentImposterTurn(room);
+    const bot = turn?.player;
+    if (!bot?.isBot) {
+      return;
+    }
+
+    this.queueBotTask(room, () => {
+      const liveRoom = this.rooms.get(room.code);
+      const liveTurn = liveRoom ? this.currentImposterTurn(liveRoom) : null;
+      if (!liveRoom || liveRoom.phase !== "answering" || liveTurn?.playerId !== bot.id || this.currentMode(liveRoom) !== "imposter") {
+        return;
+      }
+
+      this.incrementCounter("botAnswerSubmissions");
+      this.completeImposterTurn(liveRoom, this.botAnswerText(liveRoom, bot));
+    }, 1100 + Math.floor(Math.random() * 1200));
   }
 
   startFakeFactRound(room, question = null) {
@@ -1995,12 +2149,13 @@ export class KalakGameEngine {
     }
 
     const mode = this.currentMode(room);
-    this.promoteAnswerDrafts(room);
 
     if (mode === "imposter") {
       this.finishImposterAnswering(room);
       return;
     }
+
+    this.promoteAnswerDrafts(room);
 
     if (mode === "last_survivor") {
       this.finishLastSurvivorAnswering(room);
@@ -2075,7 +2230,7 @@ export class KalakGameEngine {
     this.clearTimer(room);
 
     room.options = this.activePlayers(room).map((player) => {
-      const clue = room.submissions.get(player.id)?.text || "لم يكتب وصفًا";
+      const clue = this.combinedImposterClue(room, player.id);
       return {
         id: `suspect_${player.id}`,
         text: player.name,
@@ -3248,6 +3403,14 @@ export class KalakGameEngine {
       return;
     }
 
+    if (room.phase === "answering" && this.currentMode(room) === "imposter") {
+      const turn = this.currentImposterTurn(room);
+      if (!turn || !this.isActiveImposterSpeaker(room, turn.playerId)) {
+        setTimeout(() => this.advanceImposterTurn(room.code), 150);
+      }
+      return;
+    }
+
     if (room.phase === "answering" && room.submissions.size >= this.eligibleAnswerers(room).length) {
       setTimeout(() => this.finishAnswering(room.code), 550);
     }
@@ -3354,6 +3517,62 @@ export class KalakGameEngine {
     return this.activePlayers(room);
   }
 
+  currentImposterTurn(room) {
+    if (this.currentMode(room) !== "imposter" || room.phase !== "answering") {
+      return null;
+    }
+
+    const data = room.modeData || {};
+    const turnOrder = Array.isArray(data.turnOrder) ? data.turnOrder : [];
+    if (!turnOrder.length) {
+      return null;
+    }
+
+    const passesPerPlayer = Number(data.passesPerPlayer) || IMPOSTER_CLUE_PASSES;
+    const totalTurns = Number(data.totalTurns) || turnOrder.length * passesPerPlayer;
+    const turnIndex = Math.max(0, Math.min(Number(data.turnIndex) || 0, Math.max(0, totalTurns - 1)));
+    const playerId = turnOrder[turnIndex % turnOrder.length];
+    const player = room.players.get(playerId);
+
+    return {
+      playerId,
+      player,
+      turnIndex,
+      turnNumber: Math.min(totalTurns, turnIndex + 1),
+      totalTurns,
+      pass: Math.floor(turnIndex / turnOrder.length) + 1,
+      passesPerPlayer,
+      clueSeconds: Number(data.clueSeconds) || IMPOSTER_CLUE_SECONDS,
+      maxClueWords: Number(data.maxClueWords) || IMPOSTER_MAX_CLUE_WORDS
+    };
+  }
+
+  isActiveImposterSpeaker(room, playerId) {
+    return this.activePlayers(room).some((player) => player.id === playerId);
+  }
+
+  canSubmitAnswer(room, playerId) {
+    if (this.currentMode(room) === "imposter" && room.phase === "answering") {
+      return this.currentImposterTurn(room)?.playerId === playerId;
+    }
+
+    return this.eligibleAnswerers(room).some((player) => player.id === playerId);
+  }
+
+  imposterCluesFor(room, playerId) {
+    const clues = room.modeData?.clues?.[playerId];
+    return Array.isArray(clues) ? clues.filter(Boolean) : [];
+  }
+
+  imposterClueCount(room, playerId) {
+    return this.imposterCluesFor(room, playerId).length;
+  }
+
+  combinedImposterClue(room, playerId) {
+    const clues = this.imposterCluesFor(room, playerId);
+    return clues.length ? clues.join("، ") : IMPOSTER_EMPTY_CLUE;
+  }
+
   kickVotersFor(room, targetId) {
     return [...room.players.values()].filter((player) => player.id !== targetId && !player.isBot && player.connected !== false);
   }
@@ -3442,7 +3661,8 @@ export class KalakGameEngine {
     const votesByPlayer = new Set(room.votes.keys());
     const submissionsByPlayer = new Set(room.submissions.keys());
     const eligibleVoteIds = new Set(this.eligibleVoters(room).map((player) => player.id));
-    const eligibleAnswerIds = new Set(this.eligibleAnswerers(room).map((player) => player.id));
+    const imposterAnswering = this.currentMode(room) === "imposter" && room.phase === "answering";
+    const passesPerPlayer = Number(room.modeData?.passesPerPlayer) || IMPOSTER_CLUE_PASSES;
 
     return {
       code: room.code,
@@ -3470,19 +3690,69 @@ export class KalakGameEngine {
           connected: player.connected !== false,
           eliminated: room.eliminatedPlayerIds.has(player.id),
           isHost: room.hostId === player.id,
-          submitted: submissionsByPlayer.has(player.id),
-          canSubmit: eligibleAnswerIds.has(player.id),
+          submitted: imposterAnswering
+            ? this.imposterClueCount(room, player.id) >= passesPerPlayer
+            : submissionsByPlayer.has(player.id),
+          canSubmit: this.canSubmitAnswer(room, player.id),
+          imposterClueCount: imposterAnswering ? this.imposterClueCount(room, player.id) : undefined,
           voted: votesByPlayer.has(player.id),
           canVote: eligibleVoteIds.has(player.id),
           joinedAt: player.joinedAt
         }))
         .map(({ joinedAt, ...player }) => player),
       question: this.publicQuestion(room, currentPlayerId),
+      imposterTurn: this.publicImposterTurn(room, currentPlayerId),
       phaseEndsAt: room.phaseEndsAt,
       options: this.publicOptions(room, currentPlayerId),
       kickVotes: this.publicKickVotes(room, currentPlayerId),
       results: room.phase === "results" || room.phase === "finished" ? room.results : null,
       messages: room.messages
+    };
+  }
+
+  publicImposterTurn(room, currentPlayerId) {
+    const turn = this.currentImposterTurn(room);
+    if (!turn) {
+      return null;
+    }
+
+    const data = room.modeData || {};
+    const turnOrder = Array.isArray(data.turnOrder) ? data.turnOrder : [];
+    const players = turnOrder
+      .map((playerId, index) => {
+        const player = room.players.get(playerId);
+        if (!player) {
+          return null;
+        }
+
+        const clueCount = this.imposterClueCount(room, player.id);
+        return {
+          id: player.id,
+          name: player.name,
+          avatar: player.avatar,
+          position: index + 1,
+          clueCount,
+          isCurrent: player.id === turn.playerId,
+          done: clueCount >= turn.passesPerPlayer,
+          connected: player.connected !== false,
+          eliminated: room.eliminatedPlayerIds.has(player.id)
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      playerId: turn.playerId,
+      playerName: turn.player?.name || "لاعب غير معروف",
+      avatar: turn.player?.avatar,
+      pass: turn.pass,
+      passesPerPlayer: turn.passesPerPlayer,
+      turnNumber: turn.turnNumber,
+      totalTurns: turn.totalTurns,
+      clueSeconds: turn.clueSeconds,
+      maxClueWords: turn.maxClueWords,
+      isMyTurn: turn.playerId === currentPlayerId,
+      myClueCount: currentPlayerId ? this.imposterClueCount(room, currentPlayerId) : 0,
+      players
     };
   }
 
@@ -3502,6 +3772,11 @@ export class KalakGameEngine {
     if (this.currentMode(room) === "imposter" && ["answering", "voting"].includes(room.phase)) {
       question.isImposter = currentPlayerId === room.modeData?.imposterId;
       question.secretWord = question.isImposter ? null : room.modeData?.secretWord;
+      question.imposterRules = {
+        clueSeconds: Number(room.modeData?.clueSeconds) || IMPOSTER_CLUE_SECONDS,
+        passesPerPlayer: Number(room.modeData?.passesPerPlayer) || IMPOSTER_CLUE_PASSES,
+        maxClueWords: Number(room.modeData?.maxClueWords) || IMPOSTER_MAX_CLUE_WORDS
+      };
     }
 
     if (this.currentMode(room) === "judge_pick" && ["answering", "voting"].includes(room.phase)) {

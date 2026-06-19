@@ -86,6 +86,18 @@ function scienceDayMeta(room) {
   };
 }
 
+function wordsInText(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
+}
+
+function limitWords(value, maxWords) {
+  const words = wordsInText(value);
+  if (words.length <= maxWords) {
+    return value;
+  }
+  return words.slice(0, maxWords).join(" ");
+}
+
 function getActiveMode(room) {
   return room?.activeMode || room?.settings?.mode || selectedModeIds(room?.settings?.modes)[0];
 }
@@ -272,6 +284,7 @@ export default function Game() {
   const { socket, connected } = useKalakSocket();
   const lastAutoKey = useRef("");
   const lastRoundKey = useRef("");
+  const lastImposterTurnKey = useRef("");
   const roundSplashTimer = useRef(null);
   const playZoneRef = useRef(null);
   const [sessionId, setSessionId] = useState(() => makeSessionId());
@@ -414,6 +427,14 @@ export default function Game() {
       if (nextRoom.phase !== "answering") {
         setAnswer("");
         setNotice("");
+        lastImposterTurnKey.current = "";
+      } else if (nextRoom.imposterTurn) {
+        const imposterTurnKey = `${nextRoom.round}:${nextRoom.imposterTurn.turnNumber}:${nextRoom.imposterTurn.playerId}`;
+        if (imposterTurnKey !== lastImposterTurnKey.current) {
+          lastImposterTurnKey.current = imposterTurnKey;
+          setAnswer("");
+          setNotice("");
+        }
       }
       if (nextRoom.phase !== "voting") {
         setSelectedOption("");
@@ -1420,7 +1441,22 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
     ? "اكتب إجابة غلط مقنعة عشان تخدع اللاعبين"
     : activeMode === "judge_pick"
     ? "اكتب إجابة تقنع الحكم"
-    : isImposterMode ? "اكتب وصفًا من كلمة واحدة" : "اكتب إجابة صحيحة أو خدعة مقنعة";
+    : isImposterMode ? "اكتب وصفًا من كلمة أو كلمتين" : "اكتب إجابة صحيحة أو خدعة مقنعة";
+
+  if (isImposterMode && room.imposterTurn) {
+    return (
+      <ImposterAnswering
+        room={room}
+        me={me}
+        answer={answer}
+        setAnswer={setAnswer}
+        onSubmit={onSubmit}
+        busy={busy}
+        connected={connected}
+        pendingAction={pendingAction}
+      />
+    );
+  }
 
   return (
     <section className="panel stage-panel question-stage">
@@ -1478,6 +1514,90 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
 
       <ProgressStrip players={room.players} kind="submitted" answering />
     </section>
+  );
+}
+
+function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connected, pendingAction }) {
+  const turn = room.imposterTurn;
+  const maxWords = turn.maxClueWords || 2;
+  const wordCount = wordsInText(answer).length;
+  const isMyTurn = Boolean(turn.isMyTurn && me?.canSubmit !== false);
+  const currentPlayerLabel = turn.playerName || "اللاعب الحالي";
+
+  return (
+    <section className="panel stage-panel question-stage imposter-turn-stage">
+      <div className="stage-heading">
+        <div>
+          <span className="eyebrow">{room.question.category} · الجولة {room.round}/{room.settings.rounds}</span>
+          <h2>{room.question.prompt}</h2>
+        </div>
+        <Timer
+          className="answer-timer"
+          deadline={room.phaseEndsAt}
+          durationSeconds={turn.clueSeconds}
+        />
+      </div>
+
+      <div className={`role-card ${room.question.isImposter ? "danger-role" : ""}`}>
+        <span>{room.question.isImposter ? "أنت الدخيل" : "الكلمة السرية"}</span>
+        <strong>{room.question.isImposter ? "حاول تندمج" : room.question.secretWord}</strong>
+      </div>
+
+      <div className="imposter-turn-card">
+        <div className="imposter-speaker">
+          {turn.avatar ? <Avatar avatar={turn.avatar} name={currentPlayerLabel} /> : null}
+          <div>
+            <span className="eyebrow">الدور الآن</span>
+            <strong>{currentPlayerLabel}</strong>
+          </div>
+        </div>
+        <div className="imposter-turn-stats">
+          <span>الوصف {turn.pass}/{turn.passesPerPlayer}</span>
+          <span>{turn.turnNumber}/{turn.totalTurns}</span>
+        </div>
+      </div>
+
+      {isMyTurn ? (
+        <form className="answer-form imposter-clue-form" onSubmit={onSubmit}>
+          <input
+            value={answer}
+            onChange={(event) => setAnswer(limitWords(event.target.value, maxWords))}
+            maxLength={48}
+            placeholder="كلمة أو كلمتين"
+            autoFocus
+          />
+          <div className="imposter-clue-actions">
+            <span className={wordCount > maxWords ? "over" : ""}>{wordCount}/{maxWords}</span>
+            <button className="primary-button" type="submit" disabled={!connected || busy || wordCount < 1 || wordCount > maxWords}>
+              <ActionIcon loading={pendingAction === "answer"} icon={Send} />
+              <span>{pendingAction === "answer" ? "جاري الإرسال" : "إرسال الوصف"}</span>
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="locked-answer imposter-waiting">
+          <Crown size={28} />
+          <strong>دور {currentPlayerLabel}</strong>
+          <span>اسمع الوصف، وبعد ما تخلص اللفتين يبدأ التصويت.</span>
+        </div>
+      )}
+
+      <ImposterTurnOrder turn={turn} />
+    </section>
+  );
+}
+
+function ImposterTurnOrder({ turn }) {
+  return (
+    <div className="imposter-turn-order" aria-label="ترتيب وصف الدخيل">
+      {turn.players.map((player) => (
+        <div className={`imposter-turn-player ${player.isCurrent ? "current" : ""} ${player.done ? "done" : ""}`} key={player.id}>
+          <span className="option-index">{player.position}</span>
+          <strong>{player.name}</strong>
+          <small>{player.clueCount}/{turn.passesPerPlayer}</small>
+        </div>
+      ))}
+    </div>
   );
 }
 

@@ -133,7 +133,7 @@ Content-Type: application/json
   "mode": "imposter",
   "category": "أكل",
   "secretWord": "بازين",
-  "prompt": "اكتب وصفا من كلمة واحدة للكلمة السرية."
+  "prompt": "صف الكلمة في كلمة أو كلمتين. كل لاعب عنده 30 ثانية، والدور يلف مرتين."
 }
 ```
 

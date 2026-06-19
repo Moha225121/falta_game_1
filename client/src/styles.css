@@ -2079,6 +2079,136 @@ button:disabled {
   color: #dbffe1;
 }
 
+.imposter-turn-stage {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+}
+
+.imposter-turn-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 15px;
+  border: 1px solid rgba(246, 184, 74, 0.34);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(246, 184, 74, 0.14), rgba(18, 214, 197, 0.10)),
+    rgba(255, 255, 255, 0.06);
+}
+
+.imposter-speaker {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.imposter-speaker strong {
+  display: block;
+  overflow: hidden;
+  color: var(--gold);
+  font-size: 1.2rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imposter-turn-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.imposter-turn-stats span,
+.imposter-clue-actions > span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  color: #061114;
+  background: var(--gold);
+  border-radius: var(--radius);
+  font-weight: 950;
+}
+
+.imposter-clue-form {
+  align-content: start;
+}
+
+.imposter-clue-form input {
+  min-height: 74px;
+  font-size: 1.28rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.imposter-clue-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.imposter-clue-actions > span.over {
+  color: #ffd8dc;
+  background: rgba(255, 93, 105, 0.22);
+  border: 1px solid rgba(255, 93, 105, 0.44);
+}
+
+.imposter-waiting span {
+  color: var(--muted);
+}
+
+.imposter-turn-order {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.imposter-turn-player {
+  min-width: 0;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 9px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.imposter-turn-player strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.imposter-turn-player small {
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.imposter-turn-player.current {
+  border-color: rgba(246, 184, 74, 0.58);
+  background: rgba(246, 184, 74, 0.12);
+}
+
+.imposter-turn-player.done {
+  border-color: rgba(98, 223, 108, 0.42);
+}
+
+.imposter-turn-player.done .option-index {
+  background: var(--green);
+}
+
 .options-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -3557,6 +3687,36 @@ button:disabled {
 
   .role-card strong {
     font-size: 1.12rem;
+  }
+
+  .imposter-turn-card,
+  .imposter-clue-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .imposter-turn-card {
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 12px;
+  }
+
+  .imposter-turn-stats {
+    justify-content: stretch;
+  }
+
+  .imposter-turn-stats span,
+  .imposter-clue-actions > span {
+    width: 100%;
+  }
+
+  .imposter-clue-form input {
+    min-height: 58px;
+    font-size: 1.05rem;
+  }
+
+  .imposter-turn-order {
+    grid-template-columns: 1fr;
+    margin-top: 12px;
   }
 
   .locked-answer {
