@@ -61,6 +61,8 @@ const SCIENCE_DAY_MODE = "science_day";
 const SCIENCE_DAY_TOTAL_QUESTIONS = 15;
 const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
+const SCIENCE_DAY_LIMU_LOGO = "/assets/limu-logo.png";
+const SCIENCE_DAY_BRAND_IMAGE = "/assets/science-day-brand.jpg";
 
 function isScienceDayRoom(room) {
   return getActiveMode(room) === SCIENCE_DAY_MODE;
@@ -435,6 +437,8 @@ export default function Game() {
       }
       if (nextRoom.phase !== "voting") {
         setSelectedOption("");
+      } else {
+        setSelectedOption(nextRoom.me?.selectedOptionId || "");
       }
     };
 
@@ -555,14 +559,15 @@ export default function Game() {
         active: Boolean(room),
         code: room?.code || "",
         phase: room?.phase || "",
-        mode: getActiveMode(room) || ""
+        mode: getActiveMode(room) || "",
+        waitingOnly: Boolean(isScienceDayRoom(room) && room?.phase === "lobby" && !room?.me?.isHost)
       }
     }));
-  }, [room?.activeMode, room?.code, room?.phase, room?.settings?.mode]);
+  }, [room?.activeMode, room?.code, room?.me?.isHost, room?.phase, room?.settings?.mode]);
 
   useEffect(() => () => {
     window.dispatchEvent(new CustomEvent("kalak:room-active", {
-      detail: { active: false, code: "", phase: "", mode: "" }
+      detail: { active: false, code: "", phase: "", mode: "", waitingOnly: false }
     }));
   }, []);
 
@@ -875,9 +880,10 @@ export default function Game() {
 
   const inMatch = activeMatchPhases.has(room.phase);
   const scienceDay = isScienceDayRoom(room);
+  const scienceDayWaiting = scienceDay && room.phase === "lobby" && !isHost;
 
   return (
-    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""}`}>
+    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${scienceDayWaiting ? "science-day-waiting-route" : ""}`}>
       <section className="room-header">
         <div>
           <div className="hero-kicker">
@@ -957,7 +963,9 @@ export default function Game() {
             <RoundStrip room={room} gameModes={gameModes} />
           ) : null}
 
-          {room.phase === "lobby" ? (
+          {scienceDayWaiting ? (
+            <ScienceDayWaitingScreen playerName={me?.name || player.name} />
+          ) : room.phase === "lobby" ? (
             <Lobby
               room={room}
               categories={categories}
@@ -1228,6 +1236,36 @@ function QuestionPrompt({ text }) {
   );
 }
 
+function ScienceDayBrandLockup({ compact = false }) {
+  return (
+    <div className={`science-day-brand-lockup ${compact ? "compact" : ""}`} aria-label="الجامعة الليبية الدولية واليوم العلمي">
+      <div className="science-day-limu-mark">
+        <img src={SCIENCE_DAY_LIMU_LOGO} alt="الجامعة الليبية الدولية" />
+      </div>
+      <div className="science-day-event-mark">
+        <img src={SCIENCE_DAY_BRAND_IMAGE} alt="اليوم العلمي لكلية الهندسة والتكنولوجيا" />
+      </div>
+    </div>
+  );
+}
+
+function ScienceDayWaitingScreen({ playerName }) {
+  return (
+    <section className="science-day-waiting-card" aria-live="polite">
+      <ScienceDayBrandLockup />
+      <div className="science-day-waiting-copy">
+        <span className="eyebrow">تم تسجيلك</span>
+        <h2>{playerName ? `أهلًا ${playerName}` : "أهلًا بك"}</h2>
+        <p>تم تسجيل دخولك، وسيبدأ التحدي عند إطلاقه من المشرف.</p>
+      </div>
+      <div className="science-day-waiting-status">
+        <Loader2 className="spin" size={18} />
+        <span>جاهز للانطلاق</span>
+      </div>
+    </section>
+  );
+}
+
 function ScienceDayInviteCard({ code, playerCount, onShare, compact = false }) {
   const inviteUrl = roomInviteUrl(code);
   const [qrCode, setQrCode] = useState("");
@@ -1266,6 +1304,7 @@ function ScienceDayInviteCard({ code, playerCount, onShare, compact = false }) {
   return (
     <div className={`science-day-invite ${compact ? "compact" : ""}`}>
       <div className="science-day-invite-copy">
+        <ScienceDayBrandLockup compact={compact} />
         <span className="eyebrow">اليوم العلمي</span>
         <h3>امسح QR وادخل مباشرة</h3>
         <p>الرابط يفتح شاشة الاسم فقط، وبعدها يدخل الطالب للفعالية بدون إنشاء غرفة جديدة.</p>
@@ -1649,6 +1688,8 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
   const isImposterMode = getActiveMode(room) === "imposter";
   const meta = scienceDayMeta(room);
   const monitorOnly = scienceDay && me?.canVote === false;
+  const activeOption = selectedOption || me?.selectedOptionId || "";
+  const canChangeScienceAnswer = scienceDay && me?.voted && me?.canVote !== false;
   return (
     <section className={`panel stage-panel ${scienceDay ? "science-day-stage" : ""}`}>
       <div className="stage-heading">
@@ -1674,6 +1715,12 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
         </div>
       ) : null}
 
+      {scienceDay && !monitorOnly ? (
+        <div className="science-day-change-note">
+          {canChangeScienceAnswer ? "اختيارك محفوظ. تقدر تغيّره قبل انتهاء الوقت." : "اختر الإجابة، وتقدر تبدّلها قبل انتهاء الوقت."}
+        </div>
+      ) : null}
+
       {scienceDay && isHost ? (
         <button className="secondary-button science-day-next-button" type="button" onClick={onNext} disabled={!connected || busy}>
           <ActionIcon loading={pendingAction === "next"} icon={Sparkles} />
@@ -1684,13 +1731,13 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
       <div className="options-grid">
         {room.options.map((option, index) => (
           <button
-            className={`answer-option ${selectedOption === option.id ? "selected" : ""}`}
+            className={`answer-option ${activeOption === option.id ? "selected" : ""}`}
             key={option.id}
             type="button"
-            disabled={!connected || busy || me?.voted || option.isOwn || me?.canVote === false}
+            disabled={!connected || busy || (!scienceDay && me?.voted) || option.isOwn || me?.canVote === false}
             onClick={() => onVote(option.id)}
           >
-            <span className="option-index">{pendingAction === "vote" && selectedOption === option.id ? <Loader2 className="spin" size={16} /> : index + 1}</span>
+            <span className="option-index">{pendingAction === "vote" && activeOption === option.id ? <Loader2 className="spin" size={16} /> : index + 1}</span>
             <span className="option-body">
               <strong>{isImposterMode ? option.clue || "بدون وصف" : option.text}</strong>
               {isImposterMode ? <small>{option.text}</small> : option.clue ? <small>{option.clue}</small> : null}

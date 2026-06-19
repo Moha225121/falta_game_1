@@ -97,6 +97,23 @@ a {
   animation: appLightShift 18s ease-in-out infinite;
 }
 
+.science-day-shell {
+  color-scheme: light;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(32, 162, 184, 0.16), transparent 30%),
+    radial-gradient(circle at 86% 10%, rgba(215, 32, 48, 0.12), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #eef5fb 100%);
+}
+
+.science-day-shell::before {
+  opacity: 0.7;
+  background:
+    linear-gradient(128deg, rgba(10, 52, 91, 0.08), transparent 35%),
+    linear-gradient(238deg, rgba(215, 32, 48, 0.08), transparent 38%),
+    repeating-linear-gradient(90deg, rgba(10, 52, 91, 0.045) 0 1px, transparent 1px 34px);
+  animation: none;
+}
+
 .app-shell > * {
   position: relative;
   z-index: 1;
@@ -176,6 +193,29 @@ a {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--line);
+}
+
+.science-day-shell .topbar {
+  background: rgba(255, 255, 255, 0.88);
+  border-bottom-color: rgba(10, 52, 91, 0.14);
+}
+
+.science-day-shell .brand-logo {
+  width: 82px;
+  height: 48px;
+  filter: none;
+}
+
+.science-day-shell .topbar-room-menu {
+  color: #0a345b;
+  background: rgba(10, 52, 91, 0.05);
+  border-color: rgba(10, 52, 91, 0.16);
+}
+
+.science-day-shell .topbar-room-menu:hover {
+  color: #ffffff;
+  background: #0a345b;
+  border-color: #0a345b;
 }
 
 .topbar-room-controls {
@@ -1365,6 +1405,181 @@ button:disabled {
   z-index: 1;
 }
 
+.science-day-theme {
+  --ink: #08233f;
+  --muted: #52677d;
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-strong: rgba(255, 255, 255, 0.98);
+  --line: rgba(10, 52, 91, 0.14);
+  --line-strong: rgba(10, 52, 91, 0.24);
+  --teal: #20a2b8;
+  --magenta: #d72030;
+  --gold: #0a345b;
+  --green: #1f9d62;
+  --danger: #d72030;
+  --shadow: 0 22px 54px rgba(10, 52, 91, 0.14);
+  color: var(--ink);
+  background:
+    linear-gradient(135deg, rgba(10, 52, 91, 0.06), transparent 34%),
+    linear-gradient(220deg, rgba(215, 32, 48, 0.055), transparent 34%);
+  border-radius: 0;
+}
+
+.science-day-theme .room-header,
+.science-day-theme .stage-panel,
+.science-day-theme .scoreboard,
+.science-day-theme .players-panel,
+.science-day-theme .chat-panel,
+.science-day-theme .match-drawer {
+  color: var(--ink);
+}
+
+.science-day-theme .panel,
+.science-day-theme .scoreboard,
+.science-day-theme .players-panel,
+.science-day-theme .chat-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 251, 255, 0.92)),
+    #ffffff;
+  border-color: rgba(10, 52, 91, 0.14);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.science-day-theme .stage-panel::before {
+  opacity: 0.62;
+  background:
+    linear-gradient(135deg, rgba(32, 162, 184, 0.10), transparent 38%),
+    linear-gradient(225deg, rgba(215, 32, 48, 0.08), transparent 36%),
+    repeating-linear-gradient(90deg, rgba(10, 52, 91, 0.035) 0 1px, transparent 1px 32px);
+  animation: none;
+}
+
+.science-day-theme .eyebrow,
+.science-day-theme .room-header h1 b,
+.science-day-theme .player-row svg,
+.science-day-theme .player-tile svg {
+  color: #d72030;
+}
+
+.science-day-theme .question-title {
+  color: #071d35;
+}
+
+.science-day-theme .question-note,
+.science-day-theme .option-body small,
+.science-day-theme .reveal-row span,
+.science-day-theme .award-card small {
+  color: var(--muted);
+}
+
+.science-day-theme .answer-timer,
+.science-day-theme .timer {
+  background: #ffffff;
+  border-color: rgba(10, 52, 91, 0.16);
+  box-shadow: 0 12px 28px rgba(10, 52, 91, 0.08);
+}
+
+.science-day-theme .timer-ring {
+  color: #d72030;
+  background: conic-gradient(#d72030 var(--progress), #dbe7f0 0);
+}
+
+.science-day-theme .answer-timer .timer-copy strong {
+  color: #d72030;
+}
+
+.science-day-theme .answer-timer.urgent {
+  background: #fff5f6;
+  border-color: rgba(215, 32, 48, 0.25);
+}
+
+.science-day-theme .answer-timer.urgent .timer-copy strong {
+  color: #d72030;
+}
+
+.science-day-theme .counter-chip,
+.science-day-theme .mini-chip,
+.science-day-theme .waiting-strip,
+.science-day-theme .player-tile,
+.science-day-theme .player-row,
+.science-day-theme .score-row,
+.science-day-theme .reveal-row,
+.science-day-theme .award-card {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.76);
+  border-color: rgba(10, 52, 91, 0.14);
+}
+
+.science-day-theme .correct-chip,
+.science-day-theme .drawer-tabs button.active {
+  color: #ffffff;
+  background: #1f9d62;
+  border-color: rgba(31, 157, 98, 0.22);
+}
+
+.science-day-theme .primary-button {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0a345b, #146b8a);
+  border-color: rgba(10, 52, 91, 0.22);
+  box-shadow: 0 14px 32px rgba(10, 52, 91, 0.18);
+}
+
+.science-day-theme .secondary-button,
+.science-day-theme .icon-text-button,
+.science-day-theme .ghost-button {
+  color: #0a345b;
+  background: #ffffff;
+  border-color: rgba(10, 52, 91, 0.18);
+}
+
+.science-day-theme .secondary-button:hover:not(:disabled),
+.science-day-theme .icon-text-button:hover:not(:disabled),
+.science-day-theme .ghost-button:hover:not(:disabled) {
+  color: #ffffff;
+  background: #0a345b;
+  border-color: #0a345b;
+}
+
+.science-day-theme .answer-option {
+  color: var(--ink);
+  background: #ffffff;
+  border-color: rgba(10, 52, 91, 0.15);
+  box-shadow: 0 10px 24px rgba(10, 52, 91, 0.07);
+}
+
+.science-day-theme .answer-option:not(:disabled):hover,
+.science-day-theme .answer-option.selected {
+  border-color: rgba(215, 32, 48, 0.62);
+  background: #fff7f8;
+  box-shadow: 0 16px 34px rgba(215, 32, 48, 0.12);
+}
+
+.science-day-theme .answer-option.selected {
+  outline: 2px solid rgba(215, 32, 48, 0.10);
+}
+
+.science-day-theme .option-index,
+.science-day-theme .rank,
+.science-day-theme .science-day-podium-card .rank {
+  color: #ffffff;
+  background: #0a345b;
+}
+
+.science-day-theme .answer-option.selected .option-index {
+  background: #d72030;
+}
+
+.science-day-theme .progress-track,
+.science-day-theme .round-progress {
+  background: #dbe7f0;
+}
+
+.science-day-theme .progress-track i,
+.science-day-theme .round-progress i {
+  background: linear-gradient(90deg, #d72030, #20a2b8, #0a345b);
+}
+
 .stage-heading {
   display: flex;
   justify-content: space-between;
@@ -1500,6 +1715,144 @@ button:disabled {
   border-top: 1px solid var(--line);
 }
 
+.science-day-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.science-day-limu-mark,
+.science-day-event-mark {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(10, 52, 91, 0.12);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgba(10, 52, 91, 0.08);
+}
+
+.science-day-limu-mark {
+  width: 82px;
+  height: 64px;
+  padding: 6px;
+}
+
+.science-day-limu-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.science-day-event-mark {
+  width: min(260px, 52vw);
+  height: 74px;
+}
+
+.science-day-event-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 20% 16%;
+}
+
+.science-day-brand-lockup.compact {
+  gap: 7px;
+}
+
+.science-day-brand-lockup.compact .science-day-limu-mark {
+  width: 58px;
+  height: 44px;
+  padding: 4px;
+}
+
+.science-day-brand-lockup.compact .science-day-event-mark {
+  width: 150px;
+  height: 44px;
+}
+
+.science-day-waiting-route {
+  width: min(980px, 100%);
+  min-height: calc(100dvh - 72px);
+  display: grid;
+  align-content: center;
+  overflow: hidden;
+  padding-block: clamp(10px, 3vh, 24px);
+}
+
+.science-day-waiting-route .room-header,
+.science-day-waiting-route .mobile-room-share-card,
+.science-day-waiting-route .side-zone {
+  display: none;
+}
+
+.science-day-waiting-route .game-layout {
+  display: block;
+}
+
+.science-day-waiting-route .play-zone {
+  min-height: min(620px, calc(100dvh - 120px));
+  display: grid;
+  place-items: center;
+}
+
+.science-day-waiting-card {
+  width: min(520px, 100%);
+  max-height: calc(100dvh - 132px);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: clamp(14px, 3vh, 22px);
+  overflow: hidden;
+  padding: clamp(18px, 4vw, 30px);
+  text-align: center;
+  color: #08233f;
+  background:
+    linear-gradient(135deg, rgba(32, 162, 184, 0.10), transparent 42%),
+    linear-gradient(225deg, rgba(215, 32, 48, 0.08), transparent 38%),
+    #ffffff;
+  border: 1px solid rgba(10, 52, 91, 0.14);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 70px rgba(10, 52, 91, 0.16);
+}
+
+.science-day-waiting-card .science-day-brand-lockup {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.science-day-waiting-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.science-day-waiting-copy h2 {
+  color: #0a345b;
+  font-size: clamp(1.45rem, 4vw, 2.05rem);
+  line-height: 1.2;
+}
+
+.science-day-waiting-copy p {
+  max-width: 34ch;
+  color: #52677d;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
+.science-day-waiting-status {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: #0a345b;
+  background: #f3f8fc;
+  border: 1px solid rgba(10, 52, 91, 0.14);
+  border-radius: var(--radius);
+  font-weight: 900;
+}
+
 .science-day-invite {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 210px;
@@ -1510,8 +1863,8 @@ button:disabled {
   border: 1px solid rgba(18, 214, 197, 0.34);
   border-radius: var(--radius);
   background:
-    linear-gradient(135deg, rgba(18, 214, 197, 0.16), rgba(246, 184, 74, 0.12)),
-    rgba(255, 255, 255, 0.06);
+    linear-gradient(135deg, rgba(32, 162, 184, 0.12), rgba(215, 32, 48, 0.07)),
+    rgba(255, 255, 255, 0.86);
 }
 
 .science-day-invite.compact {
@@ -1569,8 +1922,8 @@ button:disabled {
   min-width: 0;
   overflow: hidden;
   padding: 12px;
-  color: #dffffb;
-  background: rgba(0, 0, 0, 0.22);
+  color: #0a345b;
+  background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   text-overflow: ellipsis;
@@ -1582,11 +1935,12 @@ button:disabled {
   place-items: center;
   gap: 10px;
   padding: 12px;
-  color: var(--gold);
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.20);
+  color: #0a345b;
+  background: #ffffff;
+  border: 1px solid rgba(10, 52, 91, 0.14);
   border-radius: var(--radius);
   font-weight: 900;
+  box-shadow: 0 12px 28px rgba(10, 52, 91, 0.08);
 }
 
 .science-day-qr img {
@@ -1613,7 +1967,7 @@ button:disabled {
   padding: 13px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.78);
 }
 
 .science-day-rule-grid strong,
@@ -1622,7 +1976,7 @@ button:disabled {
 }
 
 .science-day-rule-grid strong {
-  color: var(--gold);
+  color: #d72030;
   margin-bottom: 5px;
 }
 
@@ -1637,10 +1991,21 @@ button:disabled {
   gap: 9px;
   margin-bottom: 14px;
   padding: 12px 14px;
-  color: #dffffb;
-  background: rgba(18, 214, 197, 0.12);
-  border: 1px solid rgba(18, 214, 197, 0.30);
+  color: #0a345b;
+  background: rgba(32, 162, 184, 0.10);
+  border: 1px solid rgba(32, 162, 184, 0.24);
   border-radius: var(--radius);
+  font-weight: 850;
+}
+
+.science-day-change-note {
+  margin: -4px 0 12px;
+  padding: 9px 11px;
+  color: #0a345b;
+  background: rgba(10, 52, 91, 0.055);
+  border: 1px solid rgba(10, 52, 91, 0.12);
+  border-radius: var(--radius);
+  font-size: 0.84rem;
   font-weight: 850;
 }
 
@@ -1657,8 +2022,8 @@ button:disabled {
   border: 1px solid rgba(246, 184, 74, 0.34);
   border-radius: var(--radius);
   background:
-    linear-gradient(135deg, rgba(246, 184, 74, 0.14), rgba(18, 214, 197, 0.10)),
-    rgba(255, 255, 255, 0.055);
+    linear-gradient(135deg, rgba(215, 32, 48, 0.08), rgba(32, 162, 184, 0.10)),
+    rgba(255, 255, 255, 0.72);
 }
 
 .science-day-podium-card {
@@ -3686,6 +4051,53 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .science-day-brand-lockup {
+    gap: 8px;
+  }
+
+  .science-day-limu-mark {
+    width: 70px;
+    height: 54px;
+  }
+
+  .science-day-event-mark {
+    width: min(210px, 58vw);
+    height: 58px;
+  }
+
+  .science-day-waiting-route {
+    min-height: calc(100dvh - 60px);
+    padding-block: 8px;
+  }
+
+  .science-day-waiting-route .play-zone {
+    min-height: calc(100dvh - 86px);
+  }
+
+  .science-day-waiting-card {
+    max-height: calc(100dvh - 86px);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .science-day-waiting-copy {
+    gap: 6px;
+  }
+
+  .science-day-waiting-copy h2 {
+    font-size: 1.38rem;
+  }
+
+  .science-day-waiting-copy p {
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .science-day-waiting-status {
+    min-height: 34px;
+    font-size: 0.84rem;
+  }
+
   .science-day-qr img {
     width: min(220px, 100%);
     height: auto;
@@ -4186,6 +4598,37 @@ button:disabled {
 
   .room-header h1 {
     font-size: 1.2rem;
+  }
+
+  .science-day-waiting-route {
+    padding: 6px 10px;
+  }
+
+  .science-day-waiting-card {
+    max-height: calc(100dvh - 78px);
+    padding: 12px;
+  }
+
+  .science-day-waiting-card .science-day-brand-lockup {
+    gap: 6px;
+  }
+
+  .science-day-waiting-card .science-day-limu-mark {
+    width: 62px;
+    height: 48px;
+  }
+
+  .science-day-waiting-card .science-day-event-mark {
+    width: min(188px, 58vw);
+    height: 50px;
+  }
+
+  .science-day-waiting-copy h2 {
+    font-size: 1.24rem;
+  }
+
+  .science-day-waiting-copy p {
+    font-size: 0.82rem;
   }
 
   .home-comfort-list span {

@@ -1210,16 +1210,22 @@ export class KalakGameEngine {
       throw new Error("لا يمكنك التصويت لإجابتك.");
     }
 
+    const previousVote = room.votes.get(playerId);
+    if (previousVote?.optionId === option.id) {
+      return { room: this.publicRoom(room, playerId) };
+    }
+
     room.votes.set(playerId, {
       playerId,
       optionId: option.id,
       votedAt: Date.now()
     });
+
     this.incrementCounter("voteSubmissions");
 
     this.emitRoom(room);
 
-    if (room.votes.size >= this.eligibleVoters(room).length) {
+    if (this.currentMode(room) !== SCIENCE_DAY_MODE && room.votes.size >= this.eligibleVoters(room).length) {
       setTimeout(() => this.finishVoting(room.code), 550);
     }
 
@@ -2080,7 +2086,7 @@ export class KalakGameEngine {
 
         this.emitRoom(liveRoom);
 
-        if (liveRoom.votes.size >= this.eligibleVoters(liveRoom).length) {
+        if (this.currentMode(liveRoom) !== SCIENCE_DAY_MODE && liveRoom.votes.size >= this.eligibleVoters(liveRoom).length) {
           setTimeout(() => this.finishVoting(liveRoom.code), 550);
         }
       }, 1000 + index * 800 + Math.floor(Math.random() * 1200));
@@ -3405,7 +3411,7 @@ export class KalakGameEngine {
       setTimeout(() => this.finishAnswering(room.code), 550);
     }
 
-    if (room.phase === "voting" && room.votes.size >= this.eligibleVoters(room).length) {
+    if (room.phase === "voting" && this.currentMode(room) !== SCIENCE_DAY_MODE && room.votes.size >= this.eligibleVoters(room).length) {
       setTimeout(() => this.finishVoting(room.code), 550);
     }
   }
@@ -3693,7 +3699,8 @@ export class KalakGameEngine {
       me: currentPlayerId ? {
         playerId: currentPlayerId,
         isHost: room.hostId === currentPlayerId,
-        knowsCorrect: room.correctWriterIds.includes(currentPlayerId)
+        knowsCorrect: room.correctWriterIds.includes(currentPlayerId),
+        selectedOptionId: room.votes.get(currentPlayerId)?.optionId || ""
       } : null,
       players: [...room.players.values()]
         .sort((a, b) => b.score - a.score || a.joinedAt - b.joinedAt)

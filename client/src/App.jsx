@@ -9,8 +9,9 @@ export default function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin-panel");
   const isRoomRoute = /^\/play\/[^/]+/.test(location.pathname);
-  const [activeRoom, setActiveRoom] = useState({ active: false, code: "", phase: "", mode: "" });
-  const showRoomMenu = isRoomRoute && activeRoom.active;
+  const [activeRoom, setActiveRoom] = useState({ active: false, code: "", phase: "", mode: "", waitingOnly: false });
+  const showRoomMenu = isRoomRoute && activeRoom.active && !activeRoom.waitingOnly;
+  const scienceDayRoom = activeRoom.mode === "science_day";
 
   useEffect(() => {
     function updateRoomMenu(event) {
@@ -19,7 +20,8 @@ export default function App() {
         active: Boolean(detail.active),
         code: detail.code || "",
         phase: detail.phase || "",
-        mode: detail.mode || ""
+        mode: detail.mode || "",
+        waitingOnly: Boolean(detail.waitingOnly)
       });
     }
 
@@ -29,7 +31,7 @@ export default function App() {
 
   useEffect(() => {
     if (!isRoomRoute) {
-      setActiveRoom({ active: false, code: "", phase: "", mode: "" });
+      setActiveRoom({ active: false, code: "", phase: "", mode: "", waitingOnly: false });
     }
   }, [isRoomRoute]);
 
@@ -47,10 +49,14 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell ${showRoomMenu ? "room-route-shell" : ""}`}>
+    <div className={`app-shell ${showRoomMenu ? "room-route-shell" : ""} ${scienceDayRoom ? "science-day-shell" : ""}`}>
       <header className="topbar">
-        <div className="brand" aria-label="فلتة">
-          <img className="brand-logo" src="/assets/falta-logo.png" alt="فلتة" />
+        <div className="brand" aria-label={scienceDayRoom ? "الجامعة الليبية الدولية" : "فلتة"}>
+          <img
+            className="brand-logo"
+            src={scienceDayRoom ? "/assets/limu-logo.png" : "/assets/falta-logo.png"}
+            alt={scienceDayRoom ? "الجامعة الليبية الدولية" : "فلتة"}
+          />
         </div>
         {showRoomMenu ? (
           <div className="topbar-room-controls">
