@@ -86,18 +86,6 @@ function scienceDayMeta(room) {
   };
 }
 
-function wordsInText(value) {
-  return String(value || "").trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
-}
-
-function limitWords(value, maxWords) {
-  const words = wordsInText(value);
-  if (words.length <= maxWords) {
-    return value;
-  }
-  return words.slice(0, maxWords).join(" ");
-}
-
 function getActiveMode(room) {
   return room?.activeMode || room?.settings?.mode || selectedModeIds(room?.settings?.modes)[0];
 }
@@ -1441,7 +1429,7 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
     ? "اكتب إجابة غلط مقنعة عشان تخدع اللاعبين"
     : activeMode === "judge_pick"
     ? "اكتب إجابة تقنع الحكم"
-    : isImposterMode ? "اكتب وصفًا من كلمة أو كلمتين" : "اكتب إجابة صحيحة أو خدعة مقنعة";
+    : isImposterMode ? "اكتب وصفًا للكلمة" : "اكتب إجابة صحيحة أو خدعة مقنعة";
 
   if (isImposterMode && room.imposterTurn) {
     return (
@@ -1519,8 +1507,6 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
 
 function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connected, pendingAction }) {
   const turn = room.imposterTurn;
-  const maxWords = turn.maxClueWords || 2;
-  const wordCount = wordsInText(answer).length;
   const isMyTurn = Boolean(turn.isMyTurn && me?.canSubmit !== false);
   const currentPlayerLabel = turn.playerName || "اللاعب الحالي";
 
@@ -1561,14 +1547,14 @@ function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connec
         <form className="answer-form imposter-clue-form" onSubmit={onSubmit}>
           <input
             value={answer}
-            onChange={(event) => setAnswer(limitWords(event.target.value, maxWords))}
-            maxLength={48}
-            placeholder="كلمة أو كلمتين"
+            onChange={(event) => setAnswer(event.target.value)}
+            maxLength={160}
+            placeholder="يفضل كلمة واحدة، بس اكتب وصفك عادي"
             autoFocus
           />
           <div className="imposter-clue-actions">
-            <span className={wordCount > maxWords ? "over" : ""}>{wordCount}/{maxWords}</span>
-            <button className="primary-button" type="submit" disabled={!connected || busy || wordCount < 1 || wordCount > maxWords}>
+            <span>{answer.trim().length}/160</span>
+            <button className="primary-button" type="submit" disabled={!connected || busy || !answer.trim()}>
               <ActionIcon loading={pendingAction === "answer"} icon={Send} />
               <span>{pendingAction === "answer" ? "جاري الإرسال" : "إرسال الوصف"}</span>
             </button>
@@ -1583,6 +1569,7 @@ function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connec
       )}
 
       <ImposterTurnOrder turn={turn} />
+      <ImposterClueHistory history={turn.history || []} />
     </section>
   );
 }
@@ -1597,6 +1584,33 @@ function ImposterTurnOrder({ turn }) {
           <small>{player.clueCount}/{turn.passesPerPlayer}</small>
         </div>
       ))}
+    </div>
+  );
+}
+
+function ImposterClueHistory({ history }) {
+  return (
+    <div className="imposter-clue-history">
+      <div className="section-title">
+        <MessageCircle size={17} />
+        <h3>الأوصاف السابقة</h3>
+      </div>
+      {history.length ? (
+        <div className="imposter-clue-list">
+          {history.map((item) => (
+            <div className="imposter-clue-row" key={`${item.playerId}-${item.pass}`}>
+              <span className="option-index">{item.turnNumber}</span>
+              <div>
+                <strong>{item.playerName}</strong>
+                <small>الوصف {item.pass}</small>
+              </div>
+              <p>{item.text}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-clue-history">أول وصف بيظهر هنا بعد ما يرسله اللاعب.</div>
+      )}
     </div>
   );
 }

@@ -45,7 +45,6 @@ const SCIENCE_DAY_SPEED_BONUS = 50;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
 const IMPOSTER_CLUE_SECONDS = 30;
 const IMPOSTER_CLUE_PASSES = 2;
-const IMPOSTER_MAX_CLUE_WORDS = 2;
 const IMPOSTER_EMPTY_CLUE = "بدون وصف";
 const AVATAR_DEFAULT = {
   persona: "a1",
@@ -286,14 +285,6 @@ function cleanMessage(message) {
 
 function cleanAnswerText(text) {
   return String(text || "").trim().replace(/\s+/g, " ").slice(0, 160);
-}
-
-function imposterClueWords(text) {
-  return String(text || "").trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
-}
-
-function cleanImposterClueText(text, maxWords = IMPOSTER_MAX_CLUE_WORDS) {
-  return imposterClueWords(cleanAnswerText(text)).slice(0, maxWords).join(" ");
 }
 
 function cleanAvatarValue(value, choices, fallback) {
@@ -1183,17 +1174,12 @@ export class KalakGameEngine {
     }
 
     const text = cleanAnswerText(value);
-    const words = imposterClueWords(text);
-    if (words.length < 1) {
+    if (text.length < 1) {
       throw new Error("اكتب وصفًا أولًا.");
     }
 
-    if (words.length > turn.maxClueWords) {
-      throw new Error("الوصف لازم يكون كلمة أو كلمتين فقط.");
-    }
-
     this.incrementCounter("answerSubmissions");
-    this.completeImposterTurn(room, cleanImposterClueText(text, turn.maxClueWords));
+    this.completeImposterTurn(room, text);
     return { room: this.publicRoom(room, playerId) };
   }
 
@@ -1456,14 +1442,13 @@ export class KalakGameEngine {
       turnIndex: 0,
       passesPerPlayer: IMPOSTER_CLUE_PASSES,
       clueSeconds: IMPOSTER_CLUE_SECONDS,
-      maxClueWords: IMPOSTER_MAX_CLUE_WORDS,
       totalTurns: turnOrder.length * IMPOSTER_CLUE_PASSES,
       clues: {}
     };
     room.question = {
       id: `imposter_${room.round}`,
       category: "الدخيل",
-      prompt: "صف الكلمة في كلمة أو كلمتين. كل لاعب عنده 30 ثانية، والدور يلف مرتين.",
+      prompt: "صف الكلمة بكلمة واحدة. كل لاعب عنده 30 ثانية، والدور يلف مرتين.",
       difficulty: "medium"
     };
     if (question && room.question.id.startsWith("imposter_")) {
@@ -1520,7 +1505,7 @@ export class KalakGameEngine {
     const data = room.modeData || {};
     const turnOrder = Array.isArray(data.turnOrder) ? data.turnOrder : [];
     const passIndex = turnOrder.length ? Math.floor((Number(data.turnIndex) || 0) / turnOrder.length) : 0;
-    const clue = cleanImposterClueText(text, turn?.maxClueWords || IMPOSTER_MAX_CLUE_WORDS) || IMPOSTER_EMPTY_CLUE;
+    const clue = cleanAnswerText(text) || IMPOSTER_EMPTY_CLUE;
     const clues = data.clues && typeof data.clues === "object" ? data.clues : {};
     const playerClues = Array.isArray(clues[playerId]) ? [...clues[playerId]] : [];
 
@@ -3542,8 +3527,7 @@ export class KalakGameEngine {
       totalTurns,
       pass: Math.floor(turnIndex / turnOrder.length) + 1,
       passesPerPlayer,
-      clueSeconds: Number(data.clueSeconds) || IMPOSTER_CLUE_SECONDS,
-      maxClueWords: Number(data.maxClueWords) || IMPOSTER_MAX_CLUE_WORDS
+      clueSeconds: Number(data.clueSeconds) || IMPOSTER_CLUE_SECONDS
     };
   }
 
@@ -3571,6 +3555,35 @@ export class KalakGameEngine {
   combinedImposterClue(room, playerId) {
     const clues = this.imposterCluesFor(room, playerId);
     return clues.length ? clues.join("، ") : IMPOSTER_EMPTY_CLUE;
+  }
+
+  imposterClueHistory(room) {
+    const data = room.modeData || {};
+    const turnOrder = Array.isArray(data.turnOrder) ? data.turnOrder : [];
+    const passesPerPlayer = Number(data.passesPerPlayer) || IMPOSTER_CLUE_PASSES;
+    const history = [];
+
+    for (let passIndex = 0; passIndex < passesPerPlayer; passIndex += 1) {
+      for (let orderIndex = 0; orderIndex < turnOrder.length; orderIndex += 1) {
+        const playerId = turnOrder[orderIndex];
+        const player = room.players.get(playerId);
+        const clue = this.imposterCluesFor(room, playerId)[passIndex];
+        if (!player || !clue) {
+          continue;
+        }
+
+        history.push({
+          playerId,
+          playerName: player.name,
+          avatar: player.avatar,
+          pass: passIndex + 1,
+          turnNumber: history.length + 1,
+          text: clue
+        });
+      }
+    }
+
+    return history;
   }
 
   kickVotersFor(room, targetId) {
@@ -3749,9 +3762,9 @@ export class KalakGameEngine {
       turnNumber: turn.turnNumber,
       totalTurns: turn.totalTurns,
       clueSeconds: turn.clueSeconds,
-      maxClueWords: turn.maxClueWords,
       isMyTurn: turn.playerId === currentPlayerId,
       myClueCount: currentPlayerId ? this.imposterClueCount(room, currentPlayerId) : 0,
+      history: this.imposterClueHistory(room),
       players
     };
   }
@@ -3774,8 +3787,7 @@ export class KalakGameEngine {
       question.secretWord = question.isImposter ? null : room.modeData?.secretWord;
       question.imposterRules = {
         clueSeconds: Number(room.modeData?.clueSeconds) || IMPOSTER_CLUE_SECONDS,
-        passesPerPlayer: Number(room.modeData?.passesPerPlayer) || IMPOSTER_CLUE_PASSES,
-        maxClueWords: Number(room.modeData?.maxClueWords) || IMPOSTER_MAX_CLUE_WORDS
+        passesPerPlayer: Number(room.modeData?.passesPerPlayer) || IMPOSTER_CLUE_PASSES
       };
     }
 
