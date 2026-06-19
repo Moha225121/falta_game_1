@@ -40,8 +40,8 @@ const SCIENCE_DAY_MODE = "science_day";
 const SCIENCE_DAY_TOTAL_ROUNDS = 3;
 const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
 const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_ROUNDS * SCIENCE_DAY_QUESTIONS_PER_ROUND;
-const SCIENCE_DAY_CORRECT_POINTS = 100;
-const SCIENCE_DAY_SPEED_BONUS = 50;
+const SCIENCE_DAY_CORRECT_POINTS = 2;
+const SCIENCE_DAY_SPEED_BONUS = 1;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
 const IMPOSTER_CLUE_SECONDS = 30;
 const IMPOSTER_CLUE_PASSES = 2;
@@ -2273,8 +2273,8 @@ export class KalakGameEngine {
       } else {
         const survivor = answerGroup[0].player;
         const award = awards.get(survivor.id);
-        award.correctVote += 100;
-        award.total += 100;
+        award.correctVote += 1;
+        award.total += 1;
       }
     }
 
@@ -2450,8 +2450,8 @@ export class KalakGameEngine {
     for (const winner of winners) {
       const award = awards.get(winner.player.id);
       if (award) {
-        award.correctVote += 150;
-        award.total += 150;
+        award.correctVote += 2;
+        award.total += 2;
       }
     }
 
@@ -2573,16 +2573,16 @@ export class KalakGameEngine {
 
       if (option.isCorrect) {
         const award = ensureAward(vote.playerId);
-        award.correctVote += 100;
-        award.total += 100;
+        award.correctVote += 1;
+        award.total += 1;
       } else {
         for (const ownerId of option.ownerIds) {
           if (ownerId === vote.playerId) {
             continue;
           }
           const award = ensureAward(ownerId);
-          award.fakeVotes += 50;
-          award.total += 50;
+          award.fakeVotes += 1;
+          award.total += 1;
         }
       }
     }
@@ -2660,23 +2660,23 @@ export class KalakGameEngine {
       if (option?.suspectId === imposterId) {
         const award = awards.get(vote.playerId);
         if (award) {
-          award.correctVote += 120;
-          award.total += 120;
+          award.correctVote += 2;
+          award.total += 2;
         }
         continue;
       }
 
       if (imposter && awards.has(imposter.id)) {
         const award = awards.get(imposter.id);
-        award.fakeVotes += 80;
-        award.total += 80;
+        award.fakeVotes += 1;
+        award.total += 1;
       }
     }
 
     if (!imposterCaught && imposter && awards.has(imposter.id)) {
       const award = awards.get(imposter.id);
-      award.fakeVotes += 80;
-      award.total += 80;
+      award.fakeVotes += 1;
+      award.total += 1;
     }
 
     this.applyAwards(room, awards);
@@ -2718,15 +2718,15 @@ export class KalakGameEngine {
       for (const ownerId of winningOption.ownerIds) {
         const award = awards.get(ownerId);
         if (award) {
-          award.correctSubmission += 100;
-          award.total += 100;
+          award.correctSubmission += 1;
+          award.total += 1;
         }
       }
     } else if (winningGameOption) {
       const judgeAward = awards.get(room.modeData.judgeId);
       if (judgeAward) {
-        judgeAward.correctVote += 200;
-        judgeAward.total += 200;
+        judgeAward.correctVote += 3;
+        judgeAward.total += 3;
       }
     }
 
@@ -2734,9 +2734,9 @@ export class KalakGameEngine {
     room.results = {
       correctAnswer: winningGameOption ? `اختيار اللعبة: ${winningOption.text}` : winningOption?.text || "الحكم لم يختر",
       summary: winningPlayerOption
-        ? "الحكم اختار جواب لاعب، لذلك صاحب الجواب أخذ +100."
+        ? "الحكم اختار جواب لاعب، لذلك صاحب الجواب أخذ +1."
         : winningGameOption
-          ? "الحكم اختار جواب اللعبة الصحيح وأخذ +200."
+          ? "الحكم اختار جواب اللعبة الصحيح وأخذ +3."
           : "لم يصوت الحكم في الوقت المحدد، لذلك لا توجد نقاط في هذه الجولة.",
       isFinal: room.round >= room.settings.rounds,
       votes,
@@ -2773,8 +2773,8 @@ export class KalakGameEngine {
         if (vote.playerId !== targetId && vote.optionId === correctOptionId) {
           const award = awards.get(vote.playerId);
           if (award) {
-            award.correctVote += 120;
-            award.total += 120;
+            award.correctVote += 2;
+            award.total += 2;
           }
         } else if (vote.playerId !== targetId) {
           wrongGuessers += 1;
@@ -2783,9 +2783,9 @@ export class KalakGameEngine {
 
       const targetAward = awards.get(targetId);
       if (targetAward) {
-        targetAward.correctSubmission += 70;
-        targetAward.fakeVotes += wrongGuessers * 30;
-        targetAward.total += 70 + (wrongGuessers * 30);
+        targetAward.correctSubmission += 1;
+        targetAward.fakeVotes += wrongGuessers;
+        targetAward.total += 1 + wrongGuessers;
       }
     }
 
@@ -2793,7 +2793,7 @@ export class KalakGameEngine {
     room.results = {
       correctAnswer: correctOption ? `${target?.name || "الهدف"} اختار ${correctOption.text}` : "الهدف لم يختر",
       summary: correctOption
-        ? "من توقع اختيار الهدف أخذ +120. الهدف أخذ +70 لاختياره و+30 عن كل لاعب لم يتوقعه."
+        ? "من توقع اختيار الهدف أخذ +2. الهدف أخذ +1 لاختياره و+1 عن كل لاعب لم يتوقعه."
         : "لم يصوت الهدف في الوقت المحدد.",
       isFinal: room.round >= room.settings.rounds,
       votes,
@@ -2826,22 +2826,22 @@ export class KalakGameEngine {
       for (const vote of splitVotes) {
         const award = awards.get(vote.playerId);
         if (award) {
-          award.correctVote += 120;
-          award.total += 120;
+          award.correctVote += 2;
+          award.total += 2;
         }
       }
     } else if (stealVotes.length === 1) {
       summary = "لاعب واحد سرق الصفقة وأخذ الجائزة الأكبر، ومن اختار القسمة أخذ نقاط ثقة بسيطة.";
       const award = awards.get(stealVotes[0].playerId);
       if (award) {
-        award.fakeVotes += 220;
-        award.total += 220;
+        award.fakeVotes += 3;
+        award.total += 3;
       }
       for (const vote of splitVotes) {
         const splitAward = awards.get(vote.playerId);
         if (splitAward) {
-          splitAward.correctSubmission += 25;
-          splitAward.total += 25;
+          splitAward.correctSubmission += 1;
+          splitAward.total += 1;
         }
       }
     } else if (stealVotes.length > 1) {
@@ -2849,15 +2849,15 @@ export class KalakGameEngine {
       for (const vote of stealVotes) {
         const award = awards.get(vote.playerId);
         if (award) {
-          award.fakeVotes += 45;
-          award.total += 45;
+          award.fakeVotes += 1;
+          award.total += 1;
         }
       }
       for (const vote of splitVotes) {
         const splitAward = awards.get(vote.playerId);
         if (splitAward) {
-          splitAward.correctSubmission += 25;
-          splitAward.total += 25;
+          splitAward.correctSubmission += 1;
+          splitAward.total += 1;
         }
       }
     } else {
@@ -2904,8 +2904,8 @@ export class KalakGameEngine {
       if (winningIds.has(vote.optionId)) {
         const award = awards.get(vote.playerId);
         if (award) {
-          award.correctVote += 130;
-          award.total += 130;
+          award.correctVote += 2;
+          award.total += 2;
         }
       }
     }
@@ -2945,8 +2945,8 @@ export class KalakGameEngine {
       if (option && !option.isTrap) {
         const award = awards.get(vote.playerId);
         if (award) {
-          award.correctVote += 100;
-          award.total += 100;
+          award.correctVote += 1;
+          award.total += 1;
         }
       }
     }
@@ -2994,8 +2994,8 @@ export class KalakGameEngine {
       if (majorityIds.has(vote.optionId)) {
         const award = awards.get(vote.playerId);
         if (award) {
-          award.correctVote += 100;
-          award.total += 100;
+          award.correctVote += 1;
+          award.total += 1;
         }
       }
     }
@@ -3050,8 +3050,8 @@ export class KalakGameEngine {
       for (const ownerId of option.ownerIds) {
         if (ownerId !== vote.playerId && awards.has(ownerId)) {
           const award = awards.get(ownerId);
-          award.fakeVotes += 70;
-          award.total += 70;
+          award.fakeVotes += 1;
+          award.total += 1;
         }
       }
     }
@@ -3060,8 +3060,8 @@ export class KalakGameEngine {
       for (const ownerId of option.ownerIds) {
         if (awards.has(ownerId)) {
           const award = awards.get(ownerId);
-          award.correctSubmission += 80;
-          award.total += 80;
+          award.correctSubmission += 1;
+          award.total += 1;
         }
       }
     }
@@ -3140,7 +3140,7 @@ export class KalakGameEngine {
 
     room.results = {
       correctAnswer: correctOption?.text || "",
-      summary: room.modeData?.explanation || "الإجابة الصحيحة تعطي 100 نقطة، والسرعة تضيف حتى 50 نقطة إضافية.",
+      summary: room.modeData?.explanation || "الإجابة الصحيحة تعطي 2 نقطة، والسرعة تضيف حتى 1 نقطة إضافية.",
       isFinal,
       votes,
       awards: [...awards.values()]
@@ -3183,8 +3183,8 @@ export class KalakGameEngine {
       const option = room.options.find((item) => item.id === vote.optionId);
       if (option?.isCorrect) {
         const award = awards.get(vote.playerId);
-        award.correctVote += 100;
-        award.total += 100;
+        award.correctVote += 1;
+        award.total += 1;
       }
     }
 

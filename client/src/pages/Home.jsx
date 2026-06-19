@@ -52,6 +52,15 @@ function normalizeRoomCode(value) {
   return raw.replace(/[^A-Z0-9]/g, "").slice(0, 5);
 }
 
+function dismissKeyboard(scope) {
+  const activeElement = scope?.querySelector?.("input:focus, textarea:focus, select:focus")
+    || globalThis.document?.activeElement;
+
+  if (typeof activeElement?.blur === "function") {
+    activeElement.blur();
+  }
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [config, setConfig] = useState({ minPlayers: 3, maxPlayers: 6 });
@@ -72,6 +81,7 @@ export default function Home() {
 
   function startPlay(event) {
     event?.preventDefault();
+    dismissKeyboard(event?.currentTarget?.closest?.("section"));
     clearRoomSessionCache();
     persistPlayer();
     navigate("/play");
@@ -79,6 +89,7 @@ export default function Home() {
 
   function joinRoom(event) {
     event.preventDefault();
+    dismissKeyboard(event.currentTarget);
     const code = normalizeRoomCode(joinCode);
     if (!code) {
       return;
@@ -150,6 +161,8 @@ export default function Home() {
               onChange={(event) => setPlayer((current) => ({ ...current, name: event.target.value }))}
               maxLength={28}
               placeholder="اسم اللاعب"
+              autoComplete="nickname"
+              enterKeyHint="next"
             />
           </label>
         </div>
@@ -169,12 +182,17 @@ export default function Home() {
                 onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
                 maxLength={160}
                 dir="ltr"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoComplete="one-time-code"
+                spellCheck={false}
+                enterKeyHint="go"
                 placeholder="اكتب كود الغرفة هنا"
               />
             </label>
             <button className="secondary-button" type="submit">
               <LogIn size={18} />
-              <span>دخول الغرفة</span>
+              <span>دخول</span>
             </button>
           </form>
         </div>

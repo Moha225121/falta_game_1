@@ -60,9 +60,9 @@ export default function App() {
         {showRoomMenu ? (
           <div className="topbar-room-controls">
             {showRoomShare ? (
-              <button className="topbar-room-share" type="button" onClick={shareRoomLink} aria-label="مشاركة رابط الغرفة">
+              <button className="topbar-room-share" type="button" onClick={shareRoomLink} aria-label={`مشاركة رابط الغرفة ${activeRoom.code}`}>
                 <Share2 size={18} />
-                <span>مشاركة</span>
+                <span>كود {activeRoom.code}</span>
               </button>
             ) : null}
             <button className="topbar-room-menu" type="button" onClick={openRoomMenu} aria-label="فتح قائمة الغرفة">

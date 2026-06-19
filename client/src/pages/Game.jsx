@@ -161,6 +161,15 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function dismissKeyboard(scope) {
+  const activeElement = scope?.querySelector?.("input:focus, textarea:focus, select:focus")
+    || globalThis.document?.activeElement;
+
+  if (typeof activeElement?.blur === "function") {
+    activeElement.blur();
+  }
+}
+
 function makeSessionId() {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID().replace(/-/g, "");
@@ -584,6 +593,7 @@ export default function Game() {
 
   function createRoom(event) {
     event?.preventDefault();
+    dismissKeyboard(event?.currentTarget?.form || event?.currentTarget?.closest?.("form"));
     if (!socket || !connected) {
       setError("الاتصال غير جاهز.");
       return;
@@ -602,6 +612,7 @@ export default function Game() {
 
   function joinRoom(event) {
     event.preventDefault();
+    dismissKeyboard(event.currentTarget);
     if (!socket || !connected) {
       setError("الاتصال غير جاهز.");
       return;
@@ -677,6 +688,7 @@ export default function Game() {
     if (!answer.trim()) {
       return;
     }
+    dismissKeyboard(event.currentTarget);
     perform(() => ack(socket, "answer:submit", { text: answer }).then((response) => {
       if (response.correctAnswerHit) {
         setRoom(response.room);
@@ -841,6 +853,7 @@ export default function Game() {
                     autoCapitalize="characters"
                     autoComplete="one-time-code"
                     spellCheck={false}
+                    enterKeyHint="go"
                     maxLength={160}
                     placeholder="اكتب كود الغرفة هنا"
                   />
@@ -1187,9 +1200,23 @@ function PlayerFields({ player, setPlayer }) {
           onChange={(event) => setPlayer((current) => ({ ...current, name: event.target.value }))}
           maxLength={28}
           placeholder="اسم اللاعب"
+          autoComplete="nickname"
+          enterKeyHint="next"
         />
       </label>
     </div>
+  );
+}
+
+function QuestionPrompt({ text }) {
+  const [title = "", ...notes] = String(text || "").split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const note = notes.join(" ");
+
+  return (
+    <h2 className="question-title">
+      {title}
+      {note ? <small className="question-note">{note}</small> : null}
+    </h2>
   );
 }
 
@@ -1365,7 +1392,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
             </div>
             <div>
               <strong>نقاط وسرعة</strong>
-              <span>الصحيح +100، والسرعة تضيف حتى +50.</span>
+              <span>الصحيح +2، والسرعة تضيف حتى +1.</span>
             </div>
           </div>
         ) : null}
@@ -1451,7 +1478,7 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
       <div className="stage-heading">
         <div>
           <span className="eyebrow">{room.question.category} · الجولة {room.round}/{room.settings.rounds}</span>
-          <h2>{room.question.prompt}</h2>
+          <QuestionPrompt text={room.question.prompt} />
         </div>
         <Timer
           className="answer-timer"
@@ -1492,6 +1519,7 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
             onChange={(event) => setAnswer(event.target.value)}
             maxLength={160}
             placeholder={placeholder}
+            enterKeyHint="send"
           />
           <button className="primary-button" type="submit" disabled={!connected || busy || !answer.trim()}>
             <ActionIcon loading={pendingAction === "answer"} icon={Send} />
@@ -1515,7 +1543,7 @@ function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connec
       <div className="stage-heading">
         <div>
           <span className="eyebrow">{room.question.category} · الجولة {room.round}/{room.settings.rounds}</span>
-          <h2>{room.question.prompt}</h2>
+          <QuestionPrompt text={room.question.prompt} />
         </div>
         <Timer
           className="answer-timer"
@@ -1545,7 +1573,10 @@ function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connec
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
             maxLength={20}
-            placeholder="write desc"
+            placeholder="اكتب وصفًا"
+            inputMode="text"
+            enterKeyHint="send"
+            autoComplete="off"
             autoFocus
           />
           <div className="imposter-clue-actions">
@@ -1619,7 +1650,7 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
               ? `الجولة ${meta.eventRound}/${meta.totalEventRounds} · السؤال ${meta.questionInRound}/${meta.questionsPerRound}`
               : `${room.question.category} · الجولة ${room.round}/${room.settings.rounds}`}
           </span>
-          <h2>{room.question.prompt}</h2>
+          <QuestionPrompt text={room.question.prompt} />
         </div>
         <Timer
           className="answer-timer"
@@ -1682,7 +1713,7 @@ function revealLabel(room, option = {}) {
   }
 
   if (mode === "judge_pick") {
-    return option.source === "game" ? "اختيار اللعبة - الحكم +200" : "اختيار الحكم";
+    return option.source === "game" ? "اختيار اللعبة - الحكم +3" : "اختيار الحكم";
   }
 
   if (mode === "target_guess") {
@@ -1725,11 +1756,36 @@ function revealOwnerLabel(room, option) {
   return option.ownerNames.length ? `كتبها: ${option.ownerNames.join("، ")}` : "بدون صاحب";
 }
 
+function awardDetails(award, scienceDay) {
+  if (scienceDay) {
+    const parts = [];
+    const basePoints = award.scienceDay?.basePoints || 0;
+    const speedBonus = award.scienceDay?.speedBonus || 0;
+    if (basePoints > 0) {
+      parts.push(`صحيح ${basePoints}`);
+    }
+    if (speedBonus > 0) {
+      parts.push(`سرعة ${speedBonus}`);
+    }
+    if (award.scienceDay?.responseSeconds !== undefined) {
+      parts.push(`${award.scienceDay.responseSeconds}ث`);
+    }
+    return parts.join(" · ");
+  }
+
+  return [
+    award.correctVote > 0 ? `صحيح ${award.correctVote}` : "",
+    award.fakeVotes > 0 ? `خداع ${award.fakeVotes}` : "",
+    award.correctSubmission > 0 ? `إجابة ${award.correctSubmission}` : ""
+  ].filter(Boolean).join(" · ");
+}
+
 function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
   const isFinal = room.results?.isFinal || room.round >= room.settings.rounds;
   const scienceDay = isScienceDayRoom(room);
   const isImposterMode = getActiveMode(room) === "imposter";
   const scienceMeta = scienceDay ? scienceDayMeta(room) : null;
+  const visibleAwards = (room.results.awards || []).filter((award) => award.total > 0);
   const nextLabel = scienceDay && scienceMeta?.nextRoundWillReset
     ? "بدء الجولة التالية وتصفير النقاط"
     : isFinal ? "إنهاء المباراة" : "الجولة التالية";
@@ -1741,7 +1797,7 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
           <span className="eyebrow">
             {scienceDay ? `نتيجة الجولة ${scienceMeta.eventRound} · السؤال ${scienceMeta.questionInRound}/${scienceMeta.questionsPerRound}` : "كشف الجولة"}
           </span>
-          <h2>{room.question.prompt}</h2>
+          <QuestionPrompt text={room.question.prompt} />
         </div>
         <span className="correct-chip">
           <Check size={17} />
@@ -1777,23 +1833,20 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
         ))}
       </div>
 
-      <div className="awards-grid">
-        {room.results.awards.map((award) => (
-          <div className="award-card" key={award.playerId}>
-            <strong>{award.name}</strong>
-            <span>+{award.total}</span>
-            {scienceDay ? (
-              <small>
-                صحيح {award.scienceDay?.basePoints || 0} · سرعة {award.scienceDay?.speedBonus || 0} · الوقت {award.scienceDay?.responseSeconds ?? "-"} ث
-              </small>
-            ) : (
-              <small>
-                صحيح {award.correctVote} · خداع {award.fakeVotes} · إجابة صحيحة {award.correctSubmission}
-              </small>
-            )}
-          </div>
-        ))}
-      </div>
+      {visibleAwards.length ? (
+        <div className="awards-grid">
+          {visibleAwards.map((award) => {
+            const details = awardDetails(award, scienceDay);
+            return (
+              <div className="award-card" key={award.playerId}>
+                <strong>{award.name}</strong>
+                <span>+{award.total}</span>
+                {details ? <small>{details}</small> : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
 
       {isHost ? (
         <button className="primary-button wide-button" type="button" onClick={onNext} disabled={!connected || busy}>
