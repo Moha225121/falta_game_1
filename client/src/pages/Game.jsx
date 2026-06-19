@@ -61,8 +61,8 @@ const SCIENCE_DAY_MODE = "science_day";
 const SCIENCE_DAY_TOTAL_QUESTIONS = 15;
 const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
-const SCIENCE_DAY_LIMU_LOGO = "/assets/limu-logo.png";
-const SCIENCE_DAY_BRAND_IMAGE = "/assets/science-day-brand.jpg";
+const SCIENCE_DAY_LIMU_LOGO = "/assets/limu-pga-mark.png";
+const SCIENCE_DAY_BRAND_IMAGE = "/assets/science-day-mark.png";
 const arabicNumberFormatter = new Intl.NumberFormat("ar-LY");
 
 function formatArabicNumber(value) {
@@ -1248,11 +1248,17 @@ function QuestionPrompt({ text }) {
 function ScienceDayBrandLockup({ compact = false }) {
   return (
     <div className={`science-day-brand-lockup ${compact ? "compact" : ""}`} aria-label="الجامعة الليبية الدولية واليوم العلمي">
-      <div className="science-day-limu-mark">
-        <img src={SCIENCE_DAY_LIMU_LOGO} alt="الجامعة الليبية الدولية" />
+      <div className="science-day-logo-item">
+        <div className="science-day-limu-mark">
+          <img src={SCIENCE_DAY_LIMU_LOGO} alt="" aria-hidden="true" />
+        </div>
+        <span className="science-day-logo-label">الجامعة الليبية الدولية</span>
       </div>
-      <div className="science-day-event-mark">
-        <img src={SCIENCE_DAY_BRAND_IMAGE} alt="اليوم العلمي لكلية الهندسة والتكنولوجيا" />
+      <div className="science-day-logo-item">
+        <div className="science-day-event-mark">
+          <img src={SCIENCE_DAY_BRAND_IMAGE} alt="" aria-hidden="true" />
+        </div>
+        <span className="science-day-logo-label">اليوم العلمي</span>
       </div>
     </div>
   );
