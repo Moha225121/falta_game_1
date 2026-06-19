@@ -45,6 +45,7 @@ const SCIENCE_DAY_SPEED_BONUS = 50;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
 const IMPOSTER_CLUE_SECONDS = 30;
 const IMPOSTER_CLUE_PASSES = 2;
+const IMPOSTER_CLUE_MAX_LENGTH = 20;
 const IMPOSTER_EMPTY_CLUE = "بدون وصف";
 const AVATAR_DEFAULT = {
   persona: "a1",
@@ -285,6 +286,10 @@ function cleanMessage(message) {
 
 function cleanAnswerText(text) {
   return String(text || "").trim().replace(/\s+/g, " ").slice(0, 160);
+}
+
+function cleanImposterClueText(text) {
+  return cleanAnswerText(text).slice(0, IMPOSTER_CLUE_MAX_LENGTH);
 }
 
 function cleanAvatarValue(value, choices, fallback) {
@@ -1173,7 +1178,7 @@ export class KalakGameEngine {
       throw new Error("ليس دورك الآن.");
     }
 
-    const text = cleanAnswerText(value);
+    const text = cleanImposterClueText(value);
     if (text.length < 1) {
       throw new Error("اكتب وصفًا أولًا.");
     }
@@ -1448,7 +1453,7 @@ export class KalakGameEngine {
     room.question = {
       id: `imposter_${room.round}`,
       category: "الدخيل",
-      prompt: "صف الكلمة بكلمة واحدة. كل لاعب عنده 30 ثانية، والدور يلف مرتين.",
+      prompt: "صف الكلمة بكلمة واحدة.",
       difficulty: "medium"
     };
     if (question && room.question.id.startsWith("imposter_")) {
@@ -1505,7 +1510,7 @@ export class KalakGameEngine {
     const data = room.modeData || {};
     const turnOrder = Array.isArray(data.turnOrder) ? data.turnOrder : [];
     const passIndex = turnOrder.length ? Math.floor((Number(data.turnIndex) || 0) / turnOrder.length) : 0;
-    const clue = cleanAnswerText(text) || IMPOSTER_EMPTY_CLUE;
+    const clue = cleanImposterClueText(text) || IMPOSTER_EMPTY_CLUE;
     const clues = data.clues && typeof data.clues === "object" ? data.clues : {};
     const playerClues = Array.isArray(clues[playerId]) ? [...clues[playerId]] : [];
 
@@ -2689,7 +2694,7 @@ export class KalakGameEngine {
         clue: option.clue,
         isCorrect: option.suspectId === imposterId,
         ownerIds: [option.suspectId],
-        ownerNames: [option.clue ? `الوصف: ${option.clue}` : "بدون وصف"],
+        ownerNames: [option.text],
         voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
       }))
     };

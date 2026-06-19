@@ -2094,7 +2094,7 @@ button:disabled {
 
 .imposter-turn-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   margin-bottom: 10px;
@@ -2123,26 +2123,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.imposter-turn-stats {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.imposter-turn-stats span,
-.imposter-clue-actions > span {
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px 10px;
-  color: #061114;
-  background: var(--gold);
-  border-radius: var(--radius);
-  font-weight: 950;
-}
-
 .imposter-clue-form {
   align-content: start;
 }
@@ -2156,7 +2136,7 @@ button:disabled {
 
 .imposter-clue-actions {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   align-items: center;
 }
@@ -2176,7 +2156,7 @@ button:disabled {
   min-width: 0;
   min-height: 44px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 7px;
   padding: 7px;
@@ -2192,11 +2172,6 @@ button:disabled {
   color: var(--ink);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.imposter-turn-player small {
-  color: var(--muted);
-  font-weight: 900;
 }
 
 .imposter-turn-player.current {
@@ -2231,34 +2206,27 @@ button:disabled {
 .imposter-clue-row {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(74px, 0.32fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 7px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 3px;
   padding: 7px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.06);
 }
 
-.imposter-clue-row strong,
 .imposter-clue-row small {
-  display: block;
-}
-
-.imposter-clue-row strong {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
   overflow: hidden;
-  color: var(--ink);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.imposter-clue-row small {
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-
 .imposter-clue-row p {
   min-width: 0;
+  margin: 0;
   color: #dffffb;
   font-weight: 850;
   line-height: 1.35;
@@ -3803,18 +3771,6 @@ button:disabled {
     padding: 8px;
   }
 
-  .imposter-turn-stats {
-    justify-content: stretch;
-  }
-
-  .imposter-turn-stats span,
-  .imposter-clue-actions > span {
-    width: auto;
-    min-height: 26px;
-    padding: 3px 8px;
-    font-size: 0.78rem;
-  }
-
   .imposter-clue-form input {
     min-height: 42px;
     padding: 0 10px;
@@ -3828,7 +3784,7 @@ button:disabled {
 
   .imposter-turn-player {
     min-height: 36px;
-    grid-template-columns: 22px minmax(0, 1fr) auto;
+    grid-template-columns: 22px minmax(0, 1fr);
     padding: 5px;
     gap: 5px;
     font-size: 0.78rem;
@@ -3858,24 +3814,13 @@ button:disabled {
   }
 
   .imposter-clue-row {
-    grid-template-columns: 20px minmax(0, 1fr);
-    gap: 5px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
     padding: 6px;
   }
 
   .imposter-clue-row p {
-    grid-column: 1 / -1;
     font-size: 0.8rem;
-  }
-
-  .imposter-clue-row .option-index {
-    width: 20px;
-    height: 20px;
-    font-size: 0.68rem;
-  }
-
-  .imposter-clue-row strong {
-    font-size: 0.78rem;
   }
 
   .imposter-clue-row small {
@@ -4255,24 +4200,12 @@ button:disabled {
   }
 
   .match-focus-screen .imposter-clue-actions {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 6px;
   }
 
-  .match-focus-screen .imposter-clue-actions > span {
-    min-width: 54px;
-  }
-
   .match-focus-screen .imposter-turn-card {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .match-focus-screen .imposter-turn-stats {
-    justify-content: flex-end;
-  }
-
-  .match-focus-screen .imposter-turn-stats span {
-    padding-inline: 6px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .match-focus-screen .imposter-turn-order,

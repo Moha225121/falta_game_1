@@ -1537,10 +1537,6 @@ function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connec
             <strong>{currentPlayerLabel}</strong>
           </div>
         </div>
-        <div className="imposter-turn-stats">
-          <span>الوصف {turn.pass}/{turn.passesPerPlayer}</span>
-          <span>{turn.turnNumber}/{turn.totalTurns}</span>
-        </div>
       </div>
 
       {isMyTurn ? (
@@ -1548,15 +1544,14 @@ function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connec
           <input
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
-            maxLength={160}
-            placeholder="يفضل كلمة واحدة، بس اكتب وصفك عادي"
+            maxLength={20}
+            placeholder="write desc"
             autoFocus
           />
           <div className="imposter-clue-actions">
-            <span>{answer.trim().length}/160</span>
             <button className="primary-button" type="submit" disabled={!connected || busy || !answer.trim()}>
               <ActionIcon loading={pendingAction === "answer"} icon={Send} />
-              <span>{pendingAction === "answer" ? "جاري الإرسال" : "إرسال الوصف"}</span>
+              <span>{pendingAction === "answer" ? "جاري الإرسال" : "إرسال"}</span>
             </button>
           </div>
         </form>
@@ -1564,7 +1559,7 @@ function ImposterAnswering({ room, me, answer, setAnswer, onSubmit, busy, connec
         <div className="locked-answer imposter-waiting">
           <Crown size={28} />
           <strong>دور {currentPlayerLabel}</strong>
-          <span>اسمع الوصف، وبعد ما تخلص اللفتين يبدأ التصويت.</span>
+          <span>اسمع وانتظر دورك.</span>
         </div>
       )}
 
@@ -1581,7 +1576,6 @@ function ImposterTurnOrder({ turn }) {
         <div className={`imposter-turn-player ${player.isCurrent ? "current" : ""} ${player.done ? "done" : ""}`} key={player.id}>
           <span className="option-index">{player.position}</span>
           <strong>{player.name}</strong>
-          <small>{player.clueCount}/{turn.passesPerPlayer}</small>
         </div>
       ))}
     </div>
@@ -1599,17 +1593,13 @@ function ImposterClueHistory({ history }) {
         <div className="imposter-clue-list">
           {history.map((item) => (
             <div className="imposter-clue-row" key={`${item.playerId}-${item.pass}`}>
-              <span className="option-index">{item.turnNumber}</span>
-              <div>
-                <strong>{item.playerName}</strong>
-                <small>الوصف {item.pass}</small>
-              </div>
               <p>{item.text}</p>
+              <small>{item.playerName}</small>
             </div>
           ))}
         </div>
       ) : (
-        <div className="empty-clue-history">أول وصف بيظهر هنا بعد ما يرسله اللاعب.</div>
+        <div className="empty-clue-history">ما في أوصاف بعد.</div>
       )}
     </div>
   );
@@ -1617,6 +1607,7 @@ function ImposterClueHistory({ history }) {
 
 function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connected, pendingAction }) {
   const scienceDay = isScienceDayRoom(room);
+  const isImposterMode = getActiveMode(room) === "imposter";
   const meta = scienceDayMeta(room);
   const monitorOnly = scienceDay && me?.canVote === false;
   return (
@@ -1662,8 +1653,8 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
           >
             <span className="option-index">{pendingAction === "vote" && selectedOption === option.id ? <Loader2 className="spin" size={16} /> : index + 1}</span>
             <span className="option-body">
-              <strong>{option.text}</strong>
-              {option.clue ? <small>الوصف: {option.clue}</small> : null}
+              <strong>{isImposterMode ? option.clue || "بدون وصف" : option.text}</strong>
+              {isImposterMode ? <small>{option.text}</small> : option.clue ? <small>{option.clue}</small> : null}
             </span>
             {option.isOwn ? <span className="mini-chip">إجابتك</span> : null}
           </button>
@@ -1737,6 +1728,7 @@ function revealOwnerLabel(room, option) {
 function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
   const isFinal = room.results?.isFinal || room.round >= room.settings.rounds;
   const scienceDay = isScienceDayRoom(room);
+  const isImposterMode = getActiveMode(room) === "imposter";
   const scienceMeta = scienceDay ? scienceDayMeta(room) : null;
   const nextLabel = scienceDay && scienceMeta?.nextRoundWillReset
     ? "بدء الجولة التالية وتصفير النقاط"
@@ -1767,11 +1759,13 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
         {room.results.revealedOptions.map((option) => (
           <div className={`reveal-row ${option.isCorrect ? "correct" : ""}`} key={option.id}>
             <div>
-              <strong>{option.text}</strong>
+              <strong>{isImposterMode ? option.clue || "بدون وصف" : option.text}</strong>
               <span>
-                {option.isCorrect
-                  ? revealLabel(room, option)
-                  : revealOwnerLabel(room, option)}
+                {isImposterMode
+                  ? option.text
+                  : option.isCorrect
+                    ? revealLabel(room, option)
+                    : revealOwnerLabel(room, option)}
               </span>
             </div>
             <div className="voter-stack">
