@@ -63,6 +63,11 @@ const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
 const SCIENCE_DAY_LIMU_LOGO = "/assets/limu-logo.png";
 const SCIENCE_DAY_BRAND_IMAGE = "/assets/science-day-brand.jpg";
+const arabicNumberFormatter = new Intl.NumberFormat("ar-LY");
+
+function formatArabicNumber(value) {
+  return arabicNumberFormatter.format(Number(value || 0));
+}
 
 function isScienceDayRoom(room) {
   return getActiveMode(room) === SCIENCE_DAY_MODE;
@@ -881,6 +886,8 @@ export default function Game() {
   const inMatch = activeMatchPhases.has(room.phase);
   const scienceDay = isScienceDayRoom(room);
   const scienceDayWaiting = scienceDay && room.phase === "lobby" && !isHost;
+  const showRoomShare = (!scienceDay && room.phase === "lobby") || (scienceDay && isHost);
+  const showMobileRoomCode = !scienceDay && room.phase === "lobby";
 
   return (
     <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${scienceDayWaiting ? "science-day-waiting-route" : ""}`}>
@@ -890,7 +897,7 @@ export default function Game() {
             <span className={`status-dot ${connected ? "online" : ""}`} />
             <span>{phaseLabels[room.phase]}</span>
           </div>
-          <h1>{scienceDay && inMatch ? "اليوم العلمي" : inMatch ? phaseLabels[room.phase] : <>غرفة <b dir="ltr">{room.code}</b></>}</h1>
+          <h1>{scienceDay ? "اليوم العلمي" : inMatch ? phaseLabels[room.phase] : <>غرفة <b dir="ltr">{room.code}</b></>}</h1>
         </div>
         <div className="room-actions">
           <button className="icon-text-button mobile-menu-trigger" type="button" onClick={() => setDrawerOpen(true)}>
@@ -904,7 +911,7 @@ export default function Game() {
                 <span>{pendingAction === "end" ? "جاري الإنهاء" : "إنهاء اللعبة"}</span>
               </button>
             ) : null}
-            {room.phase === "lobby" || scienceDay ? (
+            {showRoomShare ? (
               <button className="icon-text-button" type="button" onClick={copyCode}>
                 <Share2 size={17} />
                 <span>مشاركة الرابط</span>
@@ -918,7 +925,7 @@ export default function Game() {
         </div>
       </section>
 
-      {room.phase === "lobby" || scienceDay ? (
+      {showMobileRoomCode ? (
         <button className="mobile-room-share-card" type="button" onClick={copyCode}>
           <Share2 size={16} />
           <span>كود الغرفة</span>
@@ -1092,6 +1099,8 @@ function MatchDrawer({
   onEndGame,
   onLeave
 }) {
+  const scienceDay = isScienceDayRoom(room);
+  const canShareRoom = (!scienceDay && room.phase === "lobby") || (scienceDay && isHost);
   const tabs = [
     { id: "score", label: "الترتيب", icon: Trophy },
     { id: "players", label: "اللاعبون", icon: Users },
@@ -1134,7 +1143,7 @@ function MatchDrawer({
           {panel === "chat" ? <Chat messages={room.messages} onSend={onSendChat} connected={connected} sending={chatBusy} /> : null}
           {panel === "actions" ? (
             <div className="drawer-action-list">
-              {room.phase === "lobby" || isScienceDayRoom(room) ? (
+              {canShareRoom ? (
                 <button className="icon-text-button" type="button" onClick={onCopyCode}>
                   <Share2 size={17} />
                   <span>مشاركة الرابط</span>
@@ -1692,6 +1701,11 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
   const canChangeScienceAnswer = scienceDay && me?.voted && me?.canVote !== false;
   return (
     <section className={`panel stage-panel ${scienceDay ? "science-day-stage" : ""}`}>
+      {scienceDay && !isHost ? (
+        <div className="science-day-stage-brand">
+          <ScienceDayBrandLockup compact />
+        </div>
+      ) : null}
       <div className="stage-heading">
         <div>
           <span className="eyebrow">
@@ -1747,7 +1761,7 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
         ))}
       </div>
 
-      <ProgressStrip players={room.players} kind="voted" voting />
+      <ProgressStrip players={room.players} kind="voted" voting anonymous={scienceDay} />
     </section>
   );
 }
@@ -1835,18 +1849,41 @@ function awardDetails(award, scienceDay) {
   ].filter(Boolean).join(" · ");
 }
 
+function resultVoteTotal(room) {
+  const explicitVotes = room.results?.votes;
+  if (Array.isArray(explicitVotes)) {
+    return explicitVotes.length;
+  }
+
+  return (room.results?.revealedOptions || []).reduce((sum, option) => (
+    sum + (option.voterNames?.length || 0)
+  ), 0);
+}
+
+function voteSummaryLabel(option, totalVotes) {
+  const count = option.voterNames?.length || 0;
+  const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+  return `${formatArabicNumber(count)} صوت · ${formatArabicNumber(percentage)}%`;
+}
+
 function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
   const isFinal = room.results?.isFinal || room.round >= room.settings.rounds;
   const scienceDay = isScienceDayRoom(room);
   const isImposterMode = getActiveMode(room) === "imposter";
   const scienceMeta = scienceDay ? scienceDayMeta(room) : null;
   const visibleAwards = (room.results.awards || []).filter((award) => award.total > 0);
+  const totalVotes = resultVoteTotal(room);
   const nextLabel = scienceDay && scienceMeta?.nextRoundWillReset
     ? "بدء الجولة التالية وتصفير النقاط"
     : isFinal ? "إنهاء المباراة" : "الجولة التالية";
 
   return (
     <section className={`panel stage-panel results-stage ${scienceDay ? "science-day-stage" : ""}`}>
+      {scienceDay && !isHost ? (
+        <div className="science-day-stage-brand">
+          <ScienceDayBrandLockup compact />
+        </div>
+      ) : null}
       <div className="stage-heading">
         <div>
           <span className="eyebrow">
@@ -1879,10 +1916,8 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
                     : revealOwnerLabel(room, option)}
               </span>
             </div>
-            <div className="voter-stack">
-              {option.voterNames.length ? option.voterNames.map((name) => (
-                <span key={name}>{name}</span>
-              )) : <span>لا أصوات</span>}
+            <div className="voter-stack anonymous-vote-summary">
+              <span>{voteSummaryLabel(option, totalVotes)}</span>
             </div>
           </div>
         ))}
@@ -1979,7 +2014,7 @@ function Toast({ type, icon: Icon, message, onClose }) {
   );
 }
 
-function ProgressStrip({ players, kind, voting = false, answering = false }) {
+function ProgressStrip({ players, kind, voting = false, answering = false, anonymous = false }) {
   const activePlayers = players.filter((player) => {
     if (player.eliminated) {
       return false;
@@ -1993,18 +2028,24 @@ function ProgressStrip({ players, kind, voting = false, answering = false }) {
     return true;
   });
   const done = activePlayers.filter((player) => player[kind]).length;
+  const percentage = activePlayers.length ? Math.round((done / activePlayers.length) * 100) : 0;
 
   return (
     <div className="progress-strip">
-      <span>{done}/{activePlayers.length}</span>
+      <span>
+        {formatArabicNumber(done)}/{formatArabicNumber(activePlayers.length)}
+        {anonymous ? ` · ${formatArabicNumber(percentage)}%` : ""}
+      </span>
       <div className="progress-track">
         <i style={{ width: `${activePlayers.length ? (done / activePlayers.length) * 100 : 0}%` }} />
       </div>
-      <div className="mini-player-list">
-        {activePlayers.map((player) => (
-          <span className={player[kind] ? "ready" : ""} key={player.id}>{player.name}</span>
-        ))}
-      </div>
+      {!anonymous ? (
+        <div className="mini-player-list">
+          {activePlayers.map((player) => (
+            <span className={player[kind] ? "ready" : ""} key={player.id}>{player.name}</span>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
