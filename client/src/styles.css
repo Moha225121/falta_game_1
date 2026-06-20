@@ -1006,6 +1006,59 @@ button:disabled {
   font-size: 2.2rem;
 }
 
+.round-splash-card.science-day-round-splash-card {
+  width: min(460px, calc(100vw - 36px));
+  min-height: 230px;
+  gap: 10px;
+  color: #0a345b;
+  background:
+    linear-gradient(135deg, rgba(32, 162, 184, 0.14), rgba(10, 52, 91, 0.06)),
+    #ffffff;
+  border-color: rgba(10, 52, 91, 0.18);
+  box-shadow: 0 30px 80px rgba(10, 52, 91, 0.24), inset 0 0 0 1px rgba(255, 255, 255, 0.82);
+}
+
+.round-splash-card.science-day-round-splash-card::before {
+  background:
+    linear-gradient(90deg, transparent, rgba(10, 52, 91, 0.08), transparent),
+    repeating-linear-gradient(90deg, rgba(10, 52, 91, 0.035) 0 1px, transparent 1px 18px);
+}
+
+.round-splash-card.science-day-round-splash-card .round-splash-kicker {
+  color: #146b8a;
+  font-size: 0.88rem;
+}
+
+.round-splash-card.science-day-round-splash-card strong {
+  width: auto;
+  min-width: 128px;
+  height: auto;
+  padding: 13px 18px;
+  color: #ffffff;
+  background: #0a345b;
+  border-radius: var(--radius);
+  font-size: 2.35rem;
+  box-shadow: 0 16px 34px rgba(10, 52, 91, 0.18);
+  direction: ltr;
+}
+
+.round-splash-card.science-day-round-splash-card h2 {
+  color: #071d35;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.round-splash-card.science-day-round-splash-card .round-splash-meta {
+  max-width: min(340px, 100%);
+  padding: 8px 11px;
+  color: #0a345b;
+  background: #edf6fb;
+  border: 1px solid rgba(10, 52, 91, 0.14);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .round-strip {
   min-height: 74px;
   position: relative;

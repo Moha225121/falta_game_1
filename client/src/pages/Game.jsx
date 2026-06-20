@@ -1237,11 +1237,26 @@ function RoundSplash({ splash, gameModes }) {
 
   return (
     <div className="round-splash" aria-live="polite">
-      <div className="round-splash-card">
-        <span className="round-splash-kicker">{isScienceDay ? "اليوم العلمي" : "الجولة الآن"}</span>
-        <strong>{isScienceDay ? questionInRound : splash.round}</strong>
-        <h2>{gameModeName(gameModes, splash.mode)}</h2>
-        <span className="round-splash-meta">{isScienceDay ? `${setOption.label} · ${eventRound}/${SCIENCE_DAY_TOTAL_SETS}` : `${splash.round}/${splash.rounds}`}</span>
+      <div className={`round-splash-card ${isScienceDay ? "science-day-round-splash-card" : ""}`}>
+        {isScienceDay ? (
+          <>
+            <span className="round-splash-kicker">اليوم العلمي</span>
+            <strong>{`${formatArabicNumber(questionInRound)}/${formatArabicNumber(SCIENCE_DAY_QUESTIONS_PER_SET)}`}</strong>
+            <h2>{setOption.label}</h2>
+            <span className="round-splash-meta">
+              السؤال {formatArabicNumber(questionInRound)} من {formatArabicNumber(SCIENCE_DAY_QUESTIONS_PER_SET)}
+              {" · "}
+              المجموعة {formatArabicNumber(eventRound)} من {formatArabicNumber(SCIENCE_DAY_TOTAL_SETS)}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="round-splash-kicker">الجولة الآن</span>
+            <strong>{splash.round}</strong>
+            <h2>{gameModeName(gameModes, splash.mode)}</h2>
+            <span className="round-splash-meta">{`${splash.round}/${splash.rounds}`}</span>
+          </>
+        )}
       </div>
     </div>
   );

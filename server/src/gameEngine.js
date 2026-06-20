@@ -361,6 +361,14 @@ function scienceDayQuestionMatchesSet(set) {
   return (question) => scienceDayQuestionSet(question) === cleanSet;
 }
 
+function scienceDayQuestionOrder(question = {}) {
+  const match = String(question.id || "").match(/q_science_day_set[12]_(\d+)$/);
+  if (!match) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+  return Number(match[1]) || Number.MAX_SAFE_INTEGER;
+}
+
 function codedError(message, code) {
   const error = new Error(message);
   error.code = code;
@@ -1317,6 +1325,17 @@ export class KalakGameEngine {
     return this.cleanModes(room.settings)[0];
   }
 
+  async scienceDayQuestionForRound(room) {
+    const questions = (await this.store.list({ mode: SCIENCE_DAY_MODE, active: true }))
+      .filter(scienceDayQuestionMatchesSet(room.settings.scienceDaySet))
+      .sort((a, b) => (
+        scienceDayQuestionOrder(a) - scienceDayQuestionOrder(b)
+        || String(a.id).localeCompare(String(b.id))
+      ));
+    const index = scienceDayQuestionNumber(room.round) - 1;
+    return questions[index] || null;
+  }
+
   async startRound(room) {
     this.clearTimer(room);
     const mode = this.selectModeForRound(room);
@@ -1367,14 +1386,12 @@ export class KalakGameEngine {
     room.options = [];
     room.correctWriterIds = [];
     room.results = null;
-    const setFilter = mode === SCIENCE_DAY_MODE
-      ? scienceDayQuestionMatchesSet(room.settings.scienceDaySet)
-      : null;
-    const content = await this.store.random({
-      mode,
-      excludeIds: room.usedQuestionIds,
-      filter: setFilter
-    });
+    const content = mode === SCIENCE_DAY_MODE
+      ? await this.scienceDayQuestionForRound(room)
+      : await this.store.random({
+        mode,
+        excludeIds: room.usedQuestionIds
+      });
 
     if (content) {
       room.usedQuestionIds.push(content.id);
