@@ -1448,6 +1448,10 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
   const canIncreaseRounds = connected && isHost && room.settings.rounds < limits.max;
 
   function updateModes(nextModes) {
+    if (scienceDay) {
+      return;
+    }
+
     const modes = selectedModeIds(nextModes);
     if (modes.includes(SCIENCE_DAY_MODE)) {
       const nonScienceModes = modes.filter((mode) => mode !== SCIENCE_DAY_MODE);
@@ -1541,15 +1545,31 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
           <Settings size={18} />
           <h2>الإعدادات</h2>
         </div>
-        <div className="settings-categories">
-          <span className="field-label">طور اللعبة</span>
-          <GameModePicker
-            modes={gameModes}
-            selected={selectedModes}
-            onChange={updateModes}
-            disabled={!connected || !isHost}
-          />
-        </div>
+        {scienceDay ? (
+          <div className="settings-categories science-day-mode-lock">
+            <span className="field-label">طور اللعبة</span>
+            <div className="science-day-locked-mode">
+              <span className="science-day-locked-icon">
+                <Sparkles size={18} />
+              </span>
+              <div>
+                <strong>اليوم العلمي</strong>
+                <span>طور الفعالية الحالي</span>
+              </div>
+              <span className="mini-chip">مثبت</span>
+            </div>
+          </div>
+        ) : (
+          <div className="settings-categories">
+            <span className="field-label">طور اللعبة</span>
+            <GameModePicker
+              modes={gameModes}
+              selected={selectedModes}
+              onChange={updateModes}
+              disabled={!connected || !isHost}
+            />
+          </div>
+        )}
         {scienceDay ? (
           <div className="science-day-rule-grid">
             <div>

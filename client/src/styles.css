@@ -2276,6 +2276,54 @@ button:disabled {
   display: none;
 }
 
+.science-day-mode-lock {
+  gap: 8px;
+}
+
+.science-day-locked-mode {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: #0a345b;
+  background:
+    linear-gradient(135deg, rgba(32, 162, 184, 0.10), rgba(10, 52, 91, 0.055)),
+    #ffffff;
+  border: 1px solid rgba(10, 52, 91, 0.16);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 24px rgba(10, 52, 91, 0.07);
+}
+
+.science-day-locked-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  color: #ffffff;
+  background: #0a345b;
+  border-radius: var(--radius);
+}
+
+.science-day-locked-mode div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.science-day-locked-mode strong {
+  color: #071d35;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.science-day-locked-mode div span {
+  color: #52677d;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
 .science-day-rule-grid,
 .science-day-podium {
   display: grid;
