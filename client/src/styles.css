@@ -703,6 +703,10 @@ button:disabled {
   box-shadow: 0 0 0 3px rgba(18, 214, 197, 0.22), 0 12px 34px rgba(0, 0, 0, 0.22);
 }
 
+.answer-option:focus:not(:focus-visible) {
+  outline: 0;
+}
+
 .wide-button {
   width: 100%;
 }
@@ -1654,6 +1658,12 @@ button:disabled {
   outline: 2px solid rgba(10, 52, 91, 0.10);
 }
 
+.science-day-theme .answer-option:focus:not(:focus-visible):not(.selected) {
+  background: #ffffff;
+  border-color: rgba(10, 52, 91, 0.15);
+  box-shadow: 0 10px 24px rgba(10, 52, 91, 0.07);
+}
+
 .science-day-theme .option-index,
 .science-day-theme .rank,
 .science-day-theme .science-day-podium-card .rank {
@@ -2163,6 +2173,56 @@ button:disabled {
   border-radius: 6px;
 }
 
+.science-day-set-picker {
+  width: 100%;
+  display: grid;
+  gap: 7px;
+}
+
+.science-day-set-option {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 7px 9px;
+  color: #0a345b;
+  background: #f4f9fd;
+  border: 1px solid rgba(10, 52, 91, 0.14);
+  border-radius: var(--radius);
+  font-weight: 950;
+  line-height: 1.25;
+}
+
+.science-day-set-option input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #0a345b;
+}
+
+.science-day-set-option.selected {
+  color: #ffffff;
+  background: #0a345b;
+  border-color: #0a345b;
+}
+
+.science-day-set-option.selected input {
+  accent-color: #20a2b8;
+}
+
+.science-day-set-option:has(input:disabled) {
+  cursor: default;
+}
+
+.science-day-set-option:not(:has(input:disabled)) {
+  cursor: pointer;
+}
+
+.science-day-invite.compact .science-day-set-picker {
+  display: none;
+}
+
 .science-day-rule-grid,
 .science-day-podium {
   display: grid;
@@ -2220,6 +2280,21 @@ button:disabled {
   border-radius: var(--radius);
   font-size: 0.84rem;
   font-weight: 850;
+}
+
+.science-day-finished-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  color: #0a345b;
+  background: #f3f8fc;
+  border: 1px solid rgba(10, 52, 91, 0.14);
+  border-radius: var(--radius);
+  font-weight: 900;
+  line-height: 1.6;
+  text-align: center;
 }
 
 .science-day-next-button {
@@ -2831,6 +2906,8 @@ button:disabled {
   background: rgba(255, 255, 255, 0.075);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
   animation: optionEnter 300ms ease both;
 }

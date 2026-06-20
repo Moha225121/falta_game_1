@@ -37,9 +37,16 @@ const BOT_COLORS = ["#12d6c5", "#ff3f98", "#f6b84a", "#62df6c", "#8c6cff"];
 const BOT_MARKS = ["spark", "diamond", "crown", "bolt", "circle"];
 const MAX_TOTAL_ROUNDS = 20;
 const SCIENCE_DAY_MODE = "science_day";
-const SCIENCE_DAY_TOTAL_ROUNDS = 3;
-const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
-const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_ROUNDS * SCIENCE_DAY_QUESTIONS_PER_ROUND;
+const SCIENCE_DAY_TOTAL_SETS = 2;
+const SCIENCE_DAY_QUESTIONS_PER_SET = 7;
+const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_SETS * SCIENCE_DAY_QUESTIONS_PER_SET;
+const SCIENCE_DAY_SET_ONE = "set1";
+const SCIENCE_DAY_SET_TWO = "set2";
+const SCIENCE_DAY_SET_IDS = new Set([SCIENCE_DAY_SET_ONE, SCIENCE_DAY_SET_TWO]);
+const SCIENCE_DAY_SET_LABELS = {
+  [SCIENCE_DAY_SET_ONE]: "المجموعة الأولى",
+  [SCIENCE_DAY_SET_TWO]: "المجموعة الثانية"
+};
 const SCIENCE_DAY_CORRECT_POINTS = 2;
 const SCIENCE_DAY_SPEED_BONUS = 1;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
@@ -321,32 +328,37 @@ function isScienceDayRoom(room) {
   return room?.settings?.mode === SCIENCE_DAY_MODE || room?.activeMode === SCIENCE_DAY_MODE;
 }
 
-function scienceDayRoundNumber(round) {
-  return Math.floor((Math.max(1, Number(round) || 1) - 1) / SCIENCE_DAY_QUESTIONS_PER_ROUND) + 1;
+function cleanScienceDaySet(value) {
+  const set = String(value || "").trim();
+  return SCIENCE_DAY_SET_IDS.has(set) ? set : SCIENCE_DAY_SET_ONE;
+}
+
+function scienceDaySetNumber(value) {
+  return cleanScienceDaySet(value) === SCIENCE_DAY_SET_TWO ? 2 : 1;
+}
+
+function scienceDaySetLabel(value) {
+  return SCIENCE_DAY_SET_LABELS[cleanScienceDaySet(value)];
 }
 
 function scienceDayQuestionNumber(round) {
-  return ((Math.max(1, Number(round) || 1) - 1) % SCIENCE_DAY_QUESTIONS_PER_ROUND) + 1;
+  return ((Math.max(1, Number(round) || 1) - 1) % SCIENCE_DAY_QUESTIONS_PER_SET) + 1;
 }
 
-function topScienceDayPlayers(room) {
-  return [...room.players.values()]
-    .filter((player) => !player.isBot && player.id !== room.hostId)
-    .sort((a, b) => (
-      b.score - a.score
-      || (a.scienceDayTotalMs || 0) - (b.scienceDayTotalMs || 0)
-      || a.joinedAt - b.joinedAt
-    ))
-    .slice(0, 3)
-    .map((player, index) => ({
-      rank: index + 1,
-      id: player.id,
-      name: player.name,
-      avatar: player.avatar,
-      score: player.score,
-      correctCount: player.scienceDayCorrectCount || 0,
-      timeSeconds: Number(((player.scienceDayTotalMs || 0) / 1000).toFixed(1))
-    }));
+function scienceDayQuestionSet(question = {}) {
+  const tags = Array.isArray(question.tags) ? question.tags.map((tag) => String(tag).trim()) : [];
+  if (tags.includes("science-day-set-2") || tags.includes("المجموعة الثانية")) {
+    return SCIENCE_DAY_SET_TWO;
+  }
+  if (tags.includes("science-day-set-1") || tags.includes("المجموعة الأولى")) {
+    return SCIENCE_DAY_SET_ONE;
+  }
+  return "";
+}
+
+function scienceDayQuestionMatchesSet(set) {
+  const cleanSet = cleanScienceDaySet(set);
+  return (question) => scienceDayQuestionSet(question) === cleanSet;
 }
 
 function codedError(message, code) {
@@ -1253,15 +1265,6 @@ export class KalakGameEngine {
       return { room: this.publicRoom(room, playerId) };
     }
 
-    if (this.currentMode(room) === SCIENCE_DAY_MODE && room.results?.scienceDay?.nextRoundWillReset) {
-      for (const player of room.players.values()) {
-        player.score = 0;
-        player.scienceDayCorrectCount = 0;
-        player.scienceDayTotalMs = 0;
-      }
-      this.addSystemMessage(room, `بدأت الجولة العلمية ${scienceDayRoundNumber(room.round + 1)}. تم تصفير النقاط.`);
-    }
-
     await this.startRound(room);
     return { room: this.publicRoom(room, playerId) };
   }
@@ -1364,9 +1367,13 @@ export class KalakGameEngine {
     room.options = [];
     room.correctWriterIds = [];
     room.results = null;
+    const setFilter = mode === SCIENCE_DAY_MODE
+      ? scienceDayQuestionMatchesSet(room.settings.scienceDaySet)
+      : null;
     const content = await this.store.random({
       mode,
-      excludeIds: room.usedQuestionIds
+      excludeIds: room.usedQuestionIds,
+      filter: setFilter
     });
 
     if (content) {
@@ -1895,7 +1902,8 @@ export class KalakGameEngine {
       throw new Error("أسئلة اليوم العلمي تحتاج خيارات وإجابة صحيحة.");
     }
 
-    const eventRound = scienceDayRoundNumber(room.round);
+    const selectedSet = cleanScienceDaySet(room.settings.scienceDaySet);
+    const eventRound = scienceDaySetNumber(selectedSet);
     const questionInRound = scienceDayQuestionNumber(room.round);
     const startedAt = Date.now();
     room.settings.voteSeconds = SCIENCE_DAY_QUESTION_SECONDS;
@@ -1903,10 +1911,12 @@ export class KalakGameEngine {
     room.phase = "voting";
     room.modeData = {
       modeType: SCIENCE_DAY_MODE,
+      selectedSet,
+      setLabel: scienceDaySetLabel(selectedSet),
       eventRound,
       questionInRound,
-      questionsPerRound: SCIENCE_DAY_QUESTIONS_PER_ROUND,
-      totalEventRounds: SCIENCE_DAY_TOTAL_ROUNDS,
+      questionsPerRound: SCIENCE_DAY_QUESTIONS_PER_SET,
+      totalEventRounds: SCIENCE_DAY_TOTAL_SETS,
       startedAt,
       explanation: content.explanation || ""
     };
@@ -3099,13 +3109,14 @@ export class KalakGameEngine {
     this.clearTimer(room);
 
     const awards = this.baseAwards(room);
-    const votes = this.publicVotes(room);
     const correctOption = room.options.find((option) => option.isCorrect);
-    const scoringPlayerIds = new Set([...room.players.values()]
-      .filter((player) => !player.isBot && player.id !== room.hostId)
-      .map((player) => player.id));
     const durationMs = Math.max(1, Number(room.settings.voteSeconds || 0) * 1000);
     const startedAt = Number(room.modeData?.startedAt) || Math.max(0, Number(room.phaseEndsAt || Date.now()) - durationMs);
+    const voteCounts = new Map();
+
+    for (const vote of room.votes.values()) {
+      voteCounts.set(vote.optionId, (voteCounts.get(vote.optionId) || 0) + 1);
+    }
 
     for (const vote of room.votes.values()) {
       const option = room.options.find((item) => item.id === vote.optionId);
@@ -3138,31 +3149,27 @@ export class KalakGameEngine {
 
     this.applyAwards(room, awards);
 
-    const eventRound = room.modeData?.eventRound || scienceDayRoundNumber(room.round);
+    const selectedSet = cleanScienceDaySet(room.modeData?.selectedSet || room.settings.scienceDaySet);
+    const eventRound = room.modeData?.eventRound || scienceDaySetNumber(selectedSet);
     const questionInRound = room.modeData?.questionInRound || scienceDayQuestionNumber(room.round);
-    const roundComplete = questionInRound >= SCIENCE_DAY_QUESTIONS_PER_ROUND;
-    const isFinal = room.round >= SCIENCE_DAY_TOTAL_QUESTIONS;
-    const topPlayers = topScienceDayPlayers(room);
+    const roundComplete = questionInRound >= SCIENCE_DAY_QUESTIONS_PER_SET;
+    const isFinal = room.round >= room.settings.rounds;
 
     room.results = {
       correctAnswer: correctOption?.text || "",
       summary: room.modeData?.explanation || "الإجابة الصحيحة تعطي 2 نقطة، والسرعة تضيف حتى 1 نقطة إضافية.",
       isFinal,
-      votes,
-      awards: [...awards.values()]
-        .filter((award) => scoringPlayerIds.has(award.playerId) && (award.total > 0 || room.votes.has(award.playerId)))
-        .sort((a, b) => (
-          b.total - a.total
-          || (a.scienceDay?.responseMs ?? Number.MAX_SAFE_INTEGER) - (b.scienceDay?.responseMs ?? Number.MAX_SAFE_INTEGER)
-        )),
+      votes: [],
+      awards: [],
       scienceDay: {
+        selectedSet,
+        setLabel: scienceDaySetLabel(selectedSet),
         eventRound,
         questionInRound,
-        questionsPerRound: SCIENCE_DAY_QUESTIONS_PER_ROUND,
-        totalEventRounds: SCIENCE_DAY_TOTAL_ROUNDS,
+        questionsPerRound: SCIENCE_DAY_QUESTIONS_PER_SET,
+        totalEventRounds: SCIENCE_DAY_TOTAL_SETS,
         roundComplete,
-        nextRoundWillReset: roundComplete && !isFinal,
-        topPlayers
+        nextRoundWillReset: false
       },
       revealedOptions: room.options.map((option) => ({
         id: option.id,
@@ -3170,7 +3177,8 @@ export class KalakGameEngine {
         isCorrect: option.isCorrect,
         ownerIds: [],
         ownerNames: [],
-        voterNames: votes.filter((vote) => vote.optionId === option.id).map((vote) => vote.voterName)
+        voteCount: voteCounts.get(option.id) || 0,
+        voterNames: []
       }))
     };
     room.phase = "results";
@@ -3435,7 +3443,8 @@ export class KalakGameEngine {
         modes: [SCIENCE_DAY_MODE],
         category: "all",
         categories: [],
-        rounds: SCIENCE_DAY_TOTAL_QUESTIONS,
+        rounds: SCIENCE_DAY_QUESTIONS_PER_SET,
+        scienceDaySet: cleanScienceDaySet(input.scienceDaySet),
         answerSeconds: this.config.answerSeconds,
         voteSeconds: SCIENCE_DAY_QUESTION_SECONDS
       };

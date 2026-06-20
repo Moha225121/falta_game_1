@@ -58,9 +58,14 @@ const roomCodeLength = 5;
 const activeMatchPhases = new Set(["answering", "voting", "results"]);
 const joinRetryDelays = [350, 800, 1400, 2200];
 const SCIENCE_DAY_MODE = "science_day";
-const SCIENCE_DAY_TOTAL_QUESTIONS = 15;
-const SCIENCE_DAY_QUESTIONS_PER_ROUND = 5;
+const SCIENCE_DAY_TOTAL_SETS = 2;
+const SCIENCE_DAY_QUESTIONS_PER_SET = 7;
+const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_SETS * SCIENCE_DAY_QUESTIONS_PER_SET;
 const SCIENCE_DAY_QUESTION_SECONDS = 20;
+const SCIENCE_DAY_SET_OPTIONS = [
+  { id: "set1", label: "المجموعة الأولى" },
+  { id: "set2", label: "المجموعة الثانية" }
+];
 const SCIENCE_DAY_LIMU_LOGO = "/assets/limu-pga-mark.png";
 const SCIENCE_DAY_BRAND_IMAGE = "/assets/science-day-mark.png";
 const arabicNumberFormatter = new Intl.NumberFormat("ar-LY");
@@ -77,6 +82,14 @@ function scienceDayContestants(room) {
   return (room?.players || []).filter((player) => !player.isHost && !player.isBot);
 }
 
+function scienceDaySetOption(value) {
+  return SCIENCE_DAY_SET_OPTIONS.find((option) => option.id === value) || SCIENCE_DAY_SET_OPTIONS[0];
+}
+
+function scienceDaySetNumber(value) {
+  return scienceDaySetOption(value).id === "set2" ? 2 : 1;
+}
+
 function scienceDayMeta(room) {
   const resultMeta = room?.results?.scienceDay;
   if (resultMeta) {
@@ -84,12 +97,15 @@ function scienceDayMeta(room) {
   }
 
   const round = Math.max(1, Number(room?.round || 1));
+  const setOption = scienceDaySetOption(room?.settings?.scienceDaySet);
   return {
-    eventRound: Math.floor((round - 1) / SCIENCE_DAY_QUESTIONS_PER_ROUND) + 1,
-    questionInRound: ((round - 1) % SCIENCE_DAY_QUESTIONS_PER_ROUND) + 1,
-    questionsPerRound: SCIENCE_DAY_QUESTIONS_PER_ROUND,
-    totalEventRounds: 3,
-    roundComplete: round % SCIENCE_DAY_QUESTIONS_PER_ROUND === 0
+    selectedSet: setOption.id,
+    setLabel: setOption.label,
+    eventRound: scienceDaySetNumber(setOption.id),
+    questionInRound: ((round - 1) % SCIENCE_DAY_QUESTIONS_PER_SET) + 1,
+    questionsPerRound: SCIENCE_DAY_QUESTIONS_PER_SET,
+    totalEventRounds: SCIENCE_DAY_TOTAL_SETS,
+    roundComplete: round % SCIENCE_DAY_QUESTIONS_PER_SET === 0
   };
 }
 
@@ -449,7 +465,8 @@ export default function Game() {
           key: roundKey,
           round: nextRoom.round,
           rounds: nextRoom.settings.rounds,
-          mode: activeMode
+          mode: activeMode,
+          scienceDaySet: nextRoom.settings.scienceDaySet
         });
         roundSplashTimer.current = setTimeout(() => {
           setRoundSplash((current) => current?.key === roundKey ? null : current);
@@ -1000,6 +1017,7 @@ export default function Game() {
           code={room.code}
           playerCount={scienceDayContestants(room).filter((player) => player.connected !== false).length}
           onShare={copyCode}
+          selectedSet={room.settings.scienceDaySet}
           compact
         />
       ) : null}
@@ -1213,8 +1231,9 @@ function RoundSplash({ splash, gameModes }) {
   }
 
   const isScienceDay = splash.mode === SCIENCE_DAY_MODE;
-  const eventRound = Math.floor((Math.max(1, splash.round) - 1) / SCIENCE_DAY_QUESTIONS_PER_ROUND) + 1;
-  const questionInRound = ((Math.max(1, splash.round) - 1) % SCIENCE_DAY_QUESTIONS_PER_ROUND) + 1;
+  const setOption = scienceDaySetOption(splash.scienceDaySet);
+  const eventRound = scienceDaySetNumber(setOption.id);
+  const questionInRound = ((Math.max(1, splash.round) - 1) % SCIENCE_DAY_QUESTIONS_PER_SET) + 1;
 
   return (
     <div className="round-splash" aria-live="polite">
@@ -1222,7 +1241,7 @@ function RoundSplash({ splash, gameModes }) {
         <span className="round-splash-kicker">{isScienceDay ? "اليوم العلمي" : "الجولة الآن"}</span>
         <strong>{isScienceDay ? questionInRound : splash.round}</strong>
         <h2>{gameModeName(gameModes, splash.mode)}</h2>
-        <span className="round-splash-meta">{isScienceDay ? `الجولة ${eventRound}/3` : `${splash.round}/${splash.rounds}`}</span>
+        <span className="round-splash-meta">{isScienceDay ? `${setOption.label} · ${eventRound}/${SCIENCE_DAY_TOTAL_SETS}` : `${splash.round}/${splash.rounds}`}</span>
       </div>
     </div>
   );
@@ -1239,14 +1258,14 @@ function RoundStrip({ room, gameModes }) {
       <div className="round-strip-main">
         <span className="round-number">{room.round}</span>
         <div>
-          <span>{scienceDay ? `الجولة ${meta.eventRound}/${meta.totalEventRounds}` : "الطور الحالي"}</span>
+          <span>{scienceDay ? `${meta.setLabel || "المجموعة"} ${meta.eventRound}/${meta.totalEventRounds}` : "الطور الحالي"}</span>
           <strong>{scienceDay ? `السؤال ${meta.questionInRound}/${meta.questionsPerRound}` : gameModeName(gameModes, mode)}</strong>
         </div>
       </div>
       <div className="round-progress">
         <i style={{ width: `${progress}%` }} />
       </div>
-      <span className="counter-chip">{scienceDay ? `${room.round}/${SCIENCE_DAY_TOTAL_QUESTIONS}` : `الجولة ${room.round}/${room.settings.rounds}`}</span>
+      <span className="counter-chip">{scienceDay ? `${room.round}/${room.settings.rounds || SCIENCE_DAY_QUESTIONS_PER_SET}` : `الجولة ${room.round}/${room.settings.rounds}`}</span>
     </div>
   );
 }
@@ -1321,8 +1340,17 @@ function ScienceDayWaitingScreen({ playerName }) {
   );
 }
 
-function ScienceDayInviteCard({ code, playerCount, onShare, compact = false }) {
+function ScienceDayInviteCard({
+  code,
+  playerCount,
+  onShare,
+  compact = false,
+  selectedSet = "set1",
+  canEditSet = false,
+  onSetChange = null
+}) {
   const inviteUrl = roomInviteUrl(code);
+  const selectedSetOption = scienceDaySetOption(selectedSet);
   const [qrCode, setQrCode] = useState("");
 
   useEffect(() => {
@@ -1374,6 +1402,19 @@ function ScienceDayInviteCard({ code, playerCount, onShare, compact = false }) {
       <div className="science-day-qr">
         {qrCode ? <img src={qrCode} alt="QR لدخول اليوم العلمي" /> : <Loader2 className="spin" size={38} />}
         <span>{playerCount} مشارك متصل</span>
+        <div className="science-day-set-picker" role="group" aria-label="اختيار مجموعة أسئلة اليوم العلمي">
+          {SCIENCE_DAY_SET_OPTIONS.map((option) => (
+            <label className={`science-day-set-option ${selectedSetOption.id === option.id ? "selected" : ""}`} key={option.id}>
+              <input
+                type="checkbox"
+                checked={selectedSetOption.id === option.id}
+                disabled={!canEditSet}
+                onChange={() => onSetChange?.(option.id)}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -1402,7 +1443,12 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
         return;
       }
 
-      onUpdate({ modes: [SCIENCE_DAY_MODE], rounds: SCIENCE_DAY_TOTAL_QUESTIONS, categories: [] });
+      onUpdate({
+        modes: [SCIENCE_DAY_MODE],
+        rounds: SCIENCE_DAY_QUESTIONS_PER_SET,
+        categories: [],
+        scienceDaySet: scienceDaySetOption(room.settings.scienceDaySet).id
+      });
       return;
     }
 
@@ -1432,7 +1478,14 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
       </div>
 
       {scienceDay ? (
-        <ScienceDayInviteCard code={room.code} playerCount={connectedSciencePlayers.length} onShare={onShare} />
+        <ScienceDayInviteCard
+          code={room.code}
+          playerCount={connectedSciencePlayers.length}
+          onShare={onShare}
+          selectedSet={room.settings.scienceDaySet}
+          canEditSet={isHost && connected && !busy}
+          onSetChange={(scienceDaySet) => onUpdate({ scienceDaySet })}
+        />
       ) : null}
 
       {isHost && !scienceDay ? (
@@ -1485,16 +1538,16 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
         {scienceDay ? (
           <div className="science-day-rule-grid">
             <div>
-              <strong>3 جولات</strong>
-              <span>كل جولة فيها 5 أسئلة.</span>
+              <strong>مجموعتان</strong>
+              <span>اختر المجموعة الأولى أو الثانية من بطاقة QR.</span>
             </div>
             <div>
-              <strong>15 سؤال</strong>
-              <span>{SCIENCE_DAY_QUESTION_SECONDS} ثانية لكل سؤال عن الذكاء الاصطناعي، IT، والهندسة.</span>
+              <strong>{SCIENCE_DAY_TOTAL_QUESTIONS} سؤال</strong>
+              <span>كل تشغيل يعرض {SCIENCE_DAY_QUESTIONS_PER_SET} أسئلة فقط، ومدة كل سؤال {SCIENCE_DAY_QUESTION_SECONDS} ثانية.</span>
             </div>
             <div>
-              <strong>نقاط وسرعة</strong>
-              <span>الصحيح +2، والسرعة تضيف حتى +1.</span>
+              <strong>نتائج واضحة</strong>
+              <span>الطلاب يشاهدون النسب والأعداد والإجابة الصحيحة بدون أسماء.</span>
             </div>
           </div>
         ) : null}
@@ -1756,7 +1809,7 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
         <div>
           <span className="eyebrow">
             {scienceDay
-              ? `الجولة ${meta.eventRound}/${meta.totalEventRounds} · السؤال ${meta.questionInRound}/${meta.questionsPerRound}`
+              ? `${meta.setLabel || "المجموعة"} ${meta.eventRound}/${meta.totalEventRounds} · السؤال ${meta.questionInRound}/${meta.questionsPerRound}`
               : `${room.question.category} · الجولة ${room.round}/${room.settings.rounds}`}
           </span>
           <QuestionPrompt text={room.question.prompt} />
@@ -1795,7 +1848,10 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
             key={option.id}
             type="button"
             disabled={!connected || busy || (!scienceDay && me?.voted) || option.isOwn || me?.canVote === false}
-            onClick={() => onVote(option.id)}
+            onClick={(event) => {
+              event.currentTarget.blur();
+              onVote(option.id);
+            }}
           >
             <span className="option-index">{pendingAction === "vote" && activeOption === option.id ? <Loader2 className="spin" size={16} /> : index + 1}</span>
             <span className="option-body">
@@ -1896,18 +1952,24 @@ function awardDetails(award, scienceDay) {
 }
 
 function resultVoteTotal(room) {
+  const revealedTotal = (room.results?.revealedOptions || []).reduce((sum, option) => (
+    sum + (Number.isFinite(option.voteCount) ? option.voteCount : option.voterNames?.length || 0)
+  ), 0);
+
+  if (revealedTotal > 0) {
+    return revealedTotal;
+  }
+
   const explicitVotes = room.results?.votes;
-  if (Array.isArray(explicitVotes)) {
+  if (Array.isArray(explicitVotes) && explicitVotes.length > 0) {
     return explicitVotes.length;
   }
 
-  return (room.results?.revealedOptions || []).reduce((sum, option) => (
-    sum + (option.voterNames?.length || 0)
-  ), 0);
+  return 0;
 }
 
 function voteSummaryLabel(option, totalVotes) {
-  const count = option.voterNames?.length || 0;
+  const count = Number.isFinite(option.voteCount) ? option.voteCount : option.voterNames?.length || 0;
   const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
   return `${formatArabicNumber(count)} صوت · ${formatArabicNumber(percentage)}%`;
 }
@@ -1917,11 +1979,9 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
   const scienceDay = isScienceDayRoom(room);
   const isImposterMode = getActiveMode(room) === "imposter";
   const scienceMeta = scienceDay ? scienceDayMeta(room) : null;
-  const visibleAwards = (room.results.awards || []).filter((award) => award.total > 0);
+  const visibleAwards = scienceDay ? [] : (room.results.awards || []).filter((award) => award.total > 0);
   const totalVotes = resultVoteTotal(room);
-  const nextLabel = scienceDay && scienceMeta?.nextRoundWillReset
-    ? "بدء الجولة التالية وتصفير النقاط"
-    : isFinal ? "إنهاء المباراة" : "الجولة التالية";
+  const nextLabel = isFinal ? "إنهاء المباراة" : "الجولة التالية";
 
   return (
     <section className={`panel stage-panel results-stage ${scienceDay ? "science-day-stage" : ""}`}>
@@ -1933,7 +1993,7 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
       <div className="stage-heading">
         <div>
           <span className="eyebrow">
-            {scienceDay ? `نتيجة الجولة ${scienceMeta.eventRound} · السؤال ${scienceMeta.questionInRound}/${scienceMeta.questionsPerRound}` : "كشف الجولة"}
+            {scienceDay ? `نتيجة ${scienceMeta.setLabel || "المجموعة"} · السؤال ${scienceMeta.questionInRound}/${scienceMeta.questionsPerRound}` : "كشف الجولة"}
           </span>
           <QuestionPrompt text={room.question.prompt} />
         </div>
@@ -1943,24 +2003,22 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
         </span>
       </div>
 
-      {room.results.summary ? <p className="result-summary">{room.results.summary}</p> : null}
-
-      {scienceDay && scienceMeta?.roundComplete ? (
-        <ScienceDayTopThree players={scienceMeta.topPlayers || []} final={isFinal} />
-      ) : null}
+      {room.results.summary && !scienceDay ? <p className="result-summary">{room.results.summary}</p> : null}
 
       <div className="reveal-list">
         {room.results.revealedOptions.map((option) => (
           <div className={`reveal-row ${option.isCorrect ? "correct" : ""}`} key={option.id}>
             <div>
               <strong>{isImposterMode ? option.clue || "بدون وصف" : option.text}</strong>
-              <span>
-                {isImposterMode
-                  ? option.text
-                  : option.isCorrect
-                    ? revealLabel(room, option)
-                    : revealOwnerLabel(room, option)}
-              </span>
+              {scienceDay && !option.isCorrect ? null : (
+                <span>
+                  {isImposterMode
+                    ? option.text
+                    : option.isCorrect
+                      ? revealLabel(room, option)
+                      : revealOwnerLabel(room, option)}
+                </span>
+              )}
             </div>
             <div className="voter-stack anonymous-vote-summary">
               <span>{voteSummaryLabel(option, totalVotes)}</span>
@@ -1994,52 +2052,25 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
   );
 }
 
-function ScienceDayTopThree({ players = [], final = false }) {
-  return (
-    <div className="science-day-top">
-      <div>
-        <span className="eyebrow">{final ? "أفضل 3 في الجولة الأخيرة" : "أفضل 3 في هذه الجولة"}</span>
-        <h3>{final ? "نهاية اليوم العلمي" : "النتيجة قبل تصفير النقاط"}</h3>
-      </div>
-      <div className="science-day-podium">
-        {players.length ? players.map((player, index) => (
-          <div className="science-day-podium-card" key={player.id}>
-            <span className="rank">{player.rank || index + 1}</span>
-            <Avatar avatar={player.avatar} name={player.name} />
-            <strong>{player.name}</strong>
-            <b>{player.score} نقطة</b>
-            <small>{player.correctCount || 0} صحيحة · {player.timeSeconds || 0} ث</small>
-          </div>
-        )) : (
-          <div className="science-day-podium-card">
-            <strong>لا توجد نقاط بعد</strong>
-            <b>0 نقطة</b>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function Finished({ room, onHome }) {
   const winner = room.players[0];
   const scienceDay = isScienceDayRoom(room);
-  const finalTop = room.results?.scienceDay?.topPlayers || scienceDayContestants(room).slice(0, 3).map((player, index) => ({
-    ...player,
-    rank: index + 1,
-    correctCount: player.scienceDayCorrectCount || 0,
-    timeSeconds: player.scienceDayTimeSeconds || 0
-  }));
+  const scienceMeta = scienceDay ? scienceDayMeta(room) : null;
 
   return (
     <section className="panel stage-panel final-stage">
       <div className="winner-block">
         <Crown size={42} />
         <span>{scienceDay ? "انتهى اليوم العلمي" : "الفائز"}</span>
-        <h2>{scienceDay ? "أفضل المشاركين" : winner?.name}</h2>
-        <strong>{scienceDay ? "3 جولات مكتملة" : `${winner?.score || 0} نقطة`}</strong>
+        <h2>{scienceDay ? "انتهت المجموعة" : winner?.name}</h2>
+        <strong>{scienceDay ? `${scienceMeta?.setLabel || "المجموعة"} · ${formatArabicNumber(room.settings.rounds || SCIENCE_DAY_QUESTIONS_PER_SET)} أسئلة` : `${winner?.score || 0} نقطة`}</strong>
       </div>
-      {scienceDay ? <ScienceDayTopThree players={finalTop} final /> : <Scoreboard players={room.players} />}
+      {scienceDay ? (
+        <div className="science-day-finished-note">
+          <Check size={20} />
+          <span>تم إنهاء هذه المجموعة. لبدء المجموعة الأخرى، يختار المشرف المجموعة من QR ثم يدخل الطلاب مرة ثانية.</span>
+        </div>
+      ) : <Scoreboard players={room.players} />}
       <button className="secondary-button wide-button" type="button" onClick={onHome}>
         <ArrowLeft size={18} />
         <span>العودة</span>

@@ -766,12 +766,18 @@ export class QuestionStore {
     return result.changes > 0;
   }
 
-  async random({ mode = "kalak", category = "all", categories = [], excludeIds = [] } = {}) {
+  async random({ mode = "kalak", category = "all", categories = [], excludeIds = [], filter = null } = {}) {
     let questions = await this.list({ mode, category, categories, active: true });
+    if (typeof filter === "function") {
+      questions = questions.filter(filter);
+    }
     questions = questions.filter((question) => !excludeIds.includes(question.id));
 
     if (questions.length === 0 && excludeIds.length > 0) {
       questions = await this.list({ mode, category, categories, active: true });
+      if (typeof filter === "function") {
+        questions = questions.filter(filter);
+      }
     }
 
     if (questions.length === 0) {
