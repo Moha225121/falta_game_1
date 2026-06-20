@@ -1944,12 +1944,12 @@ export class KalakGameEngine {
       correctAnswer: correct,
       difficulty: contentDifficulty(question)
     };
-    room.options = shuffle(options.map((text) => ({
+    room.options = options.map((text) => ({
       id: nanoid(8),
       text,
       isCorrect: text === correct,
       ownerIds: []
-    })));
+    }));
     room.phaseEndsAt = startedAt + room.settings.voteSeconds * 1000;
     room.timer = setTimeout(() => this.finishVoting(room.code), room.settings.voteSeconds * 1000);
     this.emitRoom(room);
