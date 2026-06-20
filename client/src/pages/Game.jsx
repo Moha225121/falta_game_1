@@ -309,6 +309,12 @@ export default function Game() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [resettingReloadSession, setResettingReloadSession] = useState(() => Boolean(roomCode && navigationWasReload()));
+  const [inviteRoomMode, setInviteRoomMode] = useState("");
+  const directInviteCode = !resettingReloadSession && location.state?.mode !== "join"
+    ? normalizeRoomCodeInput(roomCode)
+    : "";
+  const isInviteEntry = Boolean(directInviteCode);
+  const scienceDayInviteEntry = isInviteEntry && inviteRoomMode === SCIENCE_DAY_MODE;
 
   useEffect(() => {
     clearRoomSessionCache();
@@ -316,6 +322,34 @@ export default function Game() {
     api("/game-modes").then(setGameModes).catch(() => {});
     api("/config").then(setConfig).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!directInviteCode || room?.code) {
+      setInviteRoomMode("");
+      return () => {
+        active = false;
+      };
+    }
+
+    setInviteRoomMode("");
+    api(`/rooms/${directInviteCode}`).then((previewRoom) => {
+      if (!active) {
+        return;
+      }
+
+      setInviteRoomMode(getActiveMode(previewRoom) === SCIENCE_DAY_MODE ? SCIENCE_DAY_MODE : "");
+    }).catch(() => {
+      if (active) {
+        setInviteRoomMode("");
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [directInviteCode, room?.code]);
 
   useEffect(() => {
     if (!resettingReloadSession) {
@@ -559,16 +593,20 @@ export default function Game() {
   const me = useMemo(() => room?.players.find((item) => item.id === room.me?.playerId), [room]);
   const isHost = Boolean(room?.me?.isHost);
   useEffect(() => {
+    const activeMode = room ? getActiveMode(room) : inviteRoomMode;
+
     window.dispatchEvent(new CustomEvent("kalak:room-active", {
       detail: {
         active: Boolean(room),
         code: room?.code || "",
         phase: room?.phase || "",
-        mode: getActiveMode(room) || "",
-        waitingOnly: Boolean(isScienceDayRoom(room) && room?.phase === "lobby" && !room?.me?.isHost)
+        mode: activeMode || "",
+        waitingOnly: room
+          ? Boolean(isScienceDayRoom(room) && room.phase === "lobby" && !room.me?.isHost)
+          : activeMode === SCIENCE_DAY_MODE
       }
     }));
-  }, [room?.activeMode, room?.code, room?.me?.isHost, room?.phase, room?.settings?.mode]);
+  }, [inviteRoomMode, room?.activeMode, room?.code, room?.me?.isHost, room?.phase, room?.settings?.mode]);
 
   useEffect(() => () => {
     window.dispatchEvent(new CustomEvent("kalak:room-active", {
@@ -808,22 +846,24 @@ export default function Game() {
       });
   }
 
-  const directInviteCode = !resettingReloadSession && location.state?.mode !== "join"
-    ? normalizeRoomCodeInput(roomCode)
-    : "";
-  const isInviteEntry = Boolean(directInviteCode);
-
   if (!room) {
     return (
-      <main className="game-screen setup-screen">
+      <main className={`game-screen setup-screen ${scienceDayInviteEntry ? "science-day-theme science-day-invite-entry" : ""}`}>
         <section className="setup-copy">
+          {scienceDayInviteEntry ? (
+            <div className="science-day-entry-brand">
+              <ScienceDayBrandLockup />
+            </div>
+          ) : null}
           <div className="hero-kicker">
             {connected ? <Check size={18} /> : <Loader2 className="spin" size={18} />}
             <span>{connected ? "متصل" : "جاري الاتصال"}</span>
           </div>
-          <h1>{isInviteEntry ? "اكتب اسمك" : "ادخل اللعب"}</h1>
+          <h1>{scienceDayInviteEntry ? "اليوم العلمي" : isInviteEntry ? "اكتب اسمك" : "ادخل اللعب"}</h1>
           <p>
-            {isInviteEntry
+            {scienceDayInviteEntry
+              ? "اكتب اسمك واختار بطاقتك للدخول مباشرة إلى فعالية اليوم العلمي."
+              : isInviteEntry
               ? "الرابط جاهز، اختار بطاقتك واضغط دخول للغرفة."
               : "اختار بطاقتك مرة واحدة، وبعدها افتح غرفة أو ادخل بكود."}
           </p>
@@ -849,7 +889,7 @@ export default function Game() {
               {isInviteEntry ? (
                 <div className="invite-ready-card">
                   <Share2 size={18} />
-                  <span>رابط الغرفة جاهز</span>
+                  <span>{scienceDayInviteEntry ? "رابط اليوم العلمي جاهز" : "رابط الغرفة جاهز"}</span>
                 </div>
               ) : (
                 <label>

@@ -1446,6 +1446,101 @@ button:disabled {
   backdrop-filter: blur(10px);
 }
 
+.science-day-invite-entry {
+  width: min(1040px, 100%);
+  align-items: center;
+}
+
+.science-day-invite-entry .setup-copy {
+  color: #08233f;
+  text-shadow: none;
+}
+
+.science-day-entry-brand {
+  margin-bottom: 16px;
+}
+
+.science-day-invite-entry .hero-kicker {
+  color: #146b8a;
+}
+
+.science-day-invite-entry .setup-copy h1 {
+  color: #0a345b;
+}
+
+.science-day-invite-entry .setup-copy p {
+  color: #52677d;
+  font-weight: 800;
+}
+
+.science-day-theme label,
+.science-day-theme .field-label {
+  color: #52677d;
+}
+
+.science-day-theme input,
+.science-day-theme select,
+.science-day-theme textarea {
+  color: #08233f;
+  background: #ffffff;
+  border-color: rgba(10, 52, 91, 0.16);
+}
+
+.science-day-theme input:focus,
+.science-day-theme select:focus,
+.science-day-theme textarea:focus {
+  background: #ffffff;
+  border-color: #146b8a;
+  box-shadow: 0 0 0 3px rgba(20, 107, 138, 0.14);
+}
+
+.science-day-theme select option,
+.science-day-theme select optgroup {
+  color: #08233f;
+  background: #ffffff;
+}
+
+.science-day-theme .avatar-carousel,
+.science-day-theme .avatar-tools,
+.science-day-theme .avatar-choice,
+.science-day-theme .avatar-nav,
+.science-day-theme .avatar-tune-button,
+.science-day-theme .mark-button {
+  color: #08233f;
+  background: #f8fbff;
+  border-color: rgba(10, 52, 91, 0.14);
+}
+
+.science-day-theme .avatar-nav:hover,
+.science-day-theme .avatar-tune-button:hover,
+.science-day-theme .avatar-tune-button[aria-pressed="true"],
+.science-day-theme .avatar-choice:hover,
+.science-day-theme .avatar-choice.active,
+.science-day-theme .mark-button.active {
+  border-color: rgba(10, 52, 91, 0.34);
+  background: #eaf4fb;
+  box-shadow: 0 10px 24px rgba(10, 52, 91, 0.10);
+}
+
+.science-day-theme .avatar-dots button {
+  background: rgba(10, 52, 91, 0.20);
+}
+
+.science-day-theme .avatar-dots button.active {
+  background: #0a345b;
+}
+
+.science-day-theme .swatch.active,
+.science-day-theme .mark-button.active {
+  outline-color: #0a345b;
+}
+
+.science-day-theme .invite-ready-card {
+  color: #0a345b;
+  background: #eaf4fb;
+  border-color: rgba(10, 52, 91, 0.16);
+}
+
 .science-day-theme .stage-panel::before {
   opacity: 0.62;
   background:
@@ -4015,6 +4110,18 @@ button:disabled {
   .home-screen .home-table-scene,
   .setup-screen .setup-copy p {
     display: none;
+  }
+
+  .science-day-invite-entry .setup-copy p {
+    display: block;
+    max-width: 40ch;
+    margin-top: 8px;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  .science-day-invite-entry .science-day-entry-brand {
+    margin-bottom: 8px;
   }
 
   .home-screen .hero-kicker,
