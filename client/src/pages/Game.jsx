@@ -157,27 +157,70 @@ function persistPlayer(player) {
   return { ...player, name: cleanName };
 }
 
-function clearRoomSessionCache() {
-  const roomKeys = [
-    "kalak:room",
-    "kalak:roomCode",
-    "kalak:sessionId",
-    "kalak:playerId"
-  ];
+const roomSessionKeys = [
+  "kalak:room",
+  "kalak:roomCode",
+  "kalak:sessionId",
+  "kalak:playerId"
+];
 
-  for (const key of roomKeys) {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
+function storageGet(storage, key) {
+  try {
+    return storage?.getItem?.(key) || "";
+  } catch {
+    return "";
   }
 }
 
-function navigationWasReload() {
-  const navigation = globalThis.performance?.getEntriesByType?.("navigation")?.[0];
-  if (navigation?.type === "reload") {
-    return true;
+function storageSet(storage, key, value) {
+  try {
+    storage?.setItem?.(key, value);
+  } catch {
+    // Ignore private-mode or quota storage failures.
+  }
+}
+
+function storageRemove(storage, key) {
+  try {
+    storage?.removeItem?.(key);
+  } catch {
+    // Ignore private-mode storage failures.
+  }
+}
+
+function readRoomSessionCache() {
+  const code = normalizeRoomCodeInput(
+    storageGet(sessionStorage, "kalak:roomCode") || storageGet(localStorage, "kalak:roomCode")
+  );
+  const sessionId = String(
+    storageGet(sessionStorage, "kalak:sessionId") || storageGet(localStorage, "kalak:sessionId")
+  ).trim();
+  const playerId = String(
+    storageGet(sessionStorage, "kalak:playerId") || storageGet(localStorage, "kalak:playerId") || sessionId
+  ).trim();
+
+  return { code, sessionId, playerId };
+}
+
+function writeRoomSessionCache({ code, sessionId, playerId }) {
+  const cleanCode = normalizeRoomCodeInput(code);
+  const cleanSessionId = String(sessionId || playerId || "").trim();
+  const cleanPlayerId = String(playerId || cleanSessionId).trim();
+
+  if (!cleanCode || !cleanSessionId) {
+    return;
   }
 
-  return globalThis.performance?.navigation?.type === 1;
+  storageSet(sessionStorage, "kalak:roomCode", cleanCode);
+  storageSet(sessionStorage, "kalak:sessionId", cleanSessionId);
+  storageSet(sessionStorage, "kalak:playerId", cleanPlayerId);
+}
+
+function clearRoomSessionCache() {
+  for (const key of roomSessionKeys) {
+    storageRemove(localStorage, key);
+    storageRemove(sessionStorage, key);
+  }
 }
 
 function delay(ms) {
@@ -307,7 +350,11 @@ export default function Game() {
   const lastImposterTurnKey = useRef("");
   const roundSplashTimer = useRef(null);
   const playZoneRef = useRef(null);
-  const [sessionId, setSessionId] = useState(() => makeSessionId());
+  const [sessionId, setSessionId] = useState(() => {
+    const cached = readRoomSessionCache();
+    const code = normalizeRoomCodeInput(roomCode);
+    return cached.sessionId && (!code || cached.code === code) ? cached.sessionId : makeSessionId();
+  });
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -324,16 +371,14 @@ export default function Game() {
   const [chatBusy, setChatBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [resettingReloadSession, setResettingReloadSession] = useState(() => Boolean(roomCode && navigationWasReload()));
   const [inviteRoomMode, setInviteRoomMode] = useState("");
-  const directInviteCode = !resettingReloadSession && location.state?.mode !== "join"
+  const directInviteCode = location.state?.mode !== "join"
     ? normalizeRoomCodeInput(roomCode)
     : "";
   const isInviteEntry = Boolean(directInviteCode);
   const scienceDayInviteEntry = isInviteEntry && inviteRoomMode === SCIENCE_DAY_MODE;
 
   useEffect(() => {
-    clearRoomSessionCache();
     api("/categories").then(setCategories).catch(() => setCategories([]));
     api("/game-modes").then(setGameModes).catch(() => {});
     api("/config").then(setConfig).catch(() => {});
@@ -368,27 +413,6 @@ export default function Game() {
   }, [directInviteCode, room?.code]);
 
   useEffect(() => {
-    if (!resettingReloadSession) {
-      return;
-    }
-
-    clearRoomSessionCache();
-    lastAutoKey.current = "";
-    setRoom(null);
-    setJoinCode("");
-    setAnswer("");
-    setSelectedOption("");
-    setNotice("");
-    navigate("/play", { replace: true, state: null });
-  }, [navigate, resettingReloadSession]);
-
-  useEffect(() => {
-    if (resettingReloadSession && !roomCode) {
-      setResettingReloadSession(false);
-    }
-  }, [resettingReloadSession, roomCode]);
-
-  useEffect(() => {
     function openRoomMenu() {
       if (!room) {
         return;
@@ -401,26 +425,6 @@ export default function Game() {
     globalThis.addEventListener?.("kalak:open-room-menu", openRoomMenu);
     return () => globalThis.removeEventListener?.("kalak:open-room-menu", openRoomMenu);
   }, [room]);
-
-  useEffect(() => {
-    window.addEventListener("pagehide", clearRoomSessionCache);
-    return () => window.removeEventListener("pagehide", clearRoomSessionCache);
-  }, []);
-
-  useEffect(() => {
-    const code = room?.code || "";
-    const playerId = room?.me?.playerId || "";
-
-    function leaveRoomOnUnload() {
-      clearRoomSessionCache();
-      if (code && playerId && socket?.connected) {
-        socket.emit("room:leave", { code, playerId });
-      }
-    }
-
-    window.addEventListener("beforeunload", leaveRoomOnUnload);
-    return () => window.removeEventListener("beforeunload", leaveRoomOnUnload);
-  }, [room?.code, room?.me?.playerId, socket]);
 
   useEffect(() => {
     if (!error) {
@@ -454,6 +458,14 @@ export default function Game() {
     const onState = (nextRoom) => {
       setRoom(nextRoom);
       setError("");
+      if (nextRoom?.code && nextRoom?.me?.playerId) {
+        writeRoomSessionCache({
+          code: nextRoom.code,
+          sessionId: nextRoom.me.playerId,
+          playerId: nextRoom.me.playerId
+        });
+        setSessionId((current) => current === nextRoom.me.playerId ? current : nextRoom.me.playerId);
+      }
       const activeMode = getActiveMode(nextRoom);
       const roundKey = `${nextRoom.round}:${activeMode}`;
       const canShowSplash = nextRoom.round > 0 && ["answering", "voting"].includes(nextRoom.phase);
@@ -500,6 +512,7 @@ export default function Game() {
 
     const onError = (payload) => setError(payload.error || "حدث خطأ غير متوقع.");
     const onKicked = (payload) => {
+      clearRoomSessionCache();
       setRoom(null);
       setSelectedOption("");
       setAnswer("");
@@ -541,12 +554,13 @@ export default function Game() {
       return;
     }
 
-    if (resettingReloadSession) {
-      return;
-    }
-
     const state = location.state;
-    const activeCode = room?.code || (state?.mode === "join" ? roomCode : "") || state?.code || "";
+    const routeCode = normalizeRoomCodeInput(roomCode);
+    const cachedSession = readRoomSessionCache();
+    const cachedCode = cachedSession.code && (!routeCode || cachedSession.code === routeCode)
+      ? cachedSession.code
+      : "";
+    const activeCode = room?.code || (state?.mode === "join" ? roomCode : "") || state?.code || cachedCode;
     const code = normalizeRoomCodeInput(activeCode);
 
     if (state?.mode === "create" && !room) {
@@ -571,16 +585,21 @@ export default function Game() {
       return;
     }
 
-    const shouldAutoJoin = Boolean(room || state?.mode === "join" || state?.code);
+    const cachedSessionId = cachedSession.code === code ? cachedSession.sessionId : "";
+    const nextSessionId = cachedSessionId || sessionId;
+    const shouldAutoJoin = Boolean(room || state?.mode === "join" || state?.code || cachedSessionId);
     if (!shouldAutoJoin) {
       return;
     }
 
     const nextPlayer = persistPlayer(loadPlayer(state));
     setPlayer(nextPlayer);
-    const shouldRestore = Boolean(room?.code === code);
+    if (nextSessionId !== sessionId) {
+      setSessionId(nextSessionId);
+    }
+    const shouldRestore = Boolean(room?.code === code || cachedSessionId);
     const event = shouldRestore ? "room:restore" : "room:join";
-    const key = `${event}:${socket.id}:${code}:${sessionId}`;
+    const key = `${event}:${socket.id}:${code}:${nextSessionId}`;
     if (lastAutoKey.current === key) {
       return;
     }
@@ -590,14 +609,19 @@ export default function Game() {
       code,
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
-      sessionId
+      sessionId: nextSessionId
     }).then((response) => {
       navigate(`/play/${response.room.code}`, { replace: true, state: null });
+    }).catch((caught) => {
+      if (caught?.code === "SESSION_MISSING" || caught?.code === "ROOM_UNAVAILABLE") {
+        clearRoomSessionCache();
+      }
+      throw caught;
     }), shouldRestore ? "restore" : "join");
-  }, [connected, location.state, navigate, resettingReloadSession, room?.code, roomCode, sessionId, socket]);
+  }, [connected, location.state, navigate, room?.code, roomCode, sessionId, socket]);
 
   useEffect(() => {
-    if (room || resettingReloadSession || location.state?.mode === "join") {
+    if (room || location.state?.mode === "join") {
       return;
     }
 
@@ -605,7 +629,7 @@ export default function Game() {
     if (code && joinCode !== code) {
       setJoinCode(code);
     }
-  }, [joinCode, location.state, resettingReloadSession, room, roomCode]);
+  }, [joinCode, location.state, room, roomCode]);
 
   const me = useMemo(() => room?.players.find((item) => item.id === room.me?.playerId), [room]);
   const isHost = Boolean(room?.me?.isHost);
