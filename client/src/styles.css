@@ -5209,3 +5209,198 @@ button:disabled {
     padding: 8px;
   }
 }
+
+/* Science Day play screens need stricter sizing so timer, question, and choices never collide. */
+.science-day-theme .science-day-stage {
+  align-content: start;
+}
+
+.science-day-theme .science-day-stage .stage-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px 12px;
+}
+
+.science-day-theme .science-day-stage .stage-heading h2 {
+  font-size: clamp(1.02rem, 1.8vw, 1.34rem);
+  line-height: 1.32;
+}
+
+.science-day-theme .science-day-stage .stage-heading .eyebrow {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.science-day-theme .science-day-stage .question-note {
+  font-size: 0.66em;
+  line-height: 1.42;
+}
+
+.science-day-theme .science-day-stage .answer-timer {
+  min-width: 112px;
+  min-height: 48px;
+  padding: 0 10px;
+}
+
+.science-day-theme .science-day-stage .answer-timer .timer-ring {
+  width: 34px;
+  height: 34px;
+}
+
+.science-day-theme .science-day-stage .answer-timer .timer-ring svg {
+  width: 16px;
+  height: 16px;
+}
+
+.science-day-theme .science-day-stage .answer-timer .timer-copy strong {
+  font-size: 1.24rem;
+}
+
+.science-day-theme .science-day-stage .science-day-change-note {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.science-day-theme .science-day-stage .options-grid,
+.science-day-theme .science-day-stage .reveal-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 8px;
+}
+
+.science-day-theme .science-day-stage .answer-option {
+  grid-template-columns: 26px minmax(0, 1fr);
+  min-height: 50px;
+  padding: 8px;
+}
+
+.science-day-theme .science-day-stage .option-index {
+  width: 26px;
+  height: 26px;
+  font-size: 0.76rem;
+}
+
+.science-day-theme .science-day-stage .option-body strong {
+  font-size: 0.88rem;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+
+.science-day-theme .science-day-stage .correct-chip {
+  max-width: min(320px, 42vw);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.science-day-theme .science-day-stage .reveal-row {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.science-day-theme .science-day-stage .reveal-row strong {
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.science-day-theme .science-day-stage .anonymous-vote-summary span {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .science-day-theme.match-focus-screen {
+    padding-block: 6px;
+  }
+
+  .science-day-theme .science-day-stage {
+    gap: 7px;
+  }
+
+  .science-day-theme .science-day-stage .stage-heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .science-day-theme .science-day-stage .answer-timer,
+  .science-day-theme .science-day-stage .correct-chip {
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  .science-day-theme .science-day-stage .stage-heading h2 {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .science-day-theme .science-day-stage .options-grid,
+  .science-day-theme .science-day-stage .reveal-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .science-day-theme .science-day-stage .reveal-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .science-day-theme .science-day-stage .anonymous-vote-summary {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 430px) {
+  .science-day-theme.match-focus-screen .room-header h1 {
+    max-width: 62vw;
+    font-size: 0.94rem;
+  }
+
+  .science-day-theme.match-focus-screen .stage-panel {
+    padding: 8px;
+  }
+
+  .science-day-theme .science-day-stage .science-day-brand-lockup.compact {
+    gap: 5px 8px;
+  }
+
+  .science-day-theme .science-day-stage .science-day-logo-label {
+    font-size: 0.7rem;
+  }
+
+  .science-day-theme .science-day-stage .stage-heading .eyebrow {
+    font-size: 0.64rem;
+  }
+
+  .science-day-theme .science-day-stage .stage-heading h2 {
+    font-size: 0.96rem;
+  }
+
+  .science-day-theme .science-day-stage .answer-timer {
+    min-height: 34px;
+    padding: 0 7px;
+  }
+
+  .science-day-theme .science-day-stage .answer-timer .timer-ring {
+    width: 24px;
+    height: 24px;
+  }
+
+  .science-day-theme .science-day-stage .answer-timer .timer-copy strong {
+    font-size: 0.86rem;
+  }
+
+  .science-day-theme .science-day-stage .answer-option {
+    min-height: 44px;
+    gap: 7px;
+  }
+
+  .science-day-theme .science-day-stage .option-body strong,
+  .science-day-theme .science-day-stage .reveal-row strong {
+    font-size: 0.82rem;
+  }
+
+  .science-day-theme .science-day-stage .correct-chip {
+    min-height: 30px;
+    font-size: 0.72rem;
+  }
+}
