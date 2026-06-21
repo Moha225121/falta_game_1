@@ -1,5 +1,5 @@
 const configuredMaxPlayers = Number(process.env.MAX_PLAYERS || 6);
-const fixedTurnSeconds = 60;
+const fixedTurnSeconds = 30;
 
 export const config = {
   port: Number(process.env.PORT || 4000),

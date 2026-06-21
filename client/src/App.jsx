@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
-import Home from "./pages/Home.jsx";
 import Game from "./pages/Game.jsx";
 import Admin from "./pages/Admin.jsx";
 
@@ -43,7 +42,7 @@ export default function App() {
     return (
       <Routes>
         <Route path="/admin-panel" element={<Admin />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/play" replace />} />
       </Routes>
     );
   }
@@ -68,10 +67,11 @@ export default function App() {
         ) : null}
       </header>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Navigate to="/play" replace />} />
         <Route path="/play" element={<Game />} />
         <Route path="/play/:roomCode" element={<Game />} />
-        <Route path="/admin" element={<Navigate to="/" replace />} />
+        <Route path="/admin" element={<Navigate to="/play" replace />} />
+        <Route path="*" element={<Navigate to="/play" replace />} />
       </Routes>
     </div>
   );

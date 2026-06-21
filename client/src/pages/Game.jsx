@@ -62,7 +62,7 @@ const SCIENCE_DAY_MODE = "science_day";
 const SCIENCE_DAY_TOTAL_SETS = 2;
 const SCIENCE_DAY_QUESTIONS_PER_SET = 7;
 const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_SETS * SCIENCE_DAY_QUESTIONS_PER_SET;
-const SCIENCE_DAY_QUESTION_SECONDS = 20;
+const SCIENCE_DAY_QUESTION_SECONDS = 30;
 const SCIENCE_DAY_SET_OPTIONS = [
   { id: "set1", label: "المجموعة الأولى" },
   { id: "set2", label: "المجموعة الثانية" }
@@ -363,7 +363,7 @@ export default function Game() {
   const [sessionId, setSessionId] = useState(() => {
     const cached = readRoomSessionCache();
     const code = normalizeRoomCodeInput(roomCode);
-    return cached.sessionId && (!code || cached.code === code) ? cached.sessionId : makeSessionId();
+    return cached.sessionId && code && cached.code === code ? cached.sessionId : makeSessionId();
   });
   const [room, setRoom] = useState(null);
   const [roundSplash, setRoundSplash] = useState(null);
@@ -567,7 +567,7 @@ export default function Game() {
     const state = location.state;
     const routeCode = normalizeRoomCodeInput(roomCode);
     const cachedSession = readRoomSessionCache();
-    const cachedCode = cachedSession.code && (!routeCode || cachedSession.code === routeCode)
+    const cachedCode = cachedSession.code && routeCode && cachedSession.code === routeCode
       ? cachedSession.code
       : "";
     const activeCode = room?.code || (state?.mode === "join" ? roomCode : "") || state?.code || cachedCode;
@@ -1121,7 +1121,7 @@ export default function Game() {
           ) : null}
 
           {room.phase === "finished" ? (
-            <Finished room={room} currentPlayerId={room.me?.playerId} onHome={() => navigate("/")} />
+            <Finished room={room} currentPlayerId={room.me?.playerId} onHome={() => navigate("/play")} />
           ) : null}
         </div>
 
