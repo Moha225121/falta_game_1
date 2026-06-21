@@ -56,6 +56,7 @@ const phaseLabels = {
 
 const roomCodeLength = 5;
 const activeMatchPhases = new Set(["answering", "voting", "results"]);
+const focusedGamePhases = new Set([...activeMatchPhases, "finished"]);
 const joinRetryDelays = [350, 800, 1400, 2200];
 const SCIENCE_DAY_MODE = "science_day";
 const SCIENCE_DAY_TOTAL_SETS = 2;
@@ -69,9 +70,22 @@ const SCIENCE_DAY_SET_OPTIONS = [
 const SCIENCE_DAY_LIMU_LOGO = "/assets/limu-pga-mark.png";
 const SCIENCE_DAY_BRAND_IMAGE = "/assets/science-day-mark.png";
 const arabicNumberFormatter = new Intl.NumberFormat("ar-LY");
+const finalConfetti = Array.from({ length: 38 }, (_, index) => ({
+  x: (index * 23) % 100,
+  delay: (index % 13) * 90,
+  duration: 2400 + (index % 5) * 260,
+  drift: ((index % 7) - 3) * 18,
+  spin: 140 + (index % 6) * 44,
+  size: 6 + (index % 4) * 2,
+  color: ["#f6b84a", "#12d6c5", "#ff3f98", "#62df6c", "#ffe79a"][index % 5]
+}));
 
 function formatArabicNumber(value) {
   return arabicNumberFormatter.format(Number(value || 0));
+}
+
+function playerLevel(score) {
+  return Math.max(1, Math.floor(Number(score || 0) / 5) + 1);
 }
 
 function isScienceDayRoom(room) {
@@ -964,14 +978,15 @@ export default function Game() {
     );
   }
 
-  const inMatch = activeMatchPhases.has(room.phase);
+  const activeGamePhase = activeMatchPhases.has(room.phase);
+  const inMatch = focusedGamePhases.has(room.phase);
   const scienceDay = isScienceDayRoom(room);
   const scienceDayWaiting = scienceDay && room.phase === "lobby" && !isHost;
   const showRoomShare = (!scienceDay && room.phase === "lobby") || (scienceDay && isHost);
   const showMobileRoomCode = !scienceDay && room.phase === "lobby";
 
   return (
-    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${scienceDayWaiting ? "science-day-waiting-route" : ""}`}>
+    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${room.phase === "finished" ? "finished-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${scienceDayWaiting ? "science-day-waiting-route" : ""}`}>
       <section className="room-header">
         <div>
           <div className="hero-kicker">
@@ -1036,7 +1051,7 @@ export default function Game() {
 
       <RoundSplash splash={roundSplash} gameModes={gameModes} />
 
-      {scienceDay && inMatch && isHost ? (
+      {scienceDay && activeGamePhase && isHost ? (
         <ScienceDayInviteCard
           code={room.code}
           playerCount={scienceDayContestants(room).filter((player) => player.connected !== false).length}
@@ -1110,7 +1125,7 @@ export default function Game() {
           ) : null}
 
           {room.phase === "finished" ? (
-            <Finished room={room} onHome={() => navigate("/")} />
+            <Finished room={room} currentPlayerId={room.me?.playerId} onHome={() => navigate("/")} />
           ) : null}
         </div>
 
@@ -2111,25 +2126,95 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
   );
 }
 
-function Finished({ room, onHome }) {
-  const winner = room.players[0];
+function Finished({ room, currentPlayerId, onHome }) {
   const scienceDay = isScienceDayRoom(room);
   const scienceMeta = scienceDay ? scienceDayMeta(room) : null;
+  const leaderboardPlayers = scienceDay ? scienceDayContestants(room) : room.players;
+  const rankedPlayers = leaderboardPlayers.map((player, index) => ({
+    ...player,
+    rank: index + 1,
+    level: playerLevel(player.score)
+  }));
+  const topThree = rankedPlayers.slice(0, 3);
+  const podiumPlayers = [topThree[1], topThree[0], topThree[2]].filter(Boolean);
+  const winner = topThree[0];
+  const currentPlayer = rankedPlayers.find((player) => player.id === currentPlayerId);
+  const showCurrentPlayer = Boolean(currentPlayer && currentPlayer.rank > 3);
+  const winnerScore = formatArabicNumber(winner?.score || 0);
 
   return (
     <section className="panel stage-panel final-stage">
-      <div className="winner-block">
-        <Crown size={42} />
-        <span>{scienceDay ? "انتهى اليوم العلمي" : "الفائز"}</span>
-        <h2>{scienceDay ? "انتهت المجموعة" : winner?.name}</h2>
-        <strong>{scienceDay ? `${scienceMeta?.setLabel || "المجموعة"} · ${formatArabicNumber(room.settings.rounds || SCIENCE_DAY_QUESTIONS_PER_SET)} أسئلة` : `${winner?.score || 0} نقطة`}</strong>
+      <div className="final-confetti" aria-hidden="true">
+        {finalConfetti.map((piece, index) => (
+          <span
+            key={index}
+            style={{
+              "--x": `${piece.x}%`,
+              "--delay": `${piece.delay}ms`,
+              "--duration": `${piece.duration}ms`,
+              "--drift": `${piece.drift}px`,
+              "--spin": `${piece.spin}deg`,
+              "--size": `${piece.size}px`,
+              "--color": piece.color
+            }}
+          />
+        ))}
       </div>
+
+      <div className="final-board-heading">
+        <span className="final-board-kicker">
+          <Trophy size={18} />
+          {scienceDay ? "نتيجة المجموعة" : "الترتيب النهائي"}
+        </span>
+        <h2>{winner ? "منصة الفائزين" : "انتهت الجولة"}</h2>
+        <p>
+          {winner
+            ? scienceDay
+              ? `${scienceMeta?.setLabel || "المجموعة"} · المتصدر ${winner.name} بـ ${winnerScore} نقطة`
+              : `المتصدر ${winner.name} بـ ${winnerScore} نقطة`
+            : "لا توجد نقاط مسجلة بعد."}
+        </p>
+      </div>
+
+      <div className={`final-podium ${topThree.length < 3 ? "compact" : ""}`} aria-label="أفضل ثلاثة لاعبين">
+        {podiumPlayers.map((player) => (
+          <article className={`final-podium-card rank-${player.rank} ${player.id === currentPlayerId ? "is-current" : ""}`} key={player.id}>
+            <div className="final-medal">
+              {player.rank === 1 ? <Crown size={20} /> : <Trophy size={18} />}
+              <span>{formatArabicNumber(player.rank)}</span>
+            </div>
+            <Avatar avatar={player.avatar} size={player.rank === 1 ? "xl" : "lg"} />
+            <div className="final-player-copy">
+              <strong>
+                <span>{player.name}</span>
+                {player.id === currentPlayerId ? <em>(أنت)</em> : null}
+              </strong>
+              <span>{formatArabicNumber(player.score)} نقطة</span>
+              <small>المستوى {formatArabicNumber(player.level)}</small>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {showCurrentPlayer ? (
+        <div className="final-current-player">
+          <span className="final-current-rank">#{formatArabicNumber(currentPlayer.rank)}</span>
+          <Avatar avatar={currentPlayer.avatar} name={currentPlayer.name} />
+          <strong>
+            <span>{currentPlayer.name}</span>
+            <em>(أنت)</em>
+          </strong>
+          <span>{formatArabicNumber(currentPlayer.score)} نقطة</span>
+          <small>المستوى {formatArabicNumber(currentPlayer.level)}</small>
+        </div>
+      ) : null}
+
       {scienceDay ? (
         <div className="science-day-finished-note">
           <Check size={20} />
           <span>تم إنهاء هذه المجموعة. لبدء المجموعة الأخرى، يختار المشرف المجموعة من QR ثم يدخل الطلاب مرة ثانية.</span>
         </div>
-      ) : <Scoreboard players={room.players} />}
+      ) : null}
       <button className="secondary-button wide-button" type="button" onClick={onHome}>
         <ArrowLeft size={18} />
         <span>العودة</span>
