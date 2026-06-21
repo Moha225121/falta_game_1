@@ -84,10 +84,6 @@ function formatArabicNumber(value) {
   return arabicNumberFormatter.format(Number(value || 0));
 }
 
-function playerLevel(score) {
-  return Math.max(1, Math.floor(Number(score || 0) / 5) + 1);
-}
-
 function isScienceDayRoom(room) {
   return getActiveMode(room) === SCIENCE_DAY_MODE;
 }
@@ -2132,8 +2128,7 @@ function Finished({ room, currentPlayerId, onHome }) {
   const leaderboardPlayers = scienceDay ? scienceDayContestants(room) : room.players;
   const rankedPlayers = leaderboardPlayers.map((player, index) => ({
     ...player,
-    rank: index + 1,
-    level: playerLevel(player.score)
+    rank: index + 1
   }));
   const topThree = rankedPlayers.slice(0, 3);
   const podiumPlayers = [topThree[1], topThree[0], topThree[2]].filter(Boolean);
@@ -2190,7 +2185,6 @@ function Finished({ room, currentPlayerId, onHome }) {
                 {player.id === currentPlayerId ? <em>(أنت)</em> : null}
               </strong>
               <span>{formatArabicNumber(player.score)} نقطة</span>
-              <small>المستوى {formatArabicNumber(player.level)}</small>
             </div>
           </article>
         ))}
@@ -2205,7 +2199,6 @@ function Finished({ room, currentPlayerId, onHome }) {
             <em>(أنت)</em>
           </strong>
           <span>{formatArabicNumber(currentPlayer.score)} نقطة</span>
-          <small>المستوى {formatArabicNumber(currentPlayer.level)}</small>
         </div>
       ) : null}
 

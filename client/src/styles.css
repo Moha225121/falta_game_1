@@ -268,7 +268,6 @@ a {
     linear-gradient(118deg, rgba(246, 184, 74, 0.20), transparent 34%),
     linear-gradient(242deg, rgba(18, 214, 197, 0.20), transparent 38%),
     linear-gradient(180deg, transparent 0%, rgba(7, 17, 21, 0.38) 100%);
-  animation: homeAmbient 14s ease-in-out infinite;
 }
 
 .home-screen > * {
@@ -322,7 +321,7 @@ p {
 }
 
 .home-hero-copy {
-  animation: homeRise 620ms ease both;
+  animation: none;
 }
 
 .home-kicker {
@@ -367,16 +366,15 @@ p {
   border-radius: 8px;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
   transform: rotate(-2deg);
-  animation: homeTableFloat 6s ease-in-out infinite;
 }
 
 .home-table-core::before {
   content: "";
   position: absolute;
   inset: 0;
+  display: none;
   background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.14) 48%, transparent 72%);
   transform: translateX(-105%);
-  animation: homeSweep 5.8s ease-in-out infinite;
 }
 
 .home-card-chip {
@@ -392,7 +390,6 @@ p {
   font-size: 0.86rem;
   font-weight: 900;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-  animation: homeChipFloat 4.8s ease-in-out infinite;
 }
 
 .home-card-chip-a {
@@ -404,14 +401,12 @@ p {
   top: 72px;
   inset-inline-end: 28px;
   background: #baf8ef;
-  animation-delay: 600ms;
 }
 
 .home-card-chip-c {
   bottom: 30px;
   inset-inline-start: 72px;
   background: #ffd0e5;
-  animation-delay: 1200ms;
 }
 
 .home-player-token {
@@ -421,7 +416,6 @@ p {
   border: 2px solid rgba(255, 255, 255, 0.52);
   border-radius: 50%;
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
-  animation: homeTokenBreathe 3.8s ease-in-out infinite;
 }
 
 .home-player-token-a {
@@ -434,21 +428,18 @@ p {
   top: 28px;
   inset-inline-end: 40px;
   background: linear-gradient(145deg, #f6b84a, #9f6915);
-  animation-delay: 500ms;
 }
 
 .home-player-token-c {
   bottom: 18px;
   inset-inline-start: 20px;
   background: linear-gradient(145deg, #ff3f98, #8d1c54);
-  animation-delay: 900ms;
 }
 
 .home-player-token-d {
   bottom: 4px;
   inset-inline-end: 118px;
   background: linear-gradient(145deg, #62df6c, #287f32);
-  animation-delay: 1400ms;
 }
 
 .entry-grid {
@@ -478,7 +469,7 @@ p {
 .home-entry-card {
   align-self: center;
   padding: 24px;
-  animation: homeRise 620ms ease 120ms both;
+  animation: none;
   border-color: rgba(255, 255, 255, 0.20);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
@@ -3435,12 +3426,6 @@ button:disabled {
   font-weight: 950;
 }
 
-.final-player-copy small,
-.final-current-player small {
-  color: var(--muted);
-  font-weight: 850;
-}
-
 .final-current-player {
   min-height: 62px;
   display: grid;
@@ -4312,74 +4297,6 @@ button:disabled {
   }
 }
 
-@keyframes homeRise {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes homeAmbient {
-  0%,
-  100% {
-    transform: translateX(-3%) translateY(0);
-  }
-
-  50% {
-    transform: translateX(3%) translateY(-1%);
-  }
-}
-
-@keyframes homeTableFloat {
-  0%,
-  100% {
-    transform: rotate(-2deg) translateY(0);
-  }
-
-  50% {
-    transform: rotate(-1deg) translateY(-8px);
-  }
-}
-
-@keyframes homeChipFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-7px);
-  }
-}
-
-@keyframes homeTokenBreathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.06);
-  }
-}
-
-@keyframes homeSweep {
-  0%,
-  38% {
-    transform: translateX(-105%);
-  }
-
-  72%,
-  100% {
-    transform: translateX(105%);
-  }
-}
-
 @keyframes roundSplashShade {
   0%,
   100% {
@@ -5088,9 +5005,7 @@ button:disabled {
   }
 
   .final-player-copy span,
-  .final-player-copy small,
-  .final-current-player > span:not(.final-current-rank),
-  .final-current-player small {
+  .final-current-player > span:not(.final-current-rank) {
     font-size: 0.72rem;
   }
 
@@ -5099,10 +5014,6 @@ button:disabled {
     grid-template-columns: auto auto minmax(0, 1fr) auto;
     gap: 6px;
     padding: 7px;
-  }
-
-  .final-current-player small {
-    display: none;
   }
 
   .final-current-rank {
@@ -5789,7 +5700,6 @@ button:disabled {
   }
 
   .final-player-copy span,
-  .final-player-copy small,
   .final-current-player > span:not(.final-current-rank) {
     font-size: 0.66rem;
   }

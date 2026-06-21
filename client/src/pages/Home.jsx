@@ -69,6 +69,9 @@ export default function Home() {
 
   useEffect(() => {
     clearRoomSessionCache();
+    globalThis.dispatchEvent?.(new CustomEvent("kalak:room-active", {
+      detail: { active: false, code: "", phase: "", mode: "", waitingOnly: false }
+    }));
     api("/config").then(setConfig).catch(() => {});
   }, []);
 
