@@ -5,10 +5,10 @@ export function GameModePicker({ modes = [], selected = ["kalak"], onChange, dis
   const selectedModes = Array.isArray(selected) ? selected : [selected].filter(Boolean);
   const orderedModes = [...modes].sort((first, second) => {
     if (first.id === "prizes") {
-      return -1;
+      return 1;
     }
     if (second.id === "prizes") {
-      return 1;
+      return -1;
     }
     return 0;
   });

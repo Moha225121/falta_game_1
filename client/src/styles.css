@@ -512,71 +512,6 @@ p {
   font-weight: 900;
 }
 
-.prizes-main-card {
-  width: 100%;
-  min-height: 70px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 34px;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 12px;
-  text-align: start;
-  color: #fff7f4;
-  background:
-    linear-gradient(135deg, rgba(255, 93, 105, 0.22), rgba(246, 184, 74, 0.10)),
-    rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 93, 105, 0.48);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
-}
-
-.prizes-main-card:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: rgba(255, 123, 132, 0.72);
-  background:
-    linear-gradient(135deg, rgba(255, 93, 105, 0.30), rgba(246, 184, 74, 0.14)),
-    rgba(255, 255, 255, 0.07);
-}
-
-.prizes-main-card:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
-}
-
-.prizes-main-flag {
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  color: #fff;
-  background: #d91f3a;
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  border-radius: var(--radius);
-  font-size: 0.8rem;
-  font-weight: 950;
-}
-
-.prizes-main-copy {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-
-.prizes-main-copy strong {
-  font-size: 1.12rem;
-  line-height: 1.1;
-}
-
-.prizes-main-copy small {
-  color: rgba(255, 247, 244, 0.82);
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1.35;
-}
-
 .panel-heading,
 .section-title {
   gap: 10px;
@@ -2592,9 +2527,9 @@ button:disabled {
   align-items: center;
   gap: 5px;
   padding: 0 8px;
-  color: #fff;
-  background: #d91f3a;
-  border: 1px solid rgba(255, 255, 255, 0.42);
+  color: #ffd8dc;
+  background: rgba(255, 93, 105, 0.14);
+  border: 1px solid rgba(255, 93, 105, 0.34);
   border-radius: var(--radius);
   font-size: 0.72rem;
   font-weight: 950;
@@ -2641,27 +2576,34 @@ button:disabled {
 .mode-card-prizes {
   grid-column: 1 / -1;
   min-height: 74px;
-  border-color: rgba(255, 93, 105, 0.42);
+  border-color: var(--line);
   background:
-    linear-gradient(135deg, rgba(255, 93, 105, 0.16), rgba(246, 184, 74, 0.08)),
-    rgba(255, 255, 255, 0.058);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 68%),
+    rgba(255, 255, 255, 0.055);
 }
 
 .mode-card-prizes::before {
-  width: 6px;
-  background: #d91f3a;
-  opacity: 1;
+  width: 4px;
+  background: rgba(255, 93, 105, 0.60);
+  opacity: 0.78;
 }
 
 .mode-card-prizes.active {
-  border-color: rgba(255, 93, 105, 0.68);
+  border-color: rgba(246, 184, 74, 0.58);
   background:
-    linear-gradient(135deg, rgba(255, 93, 105, 0.26), rgba(246, 184, 74, 0.14)),
-    rgba(255, 255, 255, 0.075);
+    linear-gradient(180deg, rgba(246, 184, 74, 0.13), transparent 68%),
+    rgba(246, 184, 74, 0.075);
 }
 
 .mode-card-prizes.active::before {
-  background: #d91f3a;
+  background: var(--gold);
+  opacity: 1;
+}
+
+.mode-card-prizes.active .mode-event-flag {
+  color: #061114;
+  background: var(--gold);
+  border-color: rgba(255, 255, 255, 0.42);
 }
 
 .mode-card.active .mode-check {

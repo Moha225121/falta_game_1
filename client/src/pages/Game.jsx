@@ -6,7 +6,6 @@ import {
   Check,
   CircleAlert,
   Crown,
-  Flag,
   Loader2,
   LogOut,
   Menu,
@@ -706,7 +705,7 @@ export default function Game() {
     return nextSessionId;
   }
 
-  function createRoom(event, settings = {}) {
+  function createRoom(event) {
     event?.preventDefault();
     dismissKeyboard(event?.currentTarget?.form || event?.currentTarget?.closest?.("form"));
     if (!socket || !connected) {
@@ -719,20 +718,10 @@ export default function Game() {
     perform(() => ack(socket, "room:create", {
       name: nextPlayer.name,
       avatar: nextPlayer.avatar,
-      sessionId: nextSessionId,
-      ...settings
+      sessionId: nextSessionId
     }).then((response) => {
       navigate(`/play/${response.room.code}`, { replace: true, state: null });
-    }), settings.mode === PRIZES_MODE ? "create-prizes" : "create");
-  }
-
-  function createPrizesRoom(event) {
-    createRoom(event, {
-      mode: PRIZES_MODE,
-      modes: [PRIZES_MODE],
-      rounds: PRIZES_ROUNDS,
-      categories: []
-    });
+    }), "create");
   }
 
   function joinRoom(event) {
@@ -994,20 +983,6 @@ export default function Game() {
               </button>
             </form>
           </div>
-
-          {!isInviteEntry ? (
-            <button className="prizes-main-card" type="button" onClick={createPrizesRoom} disabled={!connected || busy}>
-              <span className="prizes-main-flag">
-                <Flag size={14} />
-                خاص
-              </span>
-              <span className="prizes-main-copy">
-                <strong>جوائز</strong>
-                <small>فعالية خاصة: 5 أسئلة، 3-6 لاعبين، والمضيف مراقب فقط.</small>
-              </span>
-              <ActionIcon loading={pendingAction === "create-prizes"} icon={Trophy} size={20} />
-            </button>
-          ) : null}
 
         </section>
         {error ? <Toast type="error" icon={CircleAlert} message={error} onClose={() => setError("")} /> : null}
