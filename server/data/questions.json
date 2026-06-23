@@ -35156,5 +35156,1705 @@
     "active": true,
     "createdAt": "2026-06-17T00:00:00.000Z",
     "updatedAt": "2026-06-17T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_001",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "ما اسم العملية العسكرية التي بدأت في 22 يونيو 1941 عندما غزت ألمانيا النازية الاتحاد السوفيتي؟",
+    "correctAnswer": "عملية بارباروسا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "تاريخ"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_002",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "أي مؤتمر جمع روزفلت وتشرشل وستالين في فبراير 1945 لترتيب شكل أوروبا بعد الحرب؟",
+    "correctAnswer": "مؤتمر يالطا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "سياسة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_003",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "ما اسم مركز فك الشفرات البريطاني الذي ارتبط بكسر رسائل إنغما الألمانية؟",
+    "correctAnswer": "بلتشلي بارك",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "شفرة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_004",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "ما الهجوم الياباني في ديسمبر 1941 الذي دفع الولايات المتحدة إلى دخول الحرب العالمية الثانية مباشرة؟",
+    "correctAnswer": "الهجوم على بيرل هاربر",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "أمريكا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_005",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "أي معركة في شمال أفريقيا عام 1942 أوقفت تقدم قوات رومل نحو قناة السويس؟",
+    "correctAnswer": "معركة العلمين الثانية",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "شمال أفريقيا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_006",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "ما الاسم الرمزي لعملية إنزال الحلفاء في نورماندي يوم 6 يونيو 1944؟",
+    "correctAnswer": "عملية أوفرلورد",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "نورماندي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_007",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "أي معركة انتهت باستسلام الجيش السادس الألماني بقيادة فريدريش باولوس في فبراير 1943؟",
+    "correctAnswer": "معركة ستالينغراد",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "الاتحاد السوفيتي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_008",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "ما اسم اتفاق عدم الاعتداء بين ألمانيا النازية والاتحاد السوفيتي الموقع في أغسطس 1939؟",
+    "correctAnswer": "ميثاق مولوتوف ريبنتروب",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "دبلوماسية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_009",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "ما اسم آخر هجوم ألماني كبير على الجبهة الغربية في ديسمبر 1944؟",
+    "correctAnswer": "معركة الثغرة",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "الجبهة الغربية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_010",
+    "mode": "prizes",
+    "category": "الحرب العالمية الثانية",
+    "prompt": "ما الاسم الرمزي للقنبلة الذرية التي أُلقيت على ناغازاكي عام 1945؟",
+    "correctAnswer": "فات مان",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "حرب عالمية",
+      "نووي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_011",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "ما المعاهدة التي أنهت رسميًا حالة الحرب بين ألمانيا والحلفاء بعد الحرب العالمية الأولى عام 1919؟",
+    "correctAnswer": "معاهدة فرساي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "معاهدات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_012",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "ما الاسم الذي عُرفت به العاصمة البيزنطية بعد أن جعلها قسطنطين مركزًا للإمبراطورية الرومانية الشرقية؟",
+    "correctAnswer": "القسطنطينية",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "بيزنطة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_013",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "من قاد إكمال أول رحلة دوران حول العالم بعد مقتل ماجلان في الفلبين؟",
+    "correctAnswer": "خوان سباستيان إلكانو",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "استكشاف"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_014",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "أي سلطان عثماني فتح القسطنطينية عام 1453؟",
+    "correctAnswer": "محمد الفاتح",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "عثمانيون"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_015",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "ما اللغات أو الكتابات الثلاث الموجودة على حجر رشيد والتي ساعدت في فك الهيروغليفية؟",
+    "correctAnswer": "الهيروغليفية والديموطيقية واليونانية",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "مصر القديمة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_016",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "ما اسم إمبراطور الإنكا الذي أسره فرانسيسكو بيزارو عام 1532؟",
+    "correctAnswer": "أتاهوالبا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "الأمريكيتان"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_017",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "في أي قرن بلغ الطاعون الأسود ذروته في أوروبا؟",
+    "correctAnswer": "القرن الرابع عشر",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "أوبئة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_018",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "في أي عام وُقعت الماغنا كارتا التي حدّت من سلطة الملك جون في إنجلترا؟",
+    "correctAnswer": "1215",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "قانون"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_019",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "ما اسم التحول السياسي الذي أعاد السلطة الاسمية للإمبراطور في اليابان عام 1868؟",
+    "correctAnswer": "استعادة ميجي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "اليابان"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_020",
+    "mode": "prizes",
+    "category": "تاريخ عالمي",
+    "prompt": "من أول إمبراطور وحّد الصين بعد نهاية عصر الممالك المتحاربة؟",
+    "correctAnswer": "تشين شي هوانغ",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تاريخ",
+      "الصين"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_021",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "من المخرج الياباني لفيلم الساموراي السبعة الصادر عام 1954؟",
+    "correctAnswer": "أكيرا كوروساوا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "اليابان"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_022",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "ما أول فيلم رسوم متحركة طويل أنتجته ديزني وعُرض عام 1937؟",
+    "correctAnswer": "سنو وايت والأقزام السبعة",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "ديزني"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_023",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "ما المسمى المهني للمسؤول عن الإضاءة وتكوين الصورة وحركة الكاميرا بصريًا في الفيلم؟",
+    "correctAnswer": "مدير التصوير",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "تقنيات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_024",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "ما اسم أعلى جائزة في مهرجان كان السينمائي؟",
+    "correctAnswer": "السعفة الذهبية",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "جوائز"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_025",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "ما الفيلم الذي فاز بأول أوسكار لأفضل فيلم في حفل جوائز الأكاديمية الأول؟",
+    "correctAnswer": "وينغز",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "أوسكار"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_026",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "من مخرج فيلم سارقو الدراجات المرتبط بالواقعية الإيطالية الجديدة؟",
+    "correctAnswer": "فيتوريو دي سيكا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "إيطاليا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_027",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "من الملحن الذي وضع الموسيقى الشهيرة لسلسلة ستار وورز؟",
+    "correctAnswer": "جون ويليامز",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "موسيقى"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_028",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "أي فيلم ياباني جعل مصطلح اختلاف الروايات المتناقضة للحادثة الواحدة مشهورًا عالميًا؟",
+    "correctAnswer": "راشومون",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "سرد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_029",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "ما أول فيلم طويل بالكامل من إنتاج بيكسار؟",
+    "correctAnswer": "توي ستوري",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "بيكسار"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_030",
+    "mode": "prizes",
+    "category": "سينما وأفلام",
+    "prompt": "ما اسم تقنية الانتقال التي يختفي فيها المشهد تدريجيًا إلى السواد أو يظهر منه تدريجيًا؟",
+    "correctAnswer": "الفيد",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سينما",
+      "مونتاج"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_031",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "ما نوع المحرك الذي تكون فيه الأسطوانات متقابلة أفقيًا مثل بعض محركات بورشه وسوبارو؟",
+    "correctAnswer": "محرك بوكسر",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "محركات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_032",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "من المهندس الألماني الذي ارتبط اسمه بالمحرك الدوار المستخدم في سيارات مازدا RX؟",
+    "correctAnswer": "فيليكس فانكل",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "محركات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_033",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "ما طراز فورد الذي اشتهر كسيارة شعبية مبكرة مرتبطة بخط التجميع؟",
+    "correctAnswer": "فورد موديل تي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "تاريخ"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_034",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "ما معنى اختصار ABS في أنظمة فرامل السيارات؟",
+    "correctAnswer": "نظام منع انغلاق المكابح",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "سلامة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_035",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "ما الجهاز الذي يستخدم غازات العادم لضغط الهواء الداخل إلى المحرك وزيادة القدرة؟",
+    "correctAnswer": "الشاحن التوربيني",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "أداء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_036",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "في أي دولة تقام سباقات 24 ساعة في لومان الشهيرة؟",
+    "correctAnswer": "فرنسا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "سباقات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_037",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "كم عدد الأسطوانات في محرك W16 الشهير في بوغاتي فيرون؟",
+    "correctAnswer": "16",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "بوغاتي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_038",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "ما اسم سيارة تويوتا الهجينة التي أُطلقت في اليابان عام 1997 وأصبحت رمزًا للهايبرد؟",
+    "correctAnswer": "تويوتا بريوس",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "هايبرد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_039",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "ما اختصار نظام استرجاع الطاقة في سيارات الفورمولا 1 الحديثة؟",
+    "correctAnswer": "ERS",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "فورمولا 1"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_040",
+    "mode": "prizes",
+    "category": "سيارات ومحركات",
+    "prompt": "من المصمم الرئيسي لسيارة ماكلارين F1 ذات مقعد السائق الوسطي؟",
+    "correctAnswer": "غوردون موراي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سيارات",
+      "تصميم"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_041",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "في تقنية CRISPR-Cas9، ما الجزيء الذي يوجّه إنزيم Cas9 إلى التسلسل المطلوب في الحمض النووي؟",
+    "correctAnswer": "الحمض النووي الريبي المرشد",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "أحياء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_042",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "ما القيمة التقريبية لسرعة الضوء في الفراغ بالكيلومتر في الثانية؟",
+    "correctAnswer": "299792 كيلومتر في الثانية",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "فيزياء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_043",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "أي قانون كوني يربط سرعة ابتعاد المجرات عنّا بمسافتها؟",
+    "correctAnswer": "قانون هابل",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "كونيات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_044",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "ما أكبر قمر في النظام الشمسي؟",
+    "correctAnswer": "غانيميد",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "فضاء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_045",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "ما العنصر الكيميائي الذي يحمل العدد الذري 79؟",
+    "correctAnswer": "الذهب",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "كيمياء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_046",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "في أي نوع من حدود الصفائح التكتونية تحدث عملية الاندساس غالبًا؟",
+    "correctAnswer": "الحدود المتقاربة",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "جيولوجيا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_047",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "ما أزواج القواعد النيتروجينية الأساسية في DNA؟",
+    "correctAnswer": "A مع T و C مع G",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "أحياء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_048",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "ما اسم الحد حول الثقب الأسود الذي لا يستطيع الضوء الهروب بعد عبوره؟",
+    "correctAnswer": "أفق الحدث",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "فضاء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_049",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "كم قطعة سداسية يتكون منها المرآة الأساسية في تلسكوب جيمس ويب الفضائي؟",
+    "correctAnswer": "18",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "فضاء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_050",
+    "mode": "prizes",
+    "category": "علوم وفضاء",
+    "prompt": "ما وحدة قياس المقاومة الكهربائية في النظام الدولي؟",
+    "correctAnswer": "الأوم",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "علوم",
+      "فيزياء"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_051",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "ما المضيق الذي يفصل المغرب وإسبانيا ويربط المتوسط بالمحيط الأطلسي؟",
+    "correctAnswer": "مضيق جبل طارق",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "بحار"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_052",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "أي نهر يمر عبر بغداد تاريخيًا ويشكّل مع الفرات قلب بلاد الرافدين؟",
+    "correctAnswer": "نهر دجلة",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "أنهار"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_053",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "ما أعلى جبل خارج قارة آسيا؟",
+    "correctAnswer": "أكونكاغوا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "جبال"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_054",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "ما البحيرة الروسية المعروفة بأنها أعمق بحيرة مياه عذبة في العالم؟",
+    "correctAnswer": "بحيرة بايكال",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "بحيرات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_055",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "في أي دولة تقع صحراء أتاكاما شديدة الجفاف؟",
+    "correctAnswer": "تشيلي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "صحارى"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_056",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "ما الجزيرة الكاريبية التي تتقاسمها هايتي وجمهورية الدومينيكان؟",
+    "correctAnswer": "هيسبانيولا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "جزر"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_057",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "ما الدولة التي تملك أكبر عدد من المناطق الزمنية عند احتساب أقاليمها الخارجية؟",
+    "correctAnswer": "فرنسا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "مناطق زمنية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_058",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "الحاجز المرجاني العظيم يقع قبالة سواحل أي دولة؟",
+    "correctAnswer": "أستراليا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "بحار"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_059",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "ما القناة التي تربط البحر الأبيض المتوسط بالبحر الأحمر؟",
+    "correctAnswer": "قناة السويس",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "ممرات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_060",
+    "mode": "prizes",
+    "category": "جغرافيا",
+    "prompt": "ما الدولة التي تقع فيها مدينة ماتشو بيتشو الأثرية في جبال الأنديز؟",
+    "correctAnswer": "بيرو",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "جغرافيا",
+      "آثار"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_061",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "من مؤلف رواية مئة عام من العزلة؟",
+    "correctAnswer": "غابرييل غارسيا ماركيز",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "أدب",
+      "روايات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_062",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "من الرسام الذي أنجز لوحة غيرنيكا احتجاجًا على قصف المدينة الإسبانية؟",
+    "correctAnswer": "بابلو بيكاسو",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "فن",
+      "رسم"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_063",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "ما الطراز المعماري الأوروبي المرتبط بالأقواس المدببة والدعامات الطائرة والنوافذ الزجاجية العالية؟",
+    "correctAnswer": "الطراز القوطي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "فن",
+      "عمارة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_064",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "إلى من تُنسب ملحمة الأوديسة في التراث اليوناني؟",
+    "correctAnswer": "هوميروس",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "أدب",
+      "كلاسيكيات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_065",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "من مؤلف المقطوعات المعروفة باسم الفصول الأربعة؟",
+    "correctAnswer": "أنطونيو فيفالدي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "فن",
+      "موسيقى"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_066",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "في أي متحف تُعرض لوحة الموناليزا؟",
+    "correctAnswer": "متحف اللوفر",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "فن",
+      "متاحف"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_067",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "في أي مدينة انطلقت حركة دادا الفنية تقريبًا عام 1916؟",
+    "correctAnswer": "زيورخ",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "فن",
+      "حركات فنية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_068",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "من النحات الفرنسي صاحب تمثال المفكر؟",
+    "correctAnswer": "أوغست رودان",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "فن",
+      "نحت"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_069",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "من مؤلف رواية الغريب؟",
+    "correctAnswer": "ألبير كامو",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "أدب",
+      "فلسفة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_070",
+    "mode": "prizes",
+    "category": "أدب وفن",
+    "prompt": "من الفنان الياباني صاحب الموجة العظيمة قبالة كاناغاوا؟",
+    "correctAnswer": "هوكوساي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "فن",
+      "يابان"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_071",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "ما معنى اختصار TCP في بروتوكولات الإنترنت؟",
+    "correctAnswer": "Transmission Control Protocol",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "شبكات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_072",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "في أي مختبرات طُوّر نظام التشغيل Unix لأول مرة؟",
+    "correctAnswer": "مختبرات بيل",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "أنظمة تشغيل"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_073",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "يرمز اسم RSA في التشفير إلى ألقاب ثلاثة باحثين؛ ما أشهر صيغة عربية لإجابتهم؟",
+    "correctAnswer": "ريفست شامير أدلمان",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "تشفير"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_074",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "ما اسم أول كتلة في سلسلة كتل مثل بيتكوين؟",
+    "correctAnswer": "كتلة التكوين",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "بلوكتشين"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_075",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "ما اللغة القياسية الأكثر استخدامًا للاستعلام عن قواعد البيانات العلائقية؟",
+    "correctAnswer": "SQL",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "قواعد بيانات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_076",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "أي نوع من المعالجات صُمم ليبرع في تنفيذ عمليات كثيرة متوازية مثل الرسوميات والتعلم العميق؟",
+    "correctAnswer": "GPU",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "عتاد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_077",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "ما معنى رمز الحالة HTTP 404؟",
+    "correctAnswer": "غير موجود",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "ويب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_078",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "ما المنصة المفتوحة التي تُستخدم لإدارة ونشر الحاويات على عناقيد الخوادم؟",
+    "correctAnswer": "Kubernetes",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "حاويات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_079",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "ما الاختبار الذي اقترحه آلان تورنغ لتقييم قدرة آلة على تقليد الحوار البشري؟",
+    "correctAnswer": "اختبار تورنغ",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "ذكاء اصطناعي"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_080",
+    "mode": "prizes",
+    "category": "تقنية",
+    "prompt": "ما اسم فهرس الحزم الرسمي الشائع للغة بايثون؟",
+    "correctAnswer": "PyPI",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "تقنية",
+      "برمجة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_081",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "أي منتخب فاز بكأس العالم 1970 في المكسيك؟",
+    "correctAnswer": "البرازيل",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "كرة قدم"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_082",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "ما معنى الشعار الأولمبي اللاتيني Citius, Altius, Fortius بالعربية؟",
+    "correctAnswer": "أسرع أعلى أقوى",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "أولمبياد"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_083",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "أي بطولة من بطولات التنس الكبرى تُلعب على الملاعب الترابية في رولان غاروس؟",
+    "correctAnswer": "بطولة فرنسا المفتوحة",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "تنس"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_084",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "أي دولة أفريقية وصلت أولًا إلى ربع نهائي كأس العالم لكرة القدم عام 1990؟",
+    "correctAnswer": "الكاميرون",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "كرة قدم"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_085",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "ما اسم الحلبة الشارعية التي تستضيف جائزة موناكو الكبرى في الفورمولا 1؟",
+    "correctAnswer": "حلبة موناكو",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "فورمولا 1"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_086",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "سلسلة الأشز في الكريكيت تُلعب تاريخيًا بين أي منتخبين؟",
+    "correctAnswer": "إنجلترا وأستراليا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "كريكيت"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_087",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "ما لون قميص متصدر الترتيب العام في سباق طواف فرنسا؟",
+    "correctAnswer": "الأصفر",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "دراجات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_088",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "في أي عام اعتمدت NBA خط الثلاث نقاط رسميًا؟",
+    "correctAnswer": "1979",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "كرة سلة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_089",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "ما اسم الملاكم محمد علي قبل تغييره؟",
+    "correctAnswer": "كاسيوس كلاي",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "ملاكمة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_090",
+    "mode": "prizes",
+    "category": "رياضة",
+    "prompt": "في سباقات الفورمولا 1، ماذا تعني الراية ذات المربعات السوداء والبيضاء؟",
+    "correctAnswer": "نهاية السباق",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "رياضة",
+      "سباقات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_091",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "أي اتفاقية دولية أنشأت إطار صندوق النقد الدولي والبنك الدولي بعد الحرب العالمية الثانية؟",
+    "correctAnswer": "اتفاقية بريتون وودز",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "سياسة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_092",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "في أي مدينة تأسست منظمة أوبك عام 1960؟",
+    "correctAnswer": "بغداد",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "نفط"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_093",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "ما الكتاب الأشهر لآدم سميث الذي صدر عام 1776؟",
+    "correctAnswer": "ثروة الأمم",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "كتب"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_094",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "ما العملة الأوروبية التي بدأ تداولها النقدي في 2002 بعد إطلاقها إلكترونيًا عام 1999؟",
+    "correctAnswer": "اليورو",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "أوروبا"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_095",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "في أي مدينة تُمنح جائزة نوبل للسلام؟",
+    "correctAnswer": "أوسلو",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سياسة",
+      "جوائز"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_096",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "كم دولة دائمة العضوية تمتلك حق النقض في مجلس الأمن الدولي؟",
+    "correctAnswer": "5",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "سياسة",
+      "أمم متحدة"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_097",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "ماذا يقيس معامل جيني عادة في الاقتصاد والمجتمع؟",
+    "correctAnswer": "عدم المساواة في الدخل",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "مؤشرات"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_098",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "في أي ولاية أمريكية يقع وادي السيليكون؟",
+    "correctAnswer": "كاليفورنيا",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "تقنية"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_099",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "ما اسم النقطة التي يتساوى عندها العرض والطلب في السوق؟",
+    "correctAnswer": "نقطة التوازن",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "أسواق"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
+  },
+  {
+    "id": "q_prizes_100",
+    "mode": "prizes",
+    "category": "اقتصاد وسياسة",
+    "prompt": "ما النموذج الرياضي الشهير المستخدم لتسعير الخيارات المالية ويحمل أسماء بلاك وشولز؟",
+    "correctAnswer": "نموذج بلاك شولز",
+    "difficulty": "hard",
+    "source": "جوائز seed",
+    "tags": [
+      "جوائز",
+      "اقتصاد",
+      "تمويل"
+    ],
+    "active": true,
+    "createdAt": "2026-06-24T00:00:00.000Z",
+    "updatedAt": "2026-06-24T00:00:00.000Z"
   }
 ]

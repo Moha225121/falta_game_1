@@ -37,6 +37,8 @@ const BOT_COLORS = ["#12d6c5", "#ff3f98", "#f6b84a", "#62df6c", "#8c6cff"];
 const BOT_MARKS = ["spark", "diamond", "crown", "bolt", "circle"];
 const MAX_TOTAL_ROUNDS = 20;
 const SCIENCE_DAY_MODE = "science_day";
+const PRIZES_MODE = "prizes";
+const PRIZES_ROUNDS = 5;
 const SCIENCE_DAY_TOTAL_SETS = 2;
 const SCIENCE_DAY_QUESTIONS_PER_SET = 7;
 const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_SETS * SCIENCE_DAY_QUESTIONS_PER_SET;
@@ -236,7 +238,7 @@ function answerFormatNote(question) {
 
 function promptWithAnswerFormatNote(question, mode) {
   const prompt = question?.prompt || "";
-  if (mode !== "kalak" || !prompt || /ملاحظة:\s*الإجابة/.test(prompt)) {
+  if ((mode !== "kalak" && mode !== PRIZES_MODE) || !prompt || /ملاحظة:\s*الإجابة/.test(prompt)) {
     return prompt;
   }
 
@@ -326,6 +328,14 @@ function cleanRoomCode(value) {
 
 function isScienceDayRoom(room) {
   return room?.settings?.mode === SCIENCE_DAY_MODE || room?.activeMode === SCIENCE_DAY_MODE;
+}
+
+function isPrizesRoom(room) {
+  return room?.settings?.mode === PRIZES_MODE || room?.activeMode === PRIZES_MODE;
+}
+
+function isMonitorOnlyRoom(room) {
+  return isScienceDayRoom(room) || isPrizesRoom(room);
 }
 
 function cleanScienceDaySet(value) {
@@ -714,6 +724,14 @@ export class KalakGameEngine {
     return [...room.players.values()].filter((player) => player.isBot || player.connected !== false).length;
   }
 
+  prizeContestants(room) {
+    return [...room.players.values()].filter((player) => player.id !== room.hostId && !player.isBot);
+  }
+
+  connectedPrizeContestants(room) {
+    return this.prizeContestants(room).filter((player) => player.connected !== false);
+  }
+
   assignHostIfNeeded(room, preferredPlayerId = null) {
     const currentHost = room.hostId ? room.players.get(room.hostId) : null;
     if (currentHost && !currentHost.isBot && currentHost.connected !== false) {
@@ -785,7 +803,11 @@ export class KalakGameEngine {
       throw new Error("هذه المباراة بدأت بالفعل.");
     }
 
-    if (!isScienceDayRoom(room) && this.lobbySeatCount(room) >= this.config.maxPlayers) {
+    if (isPrizesRoom(room) && this.prizeContestants(room).length >= this.config.maxPlayers) {
+      throw new Error("هذه الغرفة ممتلئة.");
+    }
+
+    if (!isMonitorOnlyRoom(room) && this.lobbySeatCount(room) >= this.config.maxPlayers) {
       throw new Error("هذه الغرفة ممتلئة.");
     }
 
@@ -972,6 +994,10 @@ export class KalakGameEngine {
       throw new Error("اليوم العلمي مصمم للحضور الحقيقي عبر الرابط أو QR.");
     }
 
+    if (isPrizesRoom(room)) {
+      throw new Error("جوائز مصمم للاعبين الحقيقيين فقط عبر الرابط أو QR.");
+    }
+
     if (this.lobbySeatCount(room) >= this.config.maxPlayers) {
       throw new Error("هذه الغرفة ممتلئة.");
     }
@@ -1043,7 +1069,9 @@ export class KalakGameEngine {
     const room = this.requireRoom(socket);
     this.requireHost(room, socket);
 
-    const connectedPlayers = [...room.players.values()].filter((player) => player.connected !== false);
+    const connectedPlayers = isPrizesRoom(room)
+      ? this.connectedPrizeContestants(room)
+      : [...room.players.values()].filter((player) => player.connected !== false);
     const requiredPlayers = isScienceDayRoom(room) ? 1 : this.config.minPlayers;
     if (connectedPlayers.length < requiredPlayers) {
       throw new Error(`اللعبة تحتاج على الأقل ${requiredPlayers} لاعبين.`);
@@ -1163,7 +1191,7 @@ export class KalakGameEngine {
 
     this.incrementCounter("answerSubmissions");
 
-    if (this.currentMode(room) === "kalak" && answersMatch(text, room.question.correctAnswer)) {
+    if ((this.currentMode(room) === "kalak" || this.currentMode(room) === PRIZES_MODE) && answersMatch(text, room.question.correctAnswer)) {
       if (!room.correctWriterIds.includes(playerId)) {
         room.correctWriterIds.push(playerId);
       }
@@ -1344,14 +1372,14 @@ export class KalakGameEngine {
       room.eliminatedPlayerIds = new Set();
     }
 
-    if (mode !== "kalak") {
+    if (mode !== "kalak" && mode !== PRIZES_MODE) {
       await this.startSpecialRound(room);
       return;
     }
 
     const question = await this.store.random({
-      mode: "kalak",
-      categories: room.settings.categories,
+      mode,
+      categories: mode === PRIZES_MODE ? [] : room.settings.categories,
       excludeIds: room.usedQuestionIds
     });
 
@@ -2594,8 +2622,9 @@ export class KalakGameEngine {
       return awards.get(playerId);
     };
 
-    for (const playerId of room.players.keys()) {
-      ensureAward(playerId);
+    const scoringPlayers = mode === PRIZES_MODE ? this.prizeContestants(room) : [...room.players.values()];
+    for (const player of scoringPlayers) {
+      ensureAward(player.id);
     }
 
     for (const vote of room.votes.values()) {
@@ -3393,7 +3422,8 @@ export class KalakGameEngine {
     room.votes.delete(player.id);
     this.clearKickVotesFor(room, player.id);
 
-    if (room.hostId === player.id) {
+    const removedHost = room.hostId === player.id;
+    if (removedHost) {
       room.hostId = null;
     }
 
@@ -3409,6 +3439,11 @@ export class KalakGameEngine {
       this.rooms.delete(room.code);
       this.incrementCounter("roomsClosed");
       this.recordRoomEvent("closed", room);
+      return player;
+    }
+
+    if (removedHost && isPrizesRoom(room)) {
+      this.closeRoom(room, "مراقب جوائز غادر الغرفة، انتهت المباراة.");
       return player;
     }
 
@@ -3464,6 +3499,18 @@ export class KalakGameEngine {
         scienceDaySet: cleanScienceDaySet(input.scienceDaySet),
         answerSeconds: this.config.answerSeconds,
         voteSeconds: SCIENCE_DAY_QUESTION_SECONDS
+      };
+    }
+
+    if (modes.includes(PRIZES_MODE)) {
+      return {
+        mode: PRIZES_MODE,
+        modes: [PRIZES_MODE],
+        category: "all",
+        categories: [],
+        rounds: PRIZES_ROUNDS,
+        answerSeconds: this.config.answerSeconds,
+        voteSeconds: this.config.voteSeconds
       };
     }
 
@@ -3526,6 +3573,9 @@ export class KalakGameEngine {
     if (this.currentMode(room) === "judge_pick") {
       return players.filter((player) => player.id !== room.modeData?.judgeId);
     }
+    if (this.currentMode(room) === PRIZES_MODE) {
+      return players.filter((player) => player.id !== room.hostId && !player.isBot);
+    }
     return players;
   }
 
@@ -3533,7 +3583,7 @@ export class KalakGameEngine {
     if (this.currentMode(room) === "judge_pick") {
       return this.activePlayers(room).filter((player) => player.id === room.modeData?.judgeId);
     }
-    if (this.currentMode(room) === SCIENCE_DAY_MODE) {
+    if (this.currentMode(room) === SCIENCE_DAY_MODE || this.currentMode(room) === PRIZES_MODE) {
       return this.activePlayers(room).filter((player) => player.id !== room.hostId && !player.isBot);
     }
     return this.activePlayers(room);

@@ -59,6 +59,8 @@ const activeMatchPhases = new Set(["answering", "voting", "results"]);
 const focusedGamePhases = new Set([...activeMatchPhases, "finished"]);
 const joinRetryDelays = [350, 800, 1400, 2200];
 const SCIENCE_DAY_MODE = "science_day";
+const PRIZES_MODE = "prizes";
+const PRIZES_ROUNDS = 5;
 const SCIENCE_DAY_TOTAL_SETS = 2;
 const SCIENCE_DAY_QUESTIONS_PER_SET = 7;
 const SCIENCE_DAY_TOTAL_QUESTIONS = SCIENCE_DAY_TOTAL_SETS * SCIENCE_DAY_QUESTIONS_PER_SET;
@@ -88,8 +90,20 @@ function isScienceDayRoom(room) {
   return getActiveMode(room) === SCIENCE_DAY_MODE;
 }
 
-function scienceDayContestants(room) {
+function isPrizesRoom(room) {
+  return getActiveMode(room) === PRIZES_MODE;
+}
+
+function isMonitorOnlyRoom(room) {
+  return isScienceDayRoom(room) || isPrizesRoom(room);
+}
+
+function monitorContestants(room) {
   return (room?.players || []).filter((player) => !player.isHost && !player.isBot);
+}
+
+function scienceDayContestants(room) {
+  return monitorContestants(room);
 }
 
 function scienceDaySetOption(value) {
@@ -387,6 +401,7 @@ export default function Game() {
     : "";
   const isInviteEntry = Boolean(directInviteCode);
   const scienceDayInviteEntry = isInviteEntry && inviteRoomMode === SCIENCE_DAY_MODE;
+  const prizesInviteEntry = isInviteEntry && inviteRoomMode === PRIZES_MODE;
 
   useEffect(() => {
     api("/categories").then(setCategories).catch(() => setCategories([]));
@@ -410,7 +425,8 @@ export default function Game() {
         return;
       }
 
-      setInviteRoomMode(getActiveMode(previewRoom) === SCIENCE_DAY_MODE ? SCIENCE_DAY_MODE : "");
+      const previewMode = getActiveMode(previewRoom);
+      setInviteRoomMode([SCIENCE_DAY_MODE, PRIZES_MODE].includes(previewMode) ? previewMode : "");
     }).catch(() => {
       if (active) {
         setInviteRoomMode("");
@@ -653,8 +669,8 @@ export default function Game() {
         phase: room?.phase || "",
         mode: activeMode || "",
         waitingOnly: room
-          ? Boolean(isScienceDayRoom(room) && room.phase === "lobby" && !room.me?.isHost)
-          : activeMode === SCIENCE_DAY_MODE
+          ? Boolean(isMonitorOnlyRoom(room) && room.phase === "lobby" && !room.me?.isHost)
+          : [SCIENCE_DAY_MODE, PRIZES_MODE].includes(activeMode)
       }
     }));
   }, [inviteRoomMode, room?.activeMode, room?.code, room?.me?.isHost, room?.phase, room?.settings?.mode]);
@@ -863,7 +879,7 @@ export default function Game() {
 
   useEffect(() => {
     function shareRoomFromTopbar() {
-      if (room?.phase !== "lobby" && !isScienceDayRoom(room)) {
+      if (room?.phase !== "lobby" && !isMonitorOnlyRoom(room)) {
         return;
       }
 
@@ -910,10 +926,12 @@ export default function Game() {
             {connected ? <Check size={18} /> : <Loader2 className="spin" size={18} />}
             <span>{connected ? "متصل" : "جاري الاتصال"}</span>
           </div>
-          <h1>{scienceDayInviteEntry ? "اليوم العلمي" : isInviteEntry ? "اكتب اسمك" : "ادخل اللعب"}</h1>
+          <h1>{scienceDayInviteEntry ? "اليوم العلمي" : prizesInviteEntry ? "جوائز" : isInviteEntry ? "اكتب اسمك" : "ادخل اللعب"}</h1>
           <p>
             {scienceDayInviteEntry
               ? "اكتب اسمك واختار بطاقتك للدخول مباشرة إلى فعالية اليوم العلمي."
+              : prizesInviteEntry
+              ? "اكتب اسمك واختار بطاقتك للدخول إلى تحدي جوائز، وبعدها انتظر المراقب يبدأ أول سؤال."
               : isInviteEntry
               ? "الرابط جاهز، اختار بطاقتك واضغط دخول للغرفة."
               : "اختار بطاقتك مرة واحدة، وبعدها افتح غرفة أو ادخل بكود."}
@@ -940,7 +958,7 @@ export default function Game() {
               {isInviteEntry ? (
                 <div className="invite-ready-card">
                   <Share2 size={18} />
-                  <span>{scienceDayInviteEntry ? "رابط اليوم العلمي جاهز" : "رابط الغرفة جاهز"}</span>
+                  <span>{scienceDayInviteEntry ? "رابط اليوم العلمي جاهز" : prizesInviteEntry ? "رابط جوائز جاهز" : "رابط الغرفة جاهز"}</span>
                 </div>
               ) : (
                 <label>
@@ -977,19 +995,21 @@ export default function Game() {
   const activeGamePhase = activeMatchPhases.has(room.phase);
   const inMatch = focusedGamePhases.has(room.phase);
   const scienceDay = isScienceDayRoom(room);
-  const scienceDayWaiting = scienceDay && room.phase === "lobby" && !isHost;
-  const showRoomShare = (!scienceDay && room.phase === "lobby") || (scienceDay && isHost);
-  const showMobileRoomCode = !scienceDay && room.phase === "lobby";
+  const prizes = isPrizesRoom(room);
+  const monitorOnly = scienceDay || prizes;
+  const monitorWaiting = monitorOnly && room.phase === "lobby" && !isHost;
+  const showRoomShare = (!monitorOnly && room.phase === "lobby") || (monitorOnly && isHost);
+  const showMobileRoomCode = !monitorOnly && room.phase === "lobby";
 
   return (
-    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${room.phase === "finished" ? "finished-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${scienceDayWaiting ? "science-day-waiting-route" : ""}`}>
+    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${room.phase === "finished" ? "finished-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${monitorWaiting ? "science-day-waiting-route" : ""}`}>
       <section className="room-header">
         <div>
           <div className="hero-kicker">
             <span className={`status-dot ${connected ? "online" : ""}`} />
             <span>{phaseLabels[room.phase]}</span>
           </div>
-          <h1>{scienceDay ? "اليوم العلمي" : inMatch ? phaseLabels[room.phase] : <>غرفة <b dir="ltr">{room.code}</b></>}</h1>
+          <h1>{scienceDay ? "اليوم العلمي" : prizes ? "جوائز" : inMatch ? phaseLabels[room.phase] : <>غرفة <b dir="ltr">{room.code}</b></>}</h1>
         </div>
         <div className="room-actions">
           <button className="icon-text-button mobile-menu-trigger" type="button" onClick={() => setDrawerOpen(true)}>
@@ -1063,8 +1083,8 @@ export default function Game() {
             <RoundStrip room={room} gameModes={gameModes} />
           ) : null}
 
-          {scienceDayWaiting ? (
-            <ScienceDayWaitingScreen playerName={me?.name || player.name} />
+          {monitorWaiting ? (
+            <ScienceDayWaitingScreen playerName={me?.name || player.name} modeName={prizes ? "جوائز" : "اليوم العلمي"} showBrand={scienceDay} />
           ) : room.phase === "lobby" ? (
             <Lobby
               room={room}
@@ -1164,7 +1184,7 @@ function ActionIcon({ loading, icon: Icon, size = 18 }) {
 }
 
 function MatchExtras({ room, busy, connected, pendingAction, chatBusy, onKickVote, onSendChat }) {
-  const scoreboardPlayers = isScienceDayRoom(room) ? scienceDayContestants(room) : room.players;
+  const scoreboardPlayers = isMonitorOnlyRoom(room) ? monitorContestants(room) : room.players;
 
   return (
     <>
@@ -1192,8 +1212,8 @@ function MatchDrawer({
   onEndGame,
   onLeave
 }) {
-  const scienceDay = isScienceDayRoom(room);
-  const canShareRoom = (!scienceDay && room.phase === "lobby") || (scienceDay && isHost);
+  const monitorOnly = isMonitorOnlyRoom(room);
+  const canShareRoom = (!monitorOnly && room.phase === "lobby") || (monitorOnly && isHost);
   const tabs = [
     { id: "score", label: "الترتيب", icon: Trophy },
     { id: "players", label: "اللاعبون", icon: Users },
@@ -1229,7 +1249,7 @@ function MatchDrawer({
         </div>
 
         <div className="drawer-body">
-          {panel === "score" ? <Scoreboard players={isScienceDayRoom(room) ? scienceDayContestants(room) : room.players} compact /> : null}
+          {panel === "score" ? <Scoreboard players={isMonitorOnlyRoom(room) ? monitorContestants(room) : room.players} compact /> : null}
           {panel === "players" ? (
             <PlayersPanel room={room} busy={busy} connected={connected} pendingAction={pendingAction} onKickVote={onKickVote} />
           ) : null}
@@ -1373,14 +1393,19 @@ function ScienceDayBrandLockup({ compact = false }) {
   );
 }
 
-function ScienceDayWaitingScreen({ playerName }) {
+function ScienceDayWaitingScreen({ playerName, modeName = "اليوم العلمي", showBrand = true }) {
   return (
     <section className="science-day-waiting-card" aria-live="polite">
-      <ScienceDayBrandLockup />
+      {showBrand ? <ScienceDayBrandLockup /> : (
+        <div className="prizes-waiting-mark">
+          <Trophy size={34} />
+          <span>{modeName}</span>
+        </div>
+      )}
       <div className="science-day-waiting-copy">
         <span className="eyebrow">تم تسجيلك</span>
         <h2>{playerName ? `أهلًا ${playerName}` : "أهلًا بك"}</h2>
-        <p>تم تسجيل دخولك، وسيبدأ التحدي عند إطلاقه من المشرف.</p>
+        <p>تم تسجيل دخولك، وسيبدأ تحدي {modeName} عند إطلاقه من المراقب.</p>
       </div>
       <div className="science-day-waiting-status">
         <Loader2 className="spin" size={18} />
@@ -1397,7 +1422,14 @@ function ScienceDayInviteCard({
   compact = false,
   selectedSet = "set1",
   canEditSet = false,
-  onSetChange = null
+  onSetChange = null,
+  modeName = "اليوم العلمي",
+  eyebrow = "اليوم العلمي",
+  title = "امسح QR وادخل مباشرة",
+  description = "الرابط يفتح شاشة الاسم فقط، وبعدها يدخل الطالب للفعالية بدون إنشاء غرفة جديدة.",
+  showBrand = true,
+  showSetPicker = true,
+  playerLabel = "مشارك متصل"
 }) {
   const inviteUrl = roomInviteUrl(code);
   const selectedSetOption = scienceDaySetOption(selectedSet);
@@ -1437,10 +1469,10 @@ function ScienceDayInviteCard({
   return (
     <div className={`science-day-invite ${compact ? "compact" : ""}`}>
       <div className="science-day-invite-copy">
-        <ScienceDayBrandLockup compact={compact} />
-        <span className="eyebrow">اليوم العلمي</span>
-        <h3>امسح QR وادخل مباشرة</h3>
-        <p>الرابط يفتح شاشة الاسم فقط، وبعدها يدخل الطالب للفعالية بدون إنشاء غرفة جديدة.</p>
+        {showBrand ? <ScienceDayBrandLockup compact={compact} /> : null}
+        <span className="eyebrow">{eyebrow}</span>
+        <h3>{title}</h3>
+        <p>{description}</p>
         <div className="science-day-link-row">
           <code dir="ltr">{inviteUrl}</code>
           <button className="secondary-button" type="button" onClick={onShare}>
@@ -1450,21 +1482,23 @@ function ScienceDayInviteCard({
         </div>
       </div>
       <div className="science-day-qr">
-        {qrCode ? <img src={qrCode} alt="QR لدخول اليوم العلمي" /> : <Loader2 className="spin" size={38} />}
-        <span>{playerCount} مشارك متصل</span>
-        <div className="science-day-set-picker" role="group" aria-label="اختيار مجموعة أسئلة اليوم العلمي">
-          {SCIENCE_DAY_SET_OPTIONS.map((option) => (
-            <label className={`science-day-set-option ${selectedSetOption.id === option.id ? "selected" : ""}`} key={option.id}>
-              <input
-                type="checkbox"
-                checked={selectedSetOption.id === option.id}
-                disabled={!canEditSet}
-                onChange={() => onSetChange?.(option.id)}
-              />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
+        {qrCode ? <img src={qrCode} alt={`QR لدخول ${modeName}`} /> : <Loader2 className="spin" size={38} />}
+        <span>{playerCount} {playerLabel}</span>
+        {showSetPicker ? (
+          <div className="science-day-set-picker" role="group" aria-label="اختيار مجموعة أسئلة اليوم العلمي">
+            {SCIENCE_DAY_SET_OPTIONS.map((option) => (
+              <label className={`science-day-set-option ${selectedSetOption.id === option.id ? "selected" : ""}`} key={option.id}>
+                <input
+                  type="checkbox"
+                  checked={selectedSetOption.id === option.id}
+                  disabled={!canEditSet}
+                  onChange={() => onSetChange?.(option.id)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -1473,10 +1507,12 @@ function ScienceDayInviteCard({
 function Lobby({ room, categories, gameModes, config, isHost, busy, connected, pendingAction, onUpdate, onAddBot, onShare, onStart }) {
   const connectedPlayers = room.players.filter((player) => player.connected !== false);
   const scienceDay = isScienceDayRoom(room);
-  const sciencePlayers = scienceDayContestants(room);
-  const connectedSciencePlayers = sciencePlayers.filter((player) => player.connected !== false);
-  const canStart = scienceDay || connectedPlayers.length >= config.minPlayers;
-  const canAddBot = !scienceDay && isHost && room.players.length < config.maxPlayers;
+  const prizes = isPrizesRoom(room);
+  const monitorOnly = scienceDay || prizes;
+  const contestants = monitorOnly ? monitorContestants(room) : room.players;
+  const connectedContestants = contestants.filter((player) => player.connected !== false);
+  const canStart = scienceDay || (prizes ? connectedContestants.length >= config.minPlayers : connectedPlayers.length >= config.minPlayers);
+  const canAddBot = !monitorOnly && isHost && room.players.length < config.maxPlayers;
   const selectedModes = selectedModeIds(room.settings.modes ?? room.settings.mode);
   const limits = roundLimits(selectedModes.length);
   const canDecreaseRounds = connected && isHost && room.settings.rounds > limits.min;
@@ -1488,12 +1524,26 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
     }
 
     const modes = selectedModeIds(nextModes);
-    if (modes.includes(SCIENCE_DAY_MODE)) {
-      const nonScienceModes = modes.filter((mode) => mode !== SCIENCE_DAY_MODE);
-      const scienceWasExclusive = selectedModes.length === 1 && selectedModes[0] === SCIENCE_DAY_MODE;
-      if (scienceWasExclusive && nonScienceModes.length > 0) {
-        const nextRounds = normalizeRoundCount(nonScienceModes.length, nonScienceModes.length);
-        onUpdate({ modes: nonScienceModes, rounds: nextRounds });
+    const exclusiveMode = modes.includes(SCIENCE_DAY_MODE)
+      ? SCIENCE_DAY_MODE
+      : modes.includes(PRIZES_MODE)
+      ? PRIZES_MODE
+      : "";
+    if (exclusiveMode) {
+      const nonExclusiveModes = modes.filter((mode) => mode !== SCIENCE_DAY_MODE && mode !== PRIZES_MODE);
+      const wasExclusive = selectedModes.length === 1 && [SCIENCE_DAY_MODE, PRIZES_MODE].includes(selectedModes[0]);
+      if (wasExclusive && nonExclusiveModes.length > 0) {
+        const nextRounds = normalizeRoundCount(nonExclusiveModes.length, nonExclusiveModes.length);
+        onUpdate({ modes: nonExclusiveModes, rounds: nextRounds });
+        return;
+      }
+
+      if (exclusiveMode === PRIZES_MODE) {
+        onUpdate({
+          modes: [PRIZES_MODE],
+          rounds: PRIZES_ROUNDS,
+          categories: []
+        });
         return;
       }
 
@@ -1527,22 +1577,35 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
         </div>
         <span className="counter-chip">
           <Users size={16} />
-          {scienceDay ? `${connectedSciencePlayers.length} مشارك` : `${room.players.length}/${config.maxPlayers}`}
+          {scienceDay ? `${connectedContestants.length} مشارك` : prizes ? `${connectedContestants.length}/${config.maxPlayers}` : `${room.players.length}/${config.maxPlayers}`}
         </span>
       </div>
 
       {scienceDay ? (
         <ScienceDayInviteCard
           code={room.code}
-          playerCount={connectedSciencePlayers.length}
+          playerCount={connectedContestants.length}
           onShare={onShare}
           selectedSet={room.settings.scienceDaySet}
           canEditSet={isHost && connected && !busy}
           onSetChange={(scienceDaySet) => onUpdate({ scienceDaySet })}
         />
+      ) : prizes ? (
+        <ScienceDayInviteCard
+          code={room.code}
+          playerCount={connectedContestants.length}
+          onShare={onShare}
+          modeName="جوائز"
+          eyebrow="جوائز"
+          title="امسح QR وانضم للتحدي"
+          description="الرابط يفتح شاشة الاسم فقط. اللاعبون يدخلون وينتظرون المراقب، ثم تبدأ 5 أسئلة بنظام شن الصح."
+          showBrand={false}
+          showSetPicker={false}
+          playerLabel="لاعب متصل"
+        />
       ) : null}
 
-      {isHost && !scienceDay ? (
+      {isHost && !monitorOnly ? (
         <div className="bot-controls">
           <button className="secondary-button" type="button" onClick={onAddBot} disabled={!connected || !canAddBot || busy}>
             <ActionIcon loading={pendingAction === "bot"} icon={UserPlus} />
@@ -1568,7 +1631,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
                 </span>
               ) : null}
               {player.connected === false ? <span className="mini-chip offline-chip">غير متصل</span> : null}
-              {player.isHost && scienceDay ? <span className="mini-chip">مراقب</span> : null}
+              {player.isHost && monitorOnly ? <span className="mini-chip">مراقب</span> : null}
               {player.isHost ? <Crown size={16} /> : null}
             </div>
           </div>
@@ -1580,7 +1643,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
           <Settings size={18} />
           <h2>الإعدادات</h2>
         </div>
-        {scienceDay ? (
+        {monitorOnly ? (
           <div className="settings-categories science-day-mode-lock">
             <span className="field-label">طور اللعبة</span>
             <div className="science-day-locked-mode">
@@ -1588,8 +1651,8 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
                 <Sparkles size={18} />
               </span>
               <div>
-                <strong>اليوم العلمي</strong>
-                <span>طور الفعالية الحالي</span>
+                <strong>{scienceDay ? "اليوم العلمي" : "جوائز"}</strong>
+                <span>{scienceDay ? "طور الفعالية الحالي" : "5 أسئلة بنظام شن الصح"}</span>
               </div>
               <span className="mini-chip">مثبت</span>
             </div>
@@ -1620,8 +1683,23 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
               <span>الطلاب يشاهدون النسب والأعداد والإجابة الصحيحة بدون أسماء.</span>
             </div>
           </div>
+        ) : prizes ? (
+          <div className="science-day-rule-grid">
+            <div>
+              <strong>5 أسئلة</strong>
+              <span>تحدي قصير وثقيل. كل سؤال يأخذ {room.settings.answerSeconds || 30} ثانية للإجابة ثم {room.settings.voteSeconds || 30} ثانية للتصويت.</span>
+            </div>
+            <div>
+              <strong>3 إلى 6 لاعبين</strong>
+              <span>العداد يحسب اللاعبين فقط، والمراقب لا يأخذ مكان لاعب.</span>
+            </div>
+            <div>
+              <strong>مراقب فقط</strong>
+              <span>منشئ الغرفة يشغّل الأسئلة وينهي الجولة، لكنه لا يجاوب ولا يصوّت ولا يظهر في الترتيب.</span>
+            </div>
+          </div>
         ) : null}
-        {!scienceDay && selectedModes.includes("kalak") ? <div className="settings-categories">
+        {!monitorOnly && selectedModes.includes("kalak") ? <div className="settings-categories">
           <span className="field-label">أنواع الأسئلة الخاصة بطور شن الصح</span>
           <CategoryPicker
             categories={categories}
@@ -1630,7 +1708,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
             disabled={!connected || !isHost}
           />
         </div> : null}
-        {!scienceDay ? <div className="settings-grid round-settings-grid">
+        {!monitorOnly ? <div className="settings-grid round-settings-grid">
           <div className="round-stepper" aria-label="الجولات">
             <span className="field-label">الجولات</span>
             <button
@@ -1659,7 +1737,7 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
       {isHost ? (
         <button className="primary-button wide-button" type="button" onClick={onStart} disabled={!connected || !canStart || busy}>
           <ActionIcon loading={pendingAction === "start"} icon={Play} />
-          <span>{pendingAction === "start" ? "جاري البدء" : canStart ? (scienceDay ? "بدء اليوم العلمي" : "بدء اللعبة") : `تحتاج ${config.minPlayers} لاعبين متصلين`}</span>
+          <span>{pendingAction === "start" ? "جاري البدء" : canStart ? (scienceDay ? "بدء اليوم العلمي" : prizes ? "بدء جوائز" : "بدء اللعبة") : `تحتاج ${config.minPlayers} لاعبين متصلين`}</span>
         </button>
       ) : (
         <div className="waiting-strip">
@@ -1675,7 +1753,7 @@ function Answering({ room, me, answer, setAnswer, onSubmit, busy, connected, pen
   const submitted = Boolean(me?.submitted);
   const activeMode = getActiveMode(room);
   const isImposterMode = activeMode === "imposter";
-  const knowsCorrect = activeMode === "kalak" && room.me?.knowsCorrect && !submitted;
+  const knowsCorrect = (activeMode === "kalak" || activeMode === PRIZES_MODE) && room.me?.knowsCorrect && !submitted;
   const canSubmit = me?.canSubmit !== false;
   const placeholder = knowsCorrect
     ? "اكتب إجابة غلط مقنعة عشان تخدع اللاعبين"
@@ -1863,9 +1941,10 @@ function ImposterClueHistory({ history }) {
 
 function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connected, pendingAction }) {
   const scienceDay = isScienceDayRoom(room);
+  const prizes = isPrizesRoom(room);
   const isImposterMode = getActiveMode(room) === "imposter";
   const meta = scienceDayMeta(room);
-  const monitorOnly = scienceDay && me?.canVote === false;
+  const monitorOnly = (scienceDay || prizes) && me?.canVote === false;
   const activeOption = selectedOption || me?.selectedOptionId || "";
   const canChangeScienceAnswer = scienceDay && me?.voted && me?.canVote !== false;
   return (
@@ -1894,7 +1973,7 @@ function Voting({ room, me, isHost, selectedOption, onVote, onNext, busy, connec
       {monitorOnly ? (
         <div className="science-day-monitor-note">
           <Crown size={18} />
-          <span>أنت مراقب اليوم العلمي. تابع الإجابات والوقت، وبعد النتائج انقلهم للسؤال التالي.</span>
+          <span>{scienceDay ? "أنت مراقب اليوم العلمي. تابع الإجابات والوقت، وبعد النتائج انقلهم للسؤال التالي." : "أنت مراقب جوائز. تابع الإجابات والوقت، وبعد النتائج انقل اللاعبين للسؤال التالي."}</span>
         </div>
       ) : null}
 
@@ -2124,8 +2203,9 @@ function Results({ room, isHost, busy, connected, pendingAction, onNext }) {
 
 function Finished({ room, currentPlayerId, onHome }) {
   const scienceDay = isScienceDayRoom(room);
+  const prizes = isPrizesRoom(room);
   const scienceMeta = scienceDay ? scienceDayMeta(room) : null;
-  const leaderboardPlayers = scienceDay ? scienceDayContestants(room) : room.players;
+  const leaderboardPlayers = scienceDay || prizes ? monitorContestants(room) : room.players;
   const rankedPlayers = leaderboardPlayers.map((player, index) => ({
     ...player,
     rank: index + 1

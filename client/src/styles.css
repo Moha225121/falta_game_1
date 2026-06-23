@@ -2089,6 +2089,20 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.prizes-waiting-mark {
+  min-height: 72px;
+  display: inline-grid;
+  place-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  color: #061114;
+  background: linear-gradient(135deg, var(--gold), #ffe79a);
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 38px rgba(246, 184, 74, 0.18);
+  font-weight: 950;
+}
+
 .science-day-waiting-copy {
   display: grid;
   gap: 8px;

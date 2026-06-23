@@ -29,6 +29,13 @@ export const QUESTION_TYPE_DEFINITIONS = [
     summary: "سؤال له إجابة صحيحة، واللاعبون يكتبون إجابات مخادعة."
   },
   {
+    id: "prizes",
+    name: "جوائز",
+    kind: "trivia",
+    category: "جوائز",
+    summary: "أسئلة صعبة بنظام شن الصح، مخصصة لتحدي قصير بمراقب ولاعبين عبر QR."
+  },
+  {
     id: "imposter",
     name: "الدخيل",
     kind: "secret_word",
@@ -284,7 +291,7 @@ function cleanMode(mode) {
 }
 
 function normalizeModeFields(mode, kind, input) {
-  if (mode === "kalak") {
+  if (mode === "kalak" || kind === "trivia") {
     const prompt = textFrom(input, ["prompt"], "prompt", 400, 8);
     const correctAnswer = textFrom(input, ["correctAnswer", "answer"], "correctAnswer", 160, 1);
     return {
