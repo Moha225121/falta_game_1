@@ -1,9 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap");
-
 :root {
   color-scheme: dark;
-  --ui-font: "Cairo", "Tajawal", "Segoe UI", Tahoma, Arial, sans-serif;
-  --display-font: "Cairo", "Tajawal", "Segoe UI", Tahoma, Arial, sans-serif;
+  --ui-font: "Segoe UI", Tahoma, Arial, sans-serif;
+  --display-font: "Segoe UI", Tahoma, Arial, sans-serif;
   --ink: #f7f3e7;
   --muted: #b7c7c5;
   --panel: rgba(8, 18, 22, 0.82);
@@ -78,23 +76,11 @@ a {
   min-height: 100dvh;
   position: relative;
   overflow-x: hidden;
-  background:
-    linear-gradient(180deg, rgba(7, 17, 21, 0.40), rgba(7, 17, 21, 0.94)),
-    linear-gradient(90deg, rgba(7, 17, 21, 0.72), rgba(7, 17, 21, 0.20), rgba(7, 17, 21, 0.78)),
-    url("/assets/kalak-arena.png") center top / cover fixed;
+  background: #071115;
 }
 
 .app-shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.28;
-  background:
-    linear-gradient(125deg, rgba(18, 214, 197, 0.16), transparent 34%),
-    linear-gradient(235deg, rgba(246, 184, 74, 0.14), transparent 38%);
-  animation: appLightShift 18s ease-in-out infinite;
+  display: none;
 }
 
 .science-day-shell {
@@ -129,9 +115,8 @@ a {
   gap: 16px;
   min-height: 72px;
   padding: 14px 34px;
-  background: rgba(6, 15, 18, 0.82);
+  background: #060f12;
   border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(18px);
 }
 
 .brand,
@@ -234,12 +219,6 @@ a {
   width: min(1440px, 100%);
   margin: 0 auto;
   padding: 34px;
-}
-
-.game-screen,
-.admin-screen,
-.setup-screen {
-  animation: pageEnter 420ms ease both;
 }
 
 .hero-screen {
@@ -345,7 +324,6 @@ p {
   background: rgba(255, 255, 255, 0.09);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  backdrop-filter: blur(12px);
 }
 
 .home-table-scene {
@@ -454,8 +432,6 @@ p {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
-  animation: surfaceEnter 360ms ease both;
 }
 
 .entry-panel,
@@ -534,6 +510,71 @@ p {
   border: 1px solid rgba(246, 184, 74, 0.34);
   border-radius: var(--radius);
   font-weight: 900;
+}
+
+.prizes-main-card {
+  width: 100%;
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  text-align: start;
+  color: #fff7f4;
+  background:
+    linear-gradient(135deg, rgba(255, 93, 105, 0.22), rgba(246, 184, 74, 0.10)),
+    rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 93, 105, 0.48);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.prizes-main-card:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(255, 123, 132, 0.72);
+  background:
+    linear-gradient(135deg, rgba(255, 93, 105, 0.30), rgba(246, 184, 74, 0.14)),
+    rgba(255, 255, 255, 0.07);
+}
+
+.prizes-main-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.prizes-main-flag {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  color: #fff;
+  background: #d91f3a;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.prizes-main-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.prizes-main-copy strong {
+  font-size: 1.12rem;
+  line-height: 1.1;
+}
+
+.prizes-main-copy small {
+  color: rgba(255, 247, 244, 0.82);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .panel-heading,
@@ -1065,7 +1106,6 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
 }
 
 .round-strip::before {
@@ -1429,7 +1469,6 @@ button:disabled {
   overflow: hidden;
   padding: 20px;
   min-height: 460px;
-  animation: surfaceEnter 380ms ease both;
 }
 
 .results-stage {
@@ -1445,7 +1484,6 @@ button:disabled {
     linear-gradient(120deg, transparent 0 48%, rgba(255, 255, 255, 0.04) 49%, transparent 54%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 28px);
   background-size: 220% 100%, auto;
-  animation: quietPanelSweep 16s linear infinite;
 }
 
 .stage-panel > * {
@@ -1491,7 +1529,6 @@ button:disabled {
     #ffffff;
   border-color: rgba(10, 52, 91, 0.14);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
 }
 
 .science-day-invite-entry {
@@ -2490,23 +2527,6 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   transition: transform 170ms ease, border-color 170ms ease, background 170ms ease, box-shadow 170ms ease;
-  animation: modeCardEnter 360ms ease both;
-}
-
-.mode-card:nth-child(2) {
-  animation-delay: 35ms;
-}
-
-.mode-card:nth-child(3) {
-  animation-delay: 70ms;
-}
-
-.mode-card:nth-child(4) {
-  animation-delay: 105ms;
-}
-
-.mode-card:nth-child(5) {
-  animation-delay: 140ms;
 }
 
 .mode-card::before {
@@ -2559,6 +2579,28 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.mode-title-stack {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.mode-event-flag {
+  width: fit-content;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  color: #fff;
+  background: #d91f3a;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: var(--radius);
+  font-size: 0.72rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
 .mode-card.active {
   border-color: rgba(246, 184, 74, 0.58);
   background:
@@ -2594,6 +2636,32 @@ button:disabled {
 
 .mode-card-fake_fact::before {
   background: rgba(255, 63, 152, 0.58);
+}
+
+.mode-card-prizes {
+  grid-column: 1 / -1;
+  min-height: 74px;
+  border-color: rgba(255, 93, 105, 0.42);
+  background:
+    linear-gradient(135deg, rgba(255, 93, 105, 0.16), rgba(246, 184, 74, 0.08)),
+    rgba(255, 255, 255, 0.058);
+}
+
+.mode-card-prizes::before {
+  width: 6px;
+  background: #d91f3a;
+  opacity: 1;
+}
+
+.mode-card-prizes.active {
+  border-color: rgba(255, 93, 105, 0.68);
+  background:
+    linear-gradient(135deg, rgba(255, 93, 105, 0.26), rgba(246, 184, 74, 0.14)),
+    rgba(255, 255, 255, 0.075);
+}
+
+.mode-card-prizes.active::before {
+  background: #d91f3a;
 }
 
 .mode-card.active .mode-check {
@@ -2637,7 +2705,6 @@ button:disabled {
   border-radius: var(--radius);
   font-size: 0.78rem;
   line-height: 1.45;
-  animation: surfaceEnter 140ms ease both;
 }
 
 .mode-info-inline p {
@@ -3471,8 +3538,6 @@ button:disabled {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  backdrop-filter: blur(18px);
-  animation: surfaceEnter 360ms ease both;
 }
 
 .scoreboard.compact .score-list {
@@ -4227,75 +4292,6 @@ button:disabled {
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes appLightShift {
-  0%,
-  100% {
-    transform: translateX(-2%) translateY(0);
-  }
-
-  50% {
-    transform: translateX(2%) translateY(-1%);
-  }
-}
-
-@keyframes pageEnter {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes surfaceEnter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes quietPanelSweep {
-  from {
-    background-position: -80% 0, 0 0;
-  }
-
-  to {
-    background-position: 120% 0, 0 0;
-  }
-}
-
-@keyframes modeCardEnter {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes anchoredPopoverIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(var(--popover-y, 0px)) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(var(--popover-y, 0px)) scale(1);
   }
 }
 

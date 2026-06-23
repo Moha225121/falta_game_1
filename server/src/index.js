@@ -24,6 +24,8 @@ const store = new QuestionStore();
 const game = new KalakGameEngine(io, store, config);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const clientDist = join(__dirname, "../../client/dist");
+const noStoreHeader = "no-store";
+const immutableAssetHeader = "public, max-age=31536000, immutable";
 
 app.use(cors({ origin: config.clientOrigin }));
 app.use(express.json({ limit: "1mb" }));
@@ -34,8 +36,20 @@ io.on("connection", (socket) => {
 });
 
 if (existsSync(clientDist)) {
-  app.use(express.static(clientDist));
+  app.use(express.static(clientDist, {
+    setHeaders(res, filePath) {
+      if (filePath.endsWith("index.html")) {
+        res.setHeader("Cache-Control", noStoreHeader);
+        return;
+      }
+
+      if (/[\\/]assets[\\/]/.test(filePath)) {
+        res.setHeader("Cache-Control", immutableAssetHeader);
+      }
+    }
+  }));
   app.get("*", (req, res) => {
+    res.setHeader("Cache-Control", noStoreHeader);
     res.sendFile(join(clientDist, "index.html"));
   });
 }

@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
 import Game from "./pages/Game.jsx";
-import Admin from "./pages/Admin.jsx";
+
+const Admin = lazy(() => import("./pages/Admin.jsx"));
 
 export default function App() {
   const location = useLocation();
@@ -41,7 +42,7 @@ export default function App() {
   if (isAdminRoute) {
     return (
       <Routes>
-        <Route path="/admin-panel" element={<Admin />} />
+        <Route path="/admin-panel" element={<Suspense fallback={null}><Admin /></Suspense>} />
         <Route path="*" element={<Navigate to="/play" replace />} />
       </Routes>
     );
