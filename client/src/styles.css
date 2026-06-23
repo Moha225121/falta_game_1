@@ -76,7 +76,10 @@ a {
   min-height: 100dvh;
   position: relative;
   overflow-x: hidden;
-  background: #071115;
+  background:
+    linear-gradient(180deg, rgba(7, 17, 21, 0.34), rgba(7, 17, 21, 0.94)),
+    linear-gradient(90deg, rgba(7, 17, 21, 0.74), rgba(7, 17, 21, 0.20), rgba(7, 17, 21, 0.76)),
+    url("/assets/kalak-arena-generated.jpg") center top / cover no-repeat #071115;
 }
 
 .app-shell::before {
@@ -2251,6 +2254,65 @@ button:disabled {
 
 .science-day-invite.compact .science-day-set-picker {
   display: none;
+}
+
+.prizes-theme .science-day-waiting-card,
+.prizes-theme .science-day-invite,
+.prizes-theme .science-day-locked-mode,
+.prizes-theme .science-day-rule-grid div {
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 68%),
+    rgba(8, 18, 22, 0.92);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
+.prizes-theme .science-day-invite {
+  border-color: rgba(246, 184, 74, 0.26);
+}
+
+.prizes-theme .science-day-invite-copy h3,
+.prizes-theme .science-day-rule-grid strong,
+.prizes-theme .science-day-waiting-copy h2,
+.prizes-theme .science-day-locked-mode strong {
+  color: var(--ink);
+}
+
+.prizes-theme .science-day-invite-copy .eyebrow,
+.prizes-theme .science-day-rule-grid strong {
+  color: var(--gold);
+}
+
+.prizes-theme .science-day-invite-copy p,
+.prizes-theme .science-day-rule-grid span,
+.prizes-theme .science-day-waiting-copy p,
+.prizes-theme .science-day-locked-mode div span {
+  color: var(--muted);
+}
+
+.prizes-theme .science-day-link-row code {
+  color: #e8fffb;
+  background: rgba(3, 10, 13, 0.68);
+  border-color: var(--line);
+}
+
+.prizes-theme .science-day-qr {
+  color: #061114;
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.prizes-theme .science-day-locked-icon {
+  color: #061114;
+  background: var(--gold);
+}
+
+.prizes-theme .science-day-waiting-status {
+  color: #d9fffb;
+  background: rgba(18, 214, 197, 0.10);
+  border-color: rgba(18, 214, 197, 0.28);
 }
 
 .science-day-mode-lock {

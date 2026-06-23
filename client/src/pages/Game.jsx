@@ -1001,7 +1001,7 @@ export default function Game() {
   const showMobileRoomCode = !monitorOnly && room.phase === "lobby";
 
   return (
-    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${room.phase === "finished" ? "finished-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${monitorWaiting ? "science-day-waiting-route" : ""}`}>
+    <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${room.phase === "finished" ? "finished-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${prizes ? "prizes-theme" : ""} ${monitorWaiting ? "science-day-waiting-route" : ""}`}>
       <section className="room-header">
         <div>
           <div className="hero-kicker">
