@@ -11,7 +11,6 @@ export default function App() {
   const isRoomRoute = /^\/play\/[^/]+/.test(location.pathname);
   const [activeRoom, setActiveRoom] = useState({ active: false, code: "", phase: "", mode: "", waitingOnly: false });
   const showRoomMenu = isRoomRoute && activeRoom.active && !activeRoom.waitingOnly;
-  const scienceDayRoom = activeRoom.mode === "science_day";
 
   useEffect(() => {
     function updateRoomMenu(event) {
@@ -49,13 +48,13 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell ${showRoomMenu ? "room-route-shell" : ""} ${scienceDayRoom ? "science-day-shell" : ""}`}>
+    <div className={`app-shell ${showRoomMenu ? "room-route-shell" : ""}`}>
       <header className="topbar">
-        <div className="brand" aria-label={scienceDayRoom ? "الجامعة الليبية الدولية" : "فلتة"}>
+        <div className="brand" aria-label="فلتة">
           <img
             className="brand-logo"
-            src={scienceDayRoom ? "/assets/limu-logo.png" : "/assets/falta-logo.png"}
-            alt={scienceDayRoom ? "الجامعة الليبية الدولية" : "فلتة"}
+            src="/assets/falta-logo.png"
+            alt="فلتة"
           />
         </div>
         {showRoomMenu ? (

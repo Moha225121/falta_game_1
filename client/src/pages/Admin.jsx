@@ -52,8 +52,7 @@ const fallbackQuestionTypes = [
   { id: "map_hunt", name: "خريطة السر", kind: "direct_choice", category: "خريطة السر" },
   { id: "quote_hunt", name: "من قالها؟", kind: "direct_choice", category: "من قالها؟" },
   { id: "odd_one", name: "المختلف", kind: "direct_choice", category: "المختلف" },
-  { id: "order_it", name: "رتبها", kind: "direct_choice", category: "رتبها" },
-  { id: "science_day", name: "اليوم العلمي", kind: "direct_choice", category: "اليوم العلمي" }
+  { id: "order_it", name: "رتبها", kind: "direct_choice", category: "رتبها" }
 ];
 
 const tabs = [
@@ -87,7 +86,6 @@ const modeNameFallback = {
   quote_hunt: "من قالها؟",
   odd_one: "المختلف",
   order_it: "رتبها",
-  science_day: "اليوم العلمي"
 };
 
 const phaseNames = {

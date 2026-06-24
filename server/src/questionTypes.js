@@ -29,13 +29,6 @@ export const QUESTION_TYPE_DEFINITIONS = [
     summary: "سؤال له إجابة صحيحة، واللاعبون يكتبون إجابات مخادعة."
   },
   {
-    id: "prizes",
-    name: "جوائز",
-    kind: "trivia",
-    category: "جوائز",
-    summary: "أسئلة صعبة بنظام شن الصح، مخصصة لتحدي قصير بمراقب ولاعبين عبر QR."
-  },
-  {
     id: "imposter",
     name: "الدخيل",
     kind: "secret_word",
@@ -146,13 +139,6 @@ export const QUESTION_TYPE_DEFINITIONS = [
     kind: "direct_choice",
     category: "رتبها",
     summary: "سؤال اختيار من متعدد عن الترتيب الصحيح."
-  },
-  {
-    id: "science_day",
-    name: "اليوم العلمي",
-    kind: "direct_choice",
-    category: "اليوم العلمي",
-    summary: "أسئلة اختيار من متعدد للفعاليات العلمية، مناسبة للحضور الكبير واللوحة المباشرة."
   }
 ];
 

@@ -1,17 +1,8 @@
 import { useState } from "react";
-import { Check, Flag, Info } from "lucide-react";
+import { Check, Info } from "lucide-react";
 
 export function GameModePicker({ modes = [], selected = ["kalak"], onChange, disabled = false }) {
   const selectedModes = Array.isArray(selected) ? selected : [selected].filter(Boolean);
-  const orderedModes = [...modes].sort((first, second) => {
-    if (first.id === "prizes") {
-      return 1;
-    }
-    if (second.id === "prizes") {
-      return -1;
-    }
-    return 0;
-  });
   const [openInfoId, setOpenInfoId] = useState("");
 
   function toggleInfo(modeId, event) {
@@ -35,7 +26,7 @@ export function GameModePicker({ modes = [], selected = ["kalak"], onChange, dis
 
   return (
     <div className="mode-picker">
-      {orderedModes.map((mode) => {
+      {modes.map((mode) => {
         const active = selectedModes.includes(mode.id);
         const infoOpen = openInfoId === mode.id;
         return (
@@ -51,12 +42,6 @@ export function GameModePicker({ modes = [], selected = ["kalak"], onChange, dis
             >
               <span className="mode-title-stack">
                 <strong>{mode.name}</strong>
-                {mode.id === "prizes" ? (
-                  <span className="mode-event-flag">
-                    <Flag size={13} />
-                    خاص
-                  </span>
-                ) : null}
               </span>
               <span className="mode-check">{active ? <Check size={17} /> : null}</span>
             </button>

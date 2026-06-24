@@ -36,6 +36,11 @@ const retiredSeedQuestionIds = new Set([
   "q_limu_016",
   "q_limu_017"
 ]);
+const retiredQuestionModes = new Set(["prizes", "science_day"]);
+
+function isRetiredQuestionMode(mode) {
+  return retiredQuestionModes.has(String(mode || "").trim());
+}
 
 function databasePath() {
   const configured = process.env.QUESTION_DB_PATH || process.env.QUESTIONS_DB_PATH;
@@ -340,6 +345,8 @@ export class QuestionStore {
     this.updateCategory = this.db.prepare(`
       UPDATE categories SET active = @active, updated_at = @updatedAt WHERE id = @id
     `);
+    this.deleteQuestionsByMode = this.db.prepare("DELETE FROM questions WHERE mode = ?");
+    this.deleteCategoriesByMode = this.db.prepare("DELETE FROM categories WHERE mode = ?");
 
     this.insertQuestionsTransaction = this.db.transaction((questions) => {
       for (const question of questions) {
@@ -380,6 +387,7 @@ export class QuestionStore {
 
   seedFromJsonIfNeeded() {
     const seedQuestions = readSeedRows(seedQuestionFile)
+      .filter((question) => !isRetiredQuestionMode(question.mode))
       .map((question) => ({
         ...question,
         ...normalizeStoredQuestion(question)
@@ -392,6 +400,7 @@ export class QuestionStore {
     }
 
     this.removeRetiredSeedQuestions();
+    this.removeRetiredQuestionModes();
     this.restoreUserBackup();
 
     if (this.countCategories.get().count === 0) {
@@ -425,8 +434,16 @@ export class QuestionStore {
     }
   }
 
+  removeRetiredQuestionModes() {
+    for (const mode of retiredQuestionModes) {
+      this.deleteQuestionsByMode.run(mode);
+      this.deleteCategoriesByMode.run(mode);
+    }
+  }
+
   restoreUserBackup() {
     const backupQuestions = readSeedRows(this.backupPath)
+      .filter((question) => !isRetiredQuestionMode(question.mode))
       .filter((question) => !retiredSeedQuestionIds.has(question.id))
       .map((question) => ({
         ...question,
@@ -448,11 +465,15 @@ export class QuestionStore {
   }
 
   allQuestions() {
-    return this.selectQuestions.all().map(questionFromRow);
+    return this.selectQuestions.all()
+      .filter((row) => !isRetiredQuestionMode(row.mode))
+      .map(questionFromRow);
   }
 
   allCategoryRows() {
-    return this.selectCategories.all().map(categoryFromRow);
+    return this.selectCategories.all()
+      .filter((row) => !isRetiredQuestionMode(row.mode))
+      .map(categoryFromRow);
   }
 
   async list(filters = {}) {
@@ -708,7 +729,7 @@ export class QuestionStore {
 
   async get(id) {
     const row = this.selectQuestionById.get(id);
-    return row ? questionFromRow(row) : null;
+    return row && !isRetiredQuestionMode(row.mode) ? questionFromRow(row) : null;
   }
 
   async create(input) {

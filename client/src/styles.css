@@ -2635,39 +2635,6 @@ button:disabled {
   background: rgba(255, 63, 152, 0.58);
 }
 
-.mode-card-prizes {
-  grid-column: 1 / -1;
-  min-height: 74px;
-  border-color: var(--line);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 68%),
-    rgba(255, 255, 255, 0.055);
-}
-
-.mode-card-prizes::before {
-  width: 4px;
-  background: rgba(255, 93, 105, 0.60);
-  opacity: 0.78;
-}
-
-.mode-card-prizes.active {
-  border-color: rgba(246, 184, 74, 0.58);
-  background:
-    linear-gradient(180deg, rgba(246, 184, 74, 0.13), transparent 68%),
-    rgba(246, 184, 74, 0.075);
-}
-
-.mode-card-prizes.active::before {
-  background: var(--gold);
-  opacity: 1;
-}
-
-.mode-card-prizes.active .mode-event-flag {
-  color: #061114;
-  background: var(--gold);
-  border-color: rgba(255, 255, 255, 0.42);
-}
-
 .mode-card.active .mode-check {
   color: #061114;
   background: var(--green);
