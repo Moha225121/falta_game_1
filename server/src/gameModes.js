@@ -1,3 +1,5 @@
+import { HARD_FAKE_FACTS } from "./hardFakeFacts.js";
+
 export const GAME_MODES = [
   {
     id: "kalak",
@@ -102,7 +104,8 @@ export const FAKE_FACTS = [
     statement: "ذاكرة السمكة الذهبية لا تتجاوز ثلاث ثوانٍ.",
     answer: "fake",
     explanation: "السمكة الذهبية تستطيع تذكر أنماط تعلمتها لمدة أطول من ذلك."
-  }
+  },
+  ...HARD_FAKE_FACTS
 ];
 
 export const LAST_SURVIVOR_CHALLENGES = [
