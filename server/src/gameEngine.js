@@ -100,6 +100,7 @@ const BOT_CORRECT_ANSWER_RATE = 0.18;
 const BOT_CORRECT_VOTE_RATE = 0.42;
 const RECONNECT_GRACE_MS = 45_000;
 const CATEGORY_PICK_SECONDS = 40;
+const CATEGORY_PICK_OPTION_COUNT = 5;
 const LIVE_GAME_PHASES = new Set(["choosingCategory", "answering", "voting", "results"]);
 const CUMULATIVE_DEFAULTS = {
   roomsCreated: 0,
@@ -1450,7 +1451,8 @@ export class KalakGameEngine {
 
   async startCategoryChoice(room) {
     const mode = this.currentMode(room);
-    const categories = await this.availableCategoryChoices(room, mode);
+    const categoryPool = await this.availableCategoryChoices(room, mode);
+    const categories = shuffle(categoryPool).slice(0, CATEGORY_PICK_OPTION_COUNT);
     if (!categories.length) {
       throw new Error("لا توجد تصنيفات فيها أسئلة نشطة.");
     }
