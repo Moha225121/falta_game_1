@@ -47,6 +47,7 @@ const defaultAvatar = {
 };
 const phaseLabels = {
   lobby: "الانتظار",
+  choosingCategory: "اختيار التصنيف",
   answering: "الإجابات",
   voting: "التصويت",
   results: "النتائج",
@@ -54,7 +55,7 @@ const phaseLabels = {
 };
 
 const roomCodeLength = 5;
-const activeMatchPhases = new Set(["answering", "voting", "results"]);
+const activeMatchPhases = new Set(["choosingCategory", "answering", "voting", "results"]);
 const focusedGamePhases = new Set([...activeMatchPhases, "finished"]);
 const joinRetryDelays = [350, 800, 1400, 2200];
 const SCIENCE_DAY_MODE = "science_day";
@@ -823,6 +824,15 @@ export default function Game() {
     perform(() => ack(socket, "vote:submit", { optionId }), "vote");
   }
 
+  function chooseCategory(category) {
+    if (!socket || !connected) {
+      setError("الاتصال غير جاهز.");
+      return;
+    }
+
+    perform(() => ack(socket, "category:choose", { category }), "category");
+  }
+
   async function sendChat(message) {
     if (!socket || !connected) {
       const error = new Error("الاتصال غير جاهز.");
@@ -1098,6 +1108,16 @@ export default function Game() {
               onAddBot={addBot}
               onShare={copyCode}
               onStart={() => perform(() => ack(socket, "game:start"), "start")}
+            />
+          ) : null}
+
+          {room.phase === "choosingCategory" ? (
+            <CategoryChoice
+              room={room}
+              connected={connected}
+              busy={busy}
+              pendingAction={pendingAction}
+              onChoose={chooseCategory}
             />
           ) : null}
 
@@ -1745,6 +1765,69 @@ function Lobby({ room, categories, gameModes, config, isHost, busy, connected, p
         <div className="waiting-strip">
           <Loader2 className="spin" size={18} />
           <span>بانتظار المضيف</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CategoryChoice({ room, connected, busy, pendingAction, onChoose }) {
+  const selection = room.categorySelection || {};
+  const categories = Array.isArray(selection.categories) ? selection.categories : [];
+  const chooserName = selection.chooserName || "اللاعب";
+  const isChooser = Boolean(selection.isChooser);
+  const round = selection.round || room.round + 1;
+  const rounds = selection.rounds || room.settings.rounds;
+
+  return (
+    <section className="panel stage-panel category-choice-stage">
+      <div className="stage-heading">
+        <div>
+          <span className="eyebrow">الجولة {formatArabicNumber(round)}/{formatArabicNumber(rounds)}</span>
+          <QuestionPrompt text={isChooser ? "اختر التصنيف" : `${chooserName} يختار التصنيف`} />
+        </div>
+        <Timer
+          className="answer-timer"
+          deadline={room.phaseEndsAt}
+          durationSeconds={selection.durationSeconds || 40}
+        />
+      </div>
+
+      <div className={`category-turn-card ${isChooser ? "current" : ""}`}>
+        {selection.chooserAvatar ? <Avatar avatar={selection.chooserAvatar} name={chooserName} /> : null}
+        <div>
+          <span>{isChooser ? "دورك" : "الدور الآن"}</span>
+          <strong>{isChooser ? "اختار تصنيف السؤال" : chooserName}</strong>
+        </div>
+      </div>
+
+      {isChooser ? (
+        <div className="options-grid category-choice-grid">
+          {categories.map((category, index) => (
+            <button
+              className="answer-option category-choice-button"
+              key={category}
+              type="button"
+              disabled={!connected || busy}
+              onClick={(event) => {
+                event.currentTarget.blur();
+                onChoose(category);
+              }}
+            >
+              <span className="option-index">
+                {pendingAction === "category" ? <Loader2 className="spin" size={16} /> : index + 1}
+              </span>
+              <span className="option-body">
+                <strong>{category}</strong>
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="locked-answer category-waiting">
+          <Crown size={28} />
+          <strong>انتظر الاختيار</strong>
+          <span>السؤال يبدأ بعد اختيار التصنيف.</span>
         </div>
       )}
     </section>

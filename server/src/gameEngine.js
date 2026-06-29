@@ -99,7 +99,8 @@ const BOT_FAKE_ANSWERS = [
 const BOT_CORRECT_ANSWER_RATE = 0.18;
 const BOT_CORRECT_VOTE_RATE = 0.42;
 const RECONNECT_GRACE_MS = 45_000;
-const LIVE_GAME_PHASES = new Set(["answering", "voting", "results"]);
+const CATEGORY_PICK_SECONDS = 40;
+const LIVE_GAME_PHASES = new Set(["choosingCategory", "answering", "voting", "results"]);
 const CUMULATIVE_DEFAULTS = {
   roomsCreated: 0,
   roomsClosed: 0,
@@ -118,7 +119,7 @@ const CUMULATIVE_DEFAULTS = {
   playersLeft: 0,
   kickRemovals: 0
 };
-const PHASE_ORDER = ["lobby", "answering", "voting", "results", "finished"];
+const PHASE_ORDER = ["lobby", "choosingCategory", "answering", "voting", "results", "finished"];
 
 function percent(part, total) {
   return total > 0 ? Math.round((part / total) * 100) : 0;
@@ -457,6 +458,9 @@ function createEmptyRoom(code, host, config) {
     correctWriterIds: [],
     eliminatedPlayerIds: new Set(),
     kickVotes: new Map(),
+    categorySelection: null,
+    categoryChooserOrder: [],
+    categoryChooserIndex: 0,
     activeMode: "kalak",
     modeData: null,
     results: null,
@@ -503,6 +507,7 @@ export class KalakGameEngine {
     socket.on("player:kickVote", (payload, ack) => this.handle(socket, ack, () => this.voteKick(socket, payload)));
     socket.on("game:start", (payload, ack) => this.handle(socket, ack, () => this.startGame(socket)));
     socket.on("game:end", (payload, ack) => this.handle(socket, ack, () => this.endGame(socket)));
+    socket.on("category:choose", (payload, ack) => this.handle(socket, ack, () => this.chooseCategory(socket, payload)));
     socket.on("answer:draft", (payload) => this.saveAnswerDraft(socket, payload));
     socket.on("answer:submit", (payload, ack) => this.handle(socket, ack, () => this.submitAnswer(socket, payload)));
     socket.on("vote:submit", (payload, ack) => this.handle(socket, ack, () => this.submitVote(socket, payload)));
@@ -1086,6 +1091,8 @@ export class KalakGameEngine {
     room.eliminatedPlayerIds = new Set();
     room.activeMode = room.settings.modes[0] || "kalak";
     room.modeData = null;
+    room.categorySelection = null;
+    this.resetCategoryChooserOrder(room);
     room.gameStartedAt = Date.now();
     room.finishedAt = null;
     room.statsFinalRecorded = false;
@@ -1120,6 +1127,9 @@ export class KalakGameEngine {
     room.correctWriterIds = [];
     room.eliminatedPlayerIds = new Set();
     room.modeData = null;
+    room.categorySelection = null;
+    room.categoryChooserOrder = [];
+    room.categoryChooserIndex = 0;
     room.results = null;
     room.question = null;
     room.phaseEndsAt = null;
@@ -1280,6 +1290,22 @@ export class KalakGameEngine {
     return { room: this.publicRoom(room, playerId) };
   }
 
+  async chooseCategory(socket, payload = {}) {
+    const room = this.requireRoom(socket);
+    const playerId = this.playerId(socket);
+
+    if (room.phase !== "choosingCategory") {
+      throw new Error("وقت اختيار التصنيف انتهى.");
+    }
+
+    if (room.categorySelection?.chooserId !== playerId) {
+      throw new Error("اختيار التصنيف للاعب المحدد فقط.");
+    }
+
+    await this.resolveCategoryChoice(room.code, payload.category);
+    return { room: this.publicRoom(room, playerId) };
+  }
+
   async nextRound(socket) {
     const room = this.requireRoom(socket);
     const playerId = this.playerId(socket);
@@ -1364,6 +1390,147 @@ export class KalakGameEngine {
     return questions[index] || null;
   }
 
+  categoryChooserPool(room) {
+    const active = [...room.players.values()]
+      .filter((player) => player.connected !== false && !room.eliminatedPlayerIds.has(player.id))
+      .sort((a, b) => a.joinedAt - b.joinedAt);
+    const humans = active.filter((player) => !player.isBot);
+    return humans.length ? humans : active;
+  }
+
+  resetCategoryChooserOrder(room) {
+    const pool = this.categoryChooserPool(room);
+    room.categoryChooserOrder = pool.map((player) => player.id);
+    room.categoryChooserIndex = room.categoryChooserOrder.length
+      ? Math.floor(Math.random() * room.categoryChooserOrder.length)
+      : 0;
+  }
+
+  nextCategoryChooser(room) {
+    const pool = this.categoryChooserPool(room);
+    if (!pool.length) {
+      return null;
+    }
+
+    const activeIds = new Set(pool.map((player) => player.id));
+    const orderedIds = [
+      ...(Array.isArray(room.categoryChooserOrder) ? room.categoryChooserOrder : []).filter((id) => activeIds.has(id)),
+      ...pool.map((player) => player.id).filter((id) => !(room.categoryChooserOrder || []).includes(id))
+    ];
+
+    if (!orderedIds.length) {
+      return null;
+    }
+
+    room.categoryChooserOrder = orderedIds;
+    const startIndex = Math.max(0, Number(room.categoryChooserIndex) || 0) % orderedIds.length;
+
+    for (let offset = 0; offset < orderedIds.length; offset += 1) {
+      const index = (startIndex + offset) % orderedIds.length;
+      const chooser = pool.find((player) => player.id === orderedIds[index]);
+      if (chooser) {
+        room.categoryChooserIndex = (index + 1) % orderedIds.length;
+        return chooser;
+      }
+    }
+
+    return null;
+  }
+
+  async availableCategoryChoices(room, mode) {
+    const activeCategories = await this.store.categories({ mode });
+    const activeSet = new Set(activeCategories.map((category) => category.toLowerCase()));
+    const configured = Array.isArray(room.settings.categories) ? room.settings.categories : [];
+    const choices = configured.length
+      ? configured.filter((category) => activeSet.has(String(category).toLowerCase()))
+      : activeCategories;
+
+    return [...new Set(choices.map((category) => String(category).trim()).filter(Boolean))];
+  }
+
+  async startCategoryChoice(room) {
+    const mode = this.currentMode(room);
+    const categories = await this.availableCategoryChoices(room, mode);
+    if (!categories.length) {
+      throw new Error("لا توجد تصنيفات فيها أسئلة نشطة.");
+    }
+
+    const chooser = this.nextCategoryChooser(room);
+    const fallbackCategory = categories[Math.floor(Math.random() * categories.length)];
+    if (!chooser) {
+      await this.startKalakQuestionRound(room, fallbackCategory);
+      return;
+    }
+
+    const startedAt = Date.now();
+    room.phase = "choosingCategory";
+    room.question = null;
+    room.submissions = new Map();
+    room.answerDrafts = new Map();
+    room.votes = new Map();
+    room.options = [];
+    room.correctWriterIds = [];
+    room.modeData = null;
+    room.results = null;
+    room.categorySelection = {
+      chooserId: chooser.id,
+      chooserName: chooser.name,
+      chooserAvatar: chooser.avatar,
+      round: room.round + 1,
+      rounds: room.settings.rounds,
+      mode,
+      categories,
+      durationSeconds: CATEGORY_PICK_SECONDS,
+      startedAt
+    };
+    room.phaseEndsAt = startedAt + CATEGORY_PICK_SECONDS * 1000;
+    room.timer = setTimeout(() => {
+      this.resolveCategoryChoice(room.code).catch((error) => this.handleCategoryChoiceError(room.code, error));
+    }, CATEGORY_PICK_SECONDS * 1000);
+
+    this.emitRoom(room);
+
+    if (chooser.isBot) {
+      this.queueBotTask(room, () => {
+        this.resolveCategoryChoice(room.code).catch((error) => this.handleCategoryChoiceError(room.code, error));
+      }, 900 + Math.floor(Math.random() * 900));
+    }
+  }
+
+  async resolveCategoryChoice(code, category = "") {
+    const room = this.rooms.get(code);
+    if (!room || room.phase !== "choosingCategory") {
+      return null;
+    }
+
+    const choices = room.categorySelection?.categories || [];
+    if (!choices.length) {
+      throw new Error("لا توجد تصنيفات متاحة.");
+    }
+
+    const requested = String(category || "").trim().toLowerCase();
+    const selectedCategory = choices.find((choice) => choice.toLowerCase() === requested)
+      || choices[Math.floor(Math.random() * choices.length)];
+
+    this.clearTimer(room);
+    await this.startKalakQuestionRound(room, selectedCategory);
+    return room;
+  }
+
+  handleCategoryChoiceError(code, error) {
+    const room = this.rooms.get(code);
+    if (!room) {
+      return;
+    }
+
+    this.clearTimer(room);
+    room.phase = "finished";
+    room.phaseEndsAt = null;
+    room.categorySelection = null;
+    this.addSystemMessage(room, error?.message || "تعذر بدء السؤال من التصنيف المختار.");
+    this.emitRoom(room);
+  }
+
   async startRound(room) {
     this.clearTimer(room);
     const mode = this.selectModeForRound(room);
@@ -1372,14 +1539,29 @@ export class KalakGameEngine {
       room.eliminatedPlayerIds = new Set();
     }
 
-    if (mode !== "kalak" && mode !== PRIZES_MODE) {
+    if (mode === "kalak") {
+      await this.startCategoryChoice(room);
+      return;
+    }
+
+    if (mode !== PRIZES_MODE) {
       await this.startSpecialRound(room);
       return;
     }
 
+    await this.startKalakQuestionRound(room);
+  }
+
+  async startKalakQuestionRound(room, selectedCategory = "") {
+    const mode = this.currentMode(room);
+    const categories = mode === PRIZES_MODE
+      ? []
+      : selectedCategory
+        ? [selectedCategory]
+        : room.settings.categories;
     const question = await this.store.random({
       mode,
-      categories: mode === PRIZES_MODE ? [] : room.settings.categories,
+      categories,
       excludeIds: room.usedQuestionIds
     });
 
@@ -1397,6 +1579,7 @@ export class KalakGameEngine {
     room.options = [];
     room.correctWriterIds = [];
     room.modeData = null;
+    room.categorySelection = null;
     room.results = null;
     room.phaseEndsAt = Date.now() + room.settings.answerSeconds * 1000;
     room.timer = setTimeout(() => this.finishAnswering(room.code), room.settings.answerSeconds * 1000);
@@ -1413,6 +1596,7 @@ export class KalakGameEngine {
     room.votes = new Map();
     room.options = [];
     room.correctWriterIds = [];
+    room.categorySelection = null;
     room.results = null;
     const content = mode === SCIENCE_DAY_MODE
       ? await this.scienceDayQuestionForRound(room)
@@ -3459,6 +3643,13 @@ export class KalakGameEngine {
       return;
     }
 
+    if (room.phase === "choosingCategory" && !this.isCategoryChooserActive(room)) {
+      setTimeout(() => {
+        this.resolveCategoryChoice(room.code).catch((error) => this.handleCategoryChoiceError(room.code, error));
+      }, 150);
+      return;
+    }
+
     if (room.phase === "answering" && this.currentMode(room) === "imposter") {
       const turn = this.currentImposterTurn(room);
       if (!turn || !this.isActiveImposterSpeaker(room, turn.playerId)) {
@@ -3616,6 +3807,12 @@ export class KalakGameEngine {
       passesPerPlayer,
       clueSeconds: Number(data.clueSeconds) || IMPOSTER_CLUE_SECONDS
     };
+  }
+
+  isCategoryChooserActive(room) {
+    const chooserId = room.categorySelection?.chooserId;
+    const chooser = chooserId ? room.players.get(chooserId) : null;
+    return Boolean(chooser && chooser.connected !== false && !room.eliminatedPlayerIds.has(chooser.id));
   }
 
   isActiveImposterSpeaker(room, playerId) {
@@ -3802,6 +3999,7 @@ export class KalakGameEngine {
         }))
         .map(({ joinedAt, ...player }) => player),
       question: this.publicQuestion(room, currentPlayerId),
+      categorySelection: this.publicCategorySelection(room, currentPlayerId),
       imposterTurn: this.publicImposterTurn(room, currentPlayerId),
       phaseEndsAt: room.phaseEndsAt,
       options: this.publicOptions(room, currentPlayerId),
@@ -3854,6 +4052,25 @@ export class KalakGameEngine {
       myClueCount: currentPlayerId ? this.imposterClueCount(room, currentPlayerId) : 0,
       history: this.imposterClueHistory(room),
       players
+    };
+  }
+
+  publicCategorySelection(room, currentPlayerId) {
+    const selection = room.categorySelection;
+    if (room.phase !== "choosingCategory" || !selection) {
+      return null;
+    }
+
+    return {
+      chooserId: selection.chooserId,
+      chooserName: selection.chooserName,
+      chooserAvatar: selection.chooserAvatar,
+      round: selection.round,
+      rounds: selection.rounds,
+      mode: selection.mode,
+      categories: selection.categories || [],
+      durationSeconds: selection.durationSeconds || CATEGORY_PICK_SECONDS,
+      isChooser: selection.chooserId === currentPlayerId
     };
   }
 
