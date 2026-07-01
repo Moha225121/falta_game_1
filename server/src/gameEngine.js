@@ -140,11 +140,13 @@ const ANSWER_ALIAS_GROUPS = [
   ["كراتالدمالبيضاء", "كرياتالدمالبيضاء", "خلاياالدمالبيضاء"]
 ];
 
-function baseNormalizeAnswer(value) {
-  return String(value || "")
+function normalizeAnswerText(value) {
+  return String(value ?? "")
     .trim()
     .toLowerCase()
     .normalize("NFKD")
+    .replace(/[\u0660-\u0669]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
+    .replace(/[\u06F0-\u06F9]/g, (digit) => String(digit.charCodeAt(0) - 0x06F0))
     .replace(/[\u064B-\u065F\u0670]/g, "")
     .replace(/\u0640/g, "")
     .replace(/[\u0623\u0625\u0622]/g, "\u0627")
@@ -154,7 +156,20 @@ function baseNormalizeAnswer(value) {
     .replace(/\u0629/g, "\u0647")
     .replace(/[\u06A9\u06AA]/g, "\u0643")
     .replace(/[\u06CC\u064A]/g, "\u064A")
-    .replace(/[^a-z0-9\u0600-\u06FF]+/g, "");
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, " ")
+    .trim();
+}
+
+function normalizeAnswerTokens(value) {
+  return normalizeAnswerText(value).split(/\s+/).filter(Boolean);
+}
+
+function compactAnswerTokens(tokens) {
+  return tokens.join("");
+}
+
+function baseNormalizeAnswer(value) {
+  return compactAnswerTokens(normalizeAnswerTokens(value));
 }
 
 const ANSWER_ALIAS_REPLACEMENTS = ANSWER_ALIAS_GROUPS.flatMap((group) => {
@@ -164,34 +179,102 @@ const ANSWER_ALIAS_REPLACEMENTS = ANSWER_ALIAS_GROUPS.flatMap((group) => {
     .map((alias) => [alias, canonical]);
 });
 
-function normalizeAnswer(value) {
+function applyAnswerAliases(answer) {
   return ANSWER_ALIAS_REPLACEMENTS.reduce(
     (answer, [alias, canonical]) => answer.replaceAll(alias, canonical),
-    baseNormalizeAnswer(value)
+    answer
   );
 }
 
-function answerVariants(normalized) {
-  const variants = [normalized];
-  if (normalized.startsWith("ال") && normalized.length > 3) {
-    variants.push(normalized.slice(2));
-  }
-  return [...new Set(variants)];
+function normalizeAnswer(value) {
+  return applyAnswerAliases(baseNormalizeAnswer(value));
 }
 
-function answerDistanceLimit(normalized) {
-  if (!normalized || /^[0-9]+$/.test(normalized)) {
+function stripArabicArticle(token) {
+  return token.startsWith("ال") && token.length > 3 ? token.slice(2) : token;
+}
+
+function answerCandidates(value) {
+  const tokens = normalizeAnswerTokens(value);
+  const variants = [
+    compactAnswerTokens(tokens),
+    compactAnswerTokens(tokens.map(stripArabicArticle))
+  ];
+
+  const compact = variants[0] || "";
+  if (compact.startsWith("ال") && compact.length > 3) {
+    variants.push(compact.slice(2));
+  }
+
+  return [...new Set(variants.map(applyAnswerAliases).filter(Boolean))];
+}
+
+function collectAnswerValues(input, values) {
+  if (input === null || input === undefined || input === "") {
+    return;
+  }
+
+  if (Array.isArray(input)) {
+    input.forEach((item) => collectAnswerValues(item, values));
+    return;
+  }
+
+  if (typeof input === "object") {
+    collectAnswerValues(input.correctAnswer, values);
+    collectAnswerValues(input.answer, values);
+    collectAnswerValues(input.acceptedAnswers, values);
+    collectAnswerValues(input.possibleAnswers, values);
+    collectAnswerValues(input.alternativeAnswers, values);
+    collectAnswerValues(input.aliases, values);
+    if (input.content && typeof input.content === "object") {
+      collectAnswerValues(input.content.correct, values);
+      collectAnswerValues(input.content.answer, values);
+      collectAnswerValues(input.content.acceptedAnswers, values);
+      collectAnswerValues(input.content.possibleAnswers, values);
+      collectAnswerValues(input.content.alternativeAnswers, values);
+      collectAnswerValues(input.content.aliases, values);
+    }
+    return;
+  }
+
+  String(input)
+    .split("|")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .forEach((value) => values.push(value));
+}
+
+function answerValues(expected) {
+  const values = [];
+  collectAnswerValues(expected, values);
+  return [...new Set(values)];
+}
+
+function normalizedAnswerIsNumber(value) {
+  return /^[0-9]+$/.test(value);
+}
+
+function answerDistanceLimit(left, right) {
+  if (!left || !right || normalizedAnswerIsNumber(left) || normalizedAnswerIsNumber(right)) {
     return 0;
   }
 
-  if (normalized.length < 5) {
+  const minLength = Math.min(left.length, right.length);
+  const maxLength = Math.max(left.length, right.length);
+  if (minLength < 6) {
     return 0;
   }
 
-  return normalized.length < 9 ? 1 : 2;
+  if (maxLength >= 18) {
+    return 4;
+  }
+  if (maxLength >= 12) {
+    return 3;
+  }
+  return 2;
 }
 
-function levenshteinDistanceWithin(left, right, maxDistance) {
+function editDistanceWithin(left, right, maxDistance) {
   if (left === right) {
     return 0;
   }
@@ -201,6 +284,7 @@ function levenshteinDistanceWithin(left, right, maxDistance) {
   }
 
   let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  let previousPrevious = null;
 
   for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
     const current = [leftIndex];
@@ -208,11 +292,22 @@ function levenshteinDistanceWithin(left, right, maxDistance) {
 
     for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
       const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
-      const distance = Math.min(
+      let distance = Math.min(
         previous[rightIndex] + 1,
         current[rightIndex - 1] + 1,
         previous[rightIndex - 1] + cost
       );
+
+      if (
+        previousPrevious
+        && leftIndex > 1
+        && rightIndex > 1
+        && left[leftIndex - 1] === right[rightIndex - 2]
+        && left[leftIndex - 2] === right[rightIndex - 1]
+      ) {
+        distance = Math.min(distance, previousPrevious[rightIndex - 2] + 1);
+      }
+
       current[rightIndex] = distance;
       rowMinimum = Math.min(rowMinimum, distance);
     }
@@ -221,36 +316,46 @@ function levenshteinDistanceWithin(left, right, maxDistance) {
       return maxDistance + 1;
     }
 
+    previousPrevious = previous;
     previous = current;
   }
 
   return previous[right.length];
 }
 
-function answersMatch(value, expected) {
-  const normalizedValue = normalizeAnswer(value);
-  const normalizedExpected = normalizeAnswer(expected);
-
-  if (!normalizedValue || !normalizedExpected) {
+function fuzzyAnswersMatch(left, right) {
+  const maxDistance = answerDistanceLimit(left, right);
+  if (maxDistance <= 0) {
     return false;
   }
 
-  if (normalizedValue === normalizedExpected) {
+  const distance = editDistanceWithin(left, right, maxDistance);
+  if (distance > maxDistance) {
+    return false;
+  }
+
+  if (distance <= 1) {
     return true;
   }
 
-  const valueVariants = answerVariants(normalizedValue);
-  const expectedVariants = answerVariants(normalizedExpected);
-  if (valueVariants.some((candidate) => expectedVariants.includes(candidate))) {
-    return true;
+  const sameEdges = left[0] === right[0] && left[left.length - 1] === right[right.length - 1];
+  const similarity = 1 - (distance / Math.max(left.length, right.length));
+  return sameEdges && similarity >= 0.72;
+}
+
+function answersMatch(value, expected) {
+  const valueCandidates = answerCandidates(value);
+  const expectedCandidates = answerValues(expected).flatMap(answerCandidates);
+
+  if (!valueCandidates.length || !expectedCandidates.length) {
+    return false;
   }
 
-  const maxDistance = Math.min(
-    answerDistanceLimit(normalizedValue),
-    answerDistanceLimit(normalizedExpected)
-  );
-
-  return maxDistance > 0 && levenshteinDistanceWithin(normalizedValue, normalizedExpected, maxDistance) <= maxDistance;
+  return valueCandidates.some((candidate) => (
+    expectedCandidates.some((expectedCandidate) => (
+      candidate === expectedCandidate || fuzzyAnswersMatch(candidate, expectedCandidate)
+    ))
+  ));
 }
 
 function isNumericAnswer(value) {
@@ -1240,7 +1345,7 @@ export class KalakGameEngine {
 
     this.incrementCounter("answerSubmissions");
 
-    if ((this.currentMode(room) === "kalak" || this.currentMode(room) === PRIZES_MODE) && answersMatch(text, room.question.correctAnswer)) {
+    if ((this.currentMode(room) === "kalak" || this.currentMode(room) === PRIZES_MODE) && answersMatch(text, room.question)) {
       if (!room.correctWriterIds.includes(playerId)) {
         room.correctWriterIds.push(playerId);
       }
