@@ -130,7 +130,17 @@ function elapsedSeconds(start, end = Date.now()) {
   return start ? Math.max(0, Math.floor((end - start) / 1000)) : 0;
 }
 
-function normalizeAnswer(value) {
+const ANSWER_ALIAS_GROUPS = [
+  ["منغنيز", "منجنيز", "منغانيز", "مانغنيز", "مانجنيز", "manganese"],
+  ["فيتامينج", "فيتامينسي", "vitaminc"],
+  ["فيتاميند", "فيتاميندي", "vitamind"],
+  ["فيتامينك", "فيتامينكي", "vitamink"],
+  ["الصفيحات", "الصفائح", "صفائحالدم", "الصفائحالدمويه", "الصفيحاتالدمويه"],
+  ["كراتالدمالحمراء", "كرياتالدمالحمراء", "خلاياالدمالحمراء"],
+  ["كراتالدمالبيضاء", "كرياتالدمالبيضاء", "خلاياالدمالبيضاء"]
+];
+
+function baseNormalizeAnswer(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
@@ -145,6 +155,28 @@ function normalizeAnswer(value) {
     .replace(/[\u06A9\u06AA]/g, "\u0643")
     .replace(/[\u06CC\u064A]/g, "\u064A")
     .replace(/[^a-z0-9\u0600-\u06FF]+/g, "");
+}
+
+const ANSWER_ALIAS_REPLACEMENTS = ANSWER_ALIAS_GROUPS.flatMap((group) => {
+  const [canonical, ...aliases] = group.map(baseNormalizeAnswer);
+  return aliases
+    .filter((alias) => alias && alias !== canonical)
+    .map((alias) => [alias, canonical]);
+});
+
+function normalizeAnswer(value) {
+  return ANSWER_ALIAS_REPLACEMENTS.reduce(
+    (answer, [alias, canonical]) => answer.replaceAll(alias, canonical),
+    baseNormalizeAnswer(value)
+  );
+}
+
+function answerVariants(normalized) {
+  const variants = [normalized];
+  if (normalized.startsWith("ال") && normalized.length > 3) {
+    variants.push(normalized.slice(2));
+  }
+  return [...new Set(variants)];
 }
 
 function answerDistanceLimit(normalized) {
@@ -204,6 +236,12 @@ function answersMatch(value, expected) {
   }
 
   if (normalizedValue === normalizedExpected) {
+    return true;
+  }
+
+  const valueVariants = answerVariants(normalizedValue);
+  const expectedVariants = answerVariants(normalizedExpected);
+  if (valueVariants.some((candidate) => expectedVariants.includes(candidate))) {
     return true;
   }
 

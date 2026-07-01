@@ -34764,5 +34764,1605 @@
     "active": true,
     "createdAt": "2026-06-17T00:00:00.000Z",
     "updatedAt": "2026-06-17T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_001",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "أي حجرات القلب تضخ الدم إلى الشريان الأبهر؟",
+    "correctAnswer": "البطين الأيسر",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "قلب"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_002",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "أي حجرات القلب تستقبل الدم القادم من الرئتين؟",
+    "correctAnswer": "الأذين الأيسر",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "قلب"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_003",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الصمام القلبي الواقع بين الأذين الأيسر والبطين الأيسر؟",
+    "correctAnswer": "الصمام المترالي",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "قلب"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_004",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الصمام القلبي الواقع بين الأذين الأيمن والبطين الأيمن؟",
+    "correctAnswer": "الصمام ثلاثي الشرفات",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "قلب"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_005",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم الغشاء الذي يحيط بالقلب؟",
+    "correctAnswer": "التامور",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "قلب"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_006",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الوعاء الدموي الرئيسي الذي يخرج من البطين الأيسر؟",
+    "correctAnswer": "الشريان الأبهر",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دورة دموية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_007",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الوعاءان اللذان يعيدان الدم إلى الأذين الأيمن؟",
+    "correctAnswer": "الوريدان الأجوفان",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دورة دموية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_008",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الخلايا التي تنقل الأكسجين في الدم؟",
+    "correctAnswer": "كريات الدم الحمراء",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_009",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما البروتين الذي يحمل الأكسجين داخل كريات الدم الحمراء؟",
+    "correctAnswer": "الهيموغلوبين",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_010",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الخلايا المرتبطة بالدفاع المناعي في الدم؟",
+    "correctAnswer": "كريات الدم البيضاء",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_011",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما أجزاء الدم التي تساعد على التجلط؟",
+    "correctAnswer": "الصفائح الدموية",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_012",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما السائل الأصفر الذي تسبح فيه خلايا الدم؟",
+    "correctAnswer": "البلازما",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_013",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما نوع الدم المعروف غالبا بالمتبرع العام؟",
+    "correctAnswer": "O سالب",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_014",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما نوع الدم المعروف غالبا بالمستقبل العام؟",
+    "correctAnswer": "AB موجب",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "دم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_015",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الغاز الذي تنقله الرئتان إلى الدم أثناء الشهيق؟",
+    "correctAnswer": "الأكسجين",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تنفس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_016",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الغاز الذي يخرجه الجسم غالبا مع الزفير؟",
+    "correctAnswer": "ثاني أكسيد الكربون",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تنفس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_017",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الأكياس الهوائية الدقيقة التي يتم فيها تبادل الغازات؟",
+    "correctAnswer": "الحويصلات الهوائية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تنفس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_018",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضلة الرئيسية تحت الرئتين التي تساعد على التنفس؟",
+    "correctAnswer": "الحجاب الحاجز",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تنفس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_019",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الأنبوب الذي ينقل الهواء من الحنجرة إلى الشعب الهوائية؟",
+    "correctAnswer": "القصبة الهوائية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تنفس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_020",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم تفرعات القصبة الهوائية داخل الرئتين؟",
+    "correctAnswer": "الشعب الهوائية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تنفس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_021",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الغشاء الرقيق الذي يغطي الرئتين من الخارج؟",
+    "correctAnswer": "الغشاء البلوري",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تنفس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_022",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضو الذي ينسق الحركة والإحساس والتفكير؟",
+    "correctAnswer": "الدماغ",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "جهاز عصبي"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_023",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجزء من الدماغ المرتبط بالتوازن وتنسيق الحركة؟",
+    "correctAnswer": "المخيخ",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "جهاز عصبي"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_024",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الحبل العصبي الممتد داخل العمود الفقري؟",
+    "correctAnswer": "الحبل الشوكي",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "جهاز عصبي"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_025",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الخلايا الأساسية في الجهاز العصبي؟",
+    "correctAnswer": "الخلايا العصبية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "جهاز عصبي"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_026",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المادة الدهنية التي تعزل كثيرا من الألياف العصبية؟",
+    "correctAnswer": "الميالين",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "جهاز عصبي"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_027",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الطبقة الحساسة للضوء في العين؟",
+    "correctAnswer": "الشبكية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "حواس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_028",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجزء الملون من العين؟",
+    "correctAnswer": "القزحية",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "حواس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_029",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الفتحة السوداء في مركز القزحية؟",
+    "correctAnswer": "البؤبؤ",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "حواس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_030",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العدسة الطبيعية التي تركز الضوء داخل العين؟",
+    "correctAnswer": "عدسة العين",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "حواس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_031",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الغشاء الذي يهتز عند وصول الصوت إلى الأذن؟",
+    "correctAnswer": "طبلة الأذن",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "حواس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_032",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما القناة في الأذن الداخلية المرتبطة بالتوازن؟",
+    "correctAnswer": "القنوات الهلالية",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "حواس"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_033",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما أصغر عظمة في جسم الإنسان؟",
+    "correctAnswer": "الركاب",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_034",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما أطول عظمة في جسم الإنسان؟",
+    "correctAnswer": "عظم الفخذ",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_035",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العظام التي تحمي الدماغ؟",
+    "correctAnswer": "عظام الجمجمة",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_036",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العظام التي تحمي القلب والرئتين؟",
+    "correctAnswer": "القفص الصدري",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_037",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم عظمة الركبة؟",
+    "correctAnswer": "الرضفة",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_038",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم عظام الأصابع؟",
+    "correctAnswer": "السلاميات",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_039",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما النسيج الذي يربط العضلة بالعظم؟",
+    "correctAnswer": "الوتر",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام وعضلات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_040",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما النسيج الذي يربط العظم بالعظم؟",
+    "correctAnswer": "الرباط",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "عظام وعضلات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_041",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجزء الأول من الأمعاء الدقيقة؟",
+    "correctAnswer": "الاثنا عشر",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_042",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضو الذي يمتص أغلب المغذيات بعد الهضم؟",
+    "correctAnswer": "الأمعاء الدقيقة",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_043",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضو الذي يمتص الماء من بقايا الطعام؟",
+    "correctAnswer": "الأمعاء الغليظة",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_044",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضو الذي ينتج العصارة الصفراوية؟",
+    "correctAnswer": "الكبد",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_045",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "أي كيس صغير تحت الكبد يخزن العصارة الصفراوية؟",
+    "correctAnswer": "المرارة",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_046",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضو الذي يفرز إنزيمات هضمية وإنسولين؟",
+    "correctAnswer": "البنكرياس",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_047",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الحمض الموجود في المعدة ويساعد على الهضم؟",
+    "correctAnswer": "حمض الهيدروكلوريك",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_048",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الإنزيم الموجود في اللعاب ويبدأ هضم النشويات؟",
+    "correctAnswer": "الأميليز",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_049",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الحركة التي تدفع الطعام داخل المريء والأمعاء؟",
+    "correctAnswer": "الحركة الدودية",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "هضم"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_050",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضو الذي يرشح الدم لإنتاج البول؟",
+    "correctAnswer": "الكلى",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "كلى"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_051",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الوحدة الوظيفية الصغيرة في الكلية؟",
+    "correctAnswer": "النفرون",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "كلى"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_052",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الأنبوب الذي ينقل البول من الكلية إلى المثانة؟",
+    "correctAnswer": "الحالب",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "كلى"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_053",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما العضو الذي يخزن البول قبل خروجه؟",
+    "correctAnswer": "المثانة",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "كلى"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_054",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الغدة التي تفرز هرمونات تؤثر في سرعة الأيض؟",
+    "correctAnswer": "الغدة الدرقية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "غدد"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_055",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الغدة التي تسمى أحيانا سيدة الغدد؟",
+    "correctAnswer": "الغدة النخامية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "غدد"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_056",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الغدتان الموجودتان فوق الكليتين؟",
+    "correctAnswer": "الغدتان الكظريتان",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "غدد"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_057",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الهرمون الذي يرفع الاستعداد السريع في حالة الخوف أو الخطر؟",
+    "correctAnswer": "الأدرينالين",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "غدد"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_058",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الهرمون الذي يساعد على خفض سكر الدم؟",
+    "correctAnswer": "الإنسولين",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "غدد"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_059",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الهرمون الذي يرفع سكر الدم عند الحاجة للطاقة؟",
+    "correctAnswer": "الغلوكاغون",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "غدد"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_060",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المعدن المهم لتكوين هرمونات الغدة الدرقية؟",
+    "correctAnswer": "اليود",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "معادن"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_061",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المعدن الأساسي في الهيموغلوبين؟",
+    "correctAnswer": "الحديد",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "معادن"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_062",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المعدن الأهم لقوة العظام والأسنان؟",
+    "correctAnswer": "الكالسيوم",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "معادن"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_063",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المعدن الذي يرمز له بالرمز Mn؟",
+    "correctAnswer": "المنغنيز",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "معادن"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_064",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المعدن الذي يساعد الأعصاب والعضلات ويرمز له Mg؟",
+    "correctAnswer": "المغنيسيوم",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "معادن"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_065",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المعدن المرتبط بتوازن السوائل وضغط الدم ويرمز له Na؟",
+    "correctAnswer": "الصوديوم",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "معادن"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_066",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المعدن المهم لعمل العضلات ويرمز له K؟",
+    "correctAnswer": "البوتاسيوم",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "معادن"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_067",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "أي فيتامين يساعد الجسم على امتصاص الكالسيوم؟",
+    "correctAnswer": "فيتامين د",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_068",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "أي فيتامين يرتبط بتجلط الدم؟",
+    "correctAnswer": "فيتامين ك",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_069",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "أي فيتامين يرتبط بصحة النظر؟",
+    "correctAnswer": "فيتامين أ",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_070",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "نقص أي فيتامين يسبب مرض الإسقربوط؟",
+    "correctAnswer": "فيتامين ج",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_071",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "أي فيتامين مهم للأعصاب وتكوين كريات الدم الحمراء؟",
+    "correctAnswer": "فيتامين ب12",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_072",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم فيتامين ب1؟",
+    "correctAnswer": "الثيامين",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_073",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم فيتامين ب2؟",
+    "correctAnswer": "الريبوفلافين",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_074",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم فيتامين ب3؟",
+    "correctAnswer": "النياسين",
+    "difficulty": "hard",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فيتامينات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_075",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما نوع المغذيات الذي يعد المصدر الأسرع للطاقة؟",
+    "correctAnswer": "الكربوهيدرات",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تغذية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_076",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما نوع المغذيات المهم لبناء وإصلاح الأنسجة؟",
+    "correctAnswer": "البروتين",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تغذية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_077",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما نوع المغذيات الذي يساعد على تخزين الطاقة وامتصاص بعض الفيتامينات؟",
+    "correctAnswer": "الدهون",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تغذية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_078",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المادة الغذائية التي تساعد حركة الأمعاء؟",
+    "correctAnswer": "الألياف",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تغذية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_079",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما السكر الطبيعي الموجود في الحليب؟",
+    "correctAnswer": "اللاكتوز",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تغذية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_080",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما البروتين الموجود في القمح والشعير والجاودار؟",
+    "correctAnswer": "الغلوتين",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تغذية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_081",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الحمض الدهني الشهير الموجود في الأسماك الدهنية؟",
+    "correctAnswer": "أوميغا 3",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "تغذية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_082",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم نقص الماء في الجسم؟",
+    "correctAnswer": "الجفاف",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "صحة عامة"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_083",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجهاز المستخدم لقياس درجة حرارة الجسم؟",
+    "correctAnswer": "مقياس الحرارة",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "أدوات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_084",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجهاز المستخدم لسماع أصوات القلب والرئتين؟",
+    "correctAnswer": "السماعة الطبية",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "أدوات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_085",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجهاز المستخدم لقياس ضغط الدم؟",
+    "correctAnswer": "جهاز قياس ضغط الدم",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "أدوات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_086",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجهاز الصغير الذي يقيس تشبع الأكسجين في الدم؟",
+    "correctAnswer": "مقياس التأكسج النبضي",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "أدوات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_087",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الجهاز المستخدم لقياس سكر الدم في المنزل؟",
+    "correctAnswer": "جهاز قياس السكر",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "أدوات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_088",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الاختصار الشائع لتخطيط كهربائية القلب؟",
+    "correctAnswer": "ECG",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فحوصات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_089",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الفحص الذي يعطي صورة للعظام باستخدام أشعة مؤينة؟",
+    "correctAnswer": "الأشعة السينية",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فحوصات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_090",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الفحص الذي يستخدم مجالا مغناطيسيا قويا للتصوير؟",
+    "correctAnswer": "الرنين المغناطيسي",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فحوصات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_091",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما التحليل المعروف اختصارا باسم CBC؟",
+    "correctAnswer": "تعداد الدم الكامل",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "فحوصات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_092",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الكائنات التي تعالجها المضادات الحيوية عادة؟",
+    "correctAnswer": "البكتيريا",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "وقاية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_093",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم قدرة الجراثيم على مقاومة تأثير المضاد الحيوي؟",
+    "correctAnswer": "مقاومة المضادات الحيوية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "وقاية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_094",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "كم ثانية على الأقل ينصح غالبا بغسل اليدين بالماء والصابون؟ (اكتب الرقم فقط)",
+    "correctAnswer": "20",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "وقاية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_095",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "كم نسبة الكحول الدنيا الشائعة في معقم اليدين الفعال؟ (اكتب الرقم فقط)",
+    "correctAnswer": "60",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "وقاية"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_096",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اللقاح الذي يحمي من الحصبة والنكاف والحصبة الألمانية؟",
+    "correctAnswer": "لقاح MMR",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "لقاحات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_097",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما المرض الفيروسي المعروف بطفح جلدي وحمى شديدة ويحمي منه لقاح MMR؟",
+    "correctAnswer": "الحصبة",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "لقاحات"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_098",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما السائل المستخدم لتعويض السوائل والأملاح في الإسهال؟",
+    "correctAnswer": "محلول الإماهة الفموية",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "صحة عامة"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_099",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما اسم تسخين الحليب لقتل كثير من الميكروبات؟",
+    "correctAnswer": "البسترة",
+    "difficulty": "medium",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "سلامة غذاء"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": "q_health_extra_100",
+    "mode": "kalak",
+    "category": "طب وصحة",
+    "prompt": "ما الحشرة الأشهر في نقل الملاريا للإنسان؟",
+    "correctAnswer": "البعوض",
+    "difficulty": "easy",
+    "source": "Health Trivia Seed 2026-07-01",
+    "tags": [
+      "طب وصحة",
+      "أمراض"
+    ],
+    "active": true,
+    "createdAt": "2026-07-01T00:00:00.000Z",
+    "updatedAt": "2026-07-01T00:00:00.000Z"
   }
 ]

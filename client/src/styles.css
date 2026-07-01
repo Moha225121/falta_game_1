@@ -3036,44 +3036,16 @@ button:disabled {
 .category-choice-stage {
   display: grid;
   align-content: start;
-  gap: 16px;
-}
-
-.category-turn-card {
-  min-height: 82px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.065);
-}
-
-.category-turn-card.current {
-  border-color: rgba(246, 184, 74, 0.62);
-  background: rgba(246, 184, 74, 0.12);
-}
-
-.category-turn-card div {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-
-.category-turn-card span {
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 850;
-}
-
-.category-turn-card strong {
-  overflow-wrap: anywhere;
-  font-size: 1.05rem;
+  gap: 14px;
 }
 
 .category-choice-button {
-  min-height: 74px;
+  min-height: 86px;
+  padding: 12px;
+}
+
+.category-choice-button .option-body strong {
+  font-size: 1.05rem;
 }
 
 .options-grid {

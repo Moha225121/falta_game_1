@@ -1778,13 +1778,14 @@ function CategoryChoice({ room, connected, busy, pendingAction, onChoose }) {
   const isChooser = Boolean(selection.isChooser);
   const round = selection.round || room.round + 1;
   const rounds = selection.rounds || room.settings.rounds;
+  const canChoose = connected && isChooser && !busy;
 
   return (
     <section className="panel stage-panel category-choice-stage">
       <div className="stage-heading">
         <div>
           <span className="eyebrow">الجولة {formatArabicNumber(round)}/{formatArabicNumber(rounds)}</span>
-          <QuestionPrompt text={isChooser ? "اختر التصنيف" : `${chooserName} يختار التصنيف`} />
+          <QuestionPrompt text={isChooser ? "اختر التصنيف" : `دور ${chooserName}`} />
         </div>
         <Timer
           className="answer-timer"
@@ -1793,43 +1794,27 @@ function CategoryChoice({ room, connected, busy, pendingAction, onChoose }) {
         />
       </div>
 
-      <div className={`category-turn-card ${isChooser ? "current" : ""}`}>
-        {selection.chooserAvatar ? <Avatar avatar={selection.chooserAvatar} name={chooserName} /> : null}
-        <div>
-          <span>{isChooser ? "دورك" : "الدور الآن"}</span>
-          <strong>{isChooser ? "اختار تصنيف السؤال" : chooserName}</strong>
-        </div>
+      <div className="options-grid category-choice-grid">
+        {categories.map((category, index) => (
+          <button
+            className="answer-option category-choice-button"
+            key={category}
+            type="button"
+            disabled={!canChoose}
+            onClick={(event) => {
+              event.currentTarget.blur();
+              onChoose(category);
+            }}
+          >
+            <span className="option-index">
+              {pendingAction === "category" && isChooser ? <Loader2 className="spin" size={16} /> : index + 1}
+            </span>
+            <span className="option-body">
+              <strong>{category}</strong>
+            </span>
+          </button>
+        ))}
       </div>
-
-      {isChooser ? (
-        <div className="options-grid category-choice-grid">
-          {categories.map((category, index) => (
-            <button
-              className="answer-option category-choice-button"
-              key={category}
-              type="button"
-              disabled={!connected || busy}
-              onClick={(event) => {
-                event.currentTarget.blur();
-                onChoose(category);
-              }}
-            >
-              <span className="option-index">
-                {pendingAction === "category" ? <Loader2 className="spin" size={16} /> : index + 1}
-              </span>
-              <span className="option-body">
-                <strong>{category}</strong>
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="locked-answer category-waiting">
-          <Crown size={28} />
-          <strong>انتظر الاختيار</strong>
-          <span>السؤال يبدأ بعد اختيار التصنيف.</span>
-        </div>
-      )}
     </section>
   );
 }
