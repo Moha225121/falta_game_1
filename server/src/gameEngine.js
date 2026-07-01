@@ -132,9 +132,6 @@ function elapsedSeconds(start, end = Date.now()) {
 
 const ANSWER_ALIAS_GROUPS = [
   ["منغنيز", "منجنيز", "منغانيز", "مانغنيز", "مانجنيز", "manganese"],
-  ["فيتامينج", "فيتامينسي", "vitaminc"],
-  ["فيتاميند", "فيتاميندي", "vitamind"],
-  ["فيتامينك", "فيتامينكي", "vitamink"],
   ["الصفيحات", "الصفائح", "صفائحالدم", "الصفائحالدمويه", "الصفيحاتالدمويه"],
   ["كراتالدمالحمراء", "كرياتالدمالحمراء", "خلاياالدمالحمراء"],
   ["كراتالدمالبيضاء", "كرياتالدمالبيضاء", "خلاياالدمالبيضاء"]
@@ -195,18 +192,27 @@ function stripArabicArticle(token) {
 }
 
 function answerCandidates(value) {
+  return answerCandidateEntries(value).map((entry) => entry.value);
+}
+
+function answerCandidateEntries(value) {
   const tokens = normalizeAnswerTokens(value);
-  const variants = [
-    compactAnswerTokens(tokens),
-    compactAnswerTokens(tokens.map(stripArabicArticle))
+  const tokenVariants = [
+    tokens,
+    tokens.map(stripArabicArticle)
   ];
 
-  const compact = variants[0] || "";
+  const compact = compactAnswerTokens(tokens);
   if (compact.startsWith("ال") && compact.length > 3) {
-    variants.push(compact.slice(2));
+    tokenVariants.push([compact.slice(2)]);
   }
 
-  return [...new Set(variants.map(applyAnswerAliases).filter(Boolean))];
+  const entries = tokenVariants.map((variantTokens) => ({
+    value: applyAnswerAliases(compactAnswerTokens(variantTokens)),
+    tokens: variantTokens
+  })).filter((entry) => entry.value);
+
+  return [...new Map(entries.map((entry) => [entry.value, entry])).values()];
 }
 
 function collectAnswerValues(input, values) {
@@ -343,9 +349,27 @@ function fuzzyAnswersMatch(left, right) {
   return sameEdges && similarity >= 0.72;
 }
 
+function hasTinyTokenMismatch(leftTokens, rightTokens) {
+  if (leftTokens.length !== rightTokens.length) {
+    return false;
+  }
+
+  return leftTokens.some((token, index) => {
+    const other = rightTokens[index];
+    return token !== other && (token.length <= 2 || other.length <= 2);
+  });
+}
+
+function hasShortPrefixDifference(left, right) {
+  const lengthDifference = Math.abs(left.length - right.length);
+  return lengthDifference > 0
+    && lengthDifference <= 2
+    && (left.startsWith(right) || right.startsWith(left));
+}
+
 function answersMatch(value, expected) {
-  const valueCandidates = answerCandidates(value);
-  const expectedCandidates = answerValues(expected).flatMap(answerCandidates);
+  const valueCandidates = answerCandidateEntries(value);
+  const expectedCandidates = answerValues(expected).flatMap(answerCandidateEntries);
 
   if (!valueCandidates.length || !expectedCandidates.length) {
     return false;
@@ -353,7 +377,12 @@ function answersMatch(value, expected) {
 
   return valueCandidates.some((candidate) => (
     expectedCandidates.some((expectedCandidate) => (
-      candidate === expectedCandidate || fuzzyAnswersMatch(candidate, expectedCandidate)
+      candidate.value === expectedCandidate.value
+      || (
+        !hasTinyTokenMismatch(candidate.tokens, expectedCandidate.tokens)
+        && !hasShortPrefixDifference(candidate.value, expectedCandidate.value)
+        && fuzzyAnswersMatch(candidate.value, expectedCandidate.value)
+      )
     ))
   ));
 }
