@@ -5495,15 +5495,6 @@ button:disabled {
     margin-bottom: 6px;
   }
 
-  .match-focus-screen .room-header .hero-kicker {
-    display: none;
-  }
-
-  .match-focus-screen .room-header h1 {
-    max-width: 52vw;
-    font-size: 1rem;
-  }
-
   .match-focus-screen .mobile-menu-trigger {
     min-height: 34px;
     padding: 0 9px;

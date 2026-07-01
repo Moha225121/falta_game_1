@@ -1009,6 +1009,13 @@ export default function Game() {
   const monitorWaiting = monitorOnly && room.phase === "lobby" && !isHost;
   const showRoomShare = (!monitorOnly && room.phase === "lobby") || (monitorOnly && isHost);
   const showMobileRoomCode = !monitorOnly && room.phase === "lobby";
+  const headerTitle = inMatch
+    ? null
+    : scienceDay
+    ? "اليوم العلمي"
+    : prizes
+    ? "جوائز"
+    : <>غرفة <b dir="ltr">{room.code}</b></>;
 
   return (
     <main className={`game-screen ${inMatch ? "match-focus-screen" : ""} ${room.phase === "finished" ? "finished-focus-screen" : ""} ${scienceDay ? "science-day-theme" : ""} ${prizes ? "prizes-theme" : ""} ${monitorWaiting ? "science-day-waiting-route" : ""}`}>
@@ -1018,7 +1025,7 @@ export default function Game() {
             <span className={`status-dot ${connected ? "online" : ""}`} />
             <span>{phaseLabels[room.phase]}</span>
           </div>
-          <h1>{scienceDay ? "اليوم العلمي" : prizes ? "جوائز" : inMatch ? phaseLabels[room.phase] : <>غرفة <b dir="ltr">{room.code}</b></>}</h1>
+          {headerTitle ? <h1>{headerTitle}</h1> : null}
         </div>
         <div className="room-actions">
           <button className="icon-text-button mobile-menu-trigger" type="button" onClick={() => setDrawerOpen(true)}>
