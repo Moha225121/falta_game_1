@@ -1779,13 +1779,15 @@ function CategoryChoice({ room, connected, busy, pendingAction, onChoose }) {
   const round = selection.round || room.round + 1;
   const rounds = selection.rounds || room.settings.rounds;
   const canChoose = connected && isChooser && !busy;
+  const headingLabel = isChooser
+    ? `الجولة ${formatArabicNumber(round)}/${formatArabicNumber(rounds)}`
+    : `دور ${chooserName}`;
 
   return (
     <section className="panel stage-panel category-choice-stage">
       <div className="stage-heading">
-        <div>
-          <span className="eyebrow">الجولة {formatArabicNumber(round)}/{formatArabicNumber(rounds)}</span>
-          <QuestionPrompt text={isChooser ? "اختر التصنيف" : `دور ${chooserName}`} />
+        <div className="category-choice-heading">
+          <span className="eyebrow">{headingLabel}</span>
         </div>
         <Timer
           className="answer-timer"
